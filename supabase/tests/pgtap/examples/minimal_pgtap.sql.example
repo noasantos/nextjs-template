@@ -1,0 +1,28 @@
+-- Reference-only: pgTAP shape used in this repo. Not executed by `supabase test db` (extension .example).
+--
+-- Real suites live in sibling `../` as `*.sql`. Create new ones with:
+--   pnpm supabase:pgtap:new -- your_descriptive_name
+--
+-- Docs: supabase/tests/AGENTS.md · https://supabase.com/docs/guides/database/testing
+
+begin;
+select plan(2);
+
+select ok(
+  exists(
+    select 1
+    from information_schema.tables
+    where table_schema = 'public'
+      and table_name = 'profiles'
+  ),
+  'public.profiles exists'
+);
+
+select results_eq(
+  $$ values (1::int), (2::int) $$,
+  $$ values (1::int), (2::int) $$,
+  'results_eq example — compare query output to expected rows'
+);
+
+select * from finish();
+rollback;

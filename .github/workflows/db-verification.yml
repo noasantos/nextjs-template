@@ -1,0 +1,47 @@
+name: DB Verification
+
+on:
+  pull_request:
+    paths:
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "turbo.json"
+      - "supabase/**"
+      - "packages/supabase-auth/**"
+      - "packages/supabase-data/**"
+      - "packages/supabase-infra/**"
+      - "tests/**"
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "turbo.json"
+      - "supabase/**"
+      - "packages/supabase-auth/**"
+      - "packages/supabase-data/**"
+      - "packages/supabase-infra/**"
+      - "tests/**"
+
+jobs:
+  db-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm test:integration:prepare
+
+      - run: pnpm test:db

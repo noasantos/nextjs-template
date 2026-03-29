@@ -1,0 +1,39 @@
+name: Quality
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm workflow
+
+      - run: pnpm check:forbidden
+
+      - run: pnpm check:security-smells
+
+      - name: pnpm audit (informational until lockfile advisories are cleared)
+        run: pnpm audit --audit-level=high
+        continue-on-error: true
+
+      - run: pnpm check:docs-drift
+
+      - run: pnpm test:coverage

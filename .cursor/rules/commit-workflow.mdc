@@ -1,0 +1,16 @@
+---
+description: Pre-commit verification, full-tree staging, and Conventional Commits
+alwaysApply: true
+---
+
+# Commit workflow
+
+When the user asks to **commit**, **stage and commit**, or finish work for merge:
+
+1. **`pnpm workflow`** from the repository root (lint → typecheck → build → format). Proceed only on exit **0**. If Prettier changed files, re-run lint or the full workflow until clean.
+2. **Review** `git status` / diff briefly so the message matches the change set.
+3. **Stage:** default **`git add -A`** (everything). Only stage a **subset** if the user **explicitly** asks for a partial commit.
+4. **Commit message:** English, **Conventional Commits**, describe the **full** staged diff.
+5. **`git commit`**.
+
+Canonical: repository root `AGENTS.md` → **Commit workflow (mandatory)**.

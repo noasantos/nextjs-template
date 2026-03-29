@@ -1,0 +1,13 @@
+{
+  "extends": "@workspace/typescript-config/nextjs.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@workspace/supabase-data/*": ["./src/*"],
+      "@workspace/supabase-auth/*": ["../supabase-auth/src/*"],
+      "@workspace/supabase-infra/*": ["../supabase-infra/src/*"]
+    }
+  },
+  "include": ["src", "test"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.test.tsx"]
+}

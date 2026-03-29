@@ -1,0 +1,11 @@
+---
+description: Auth invariants mirror the root contract; use getClaims on the server and validate boundary inputs
+alwaysApply: false
+---
+
+# Auth invariants (mirror of AGENTS.md + docs/guides/auth-invariants.md)
+
+- Server authorization uses `getClaims()`, not `getSession()`.
+- Session refresh belongs in root `proxy.ts` via `@workspace/supabase-auth/proxy/update-session`.
+- Validate route/action inputs at the boundary with shared schemas when the boundary is reusable.
+- Sensitive auth-adjacent handlers should call the abuse-protection hook before external auth work.

@@ -1,0 +1,31 @@
+{
+  "Metadata": {
+    "title": "Nome do Produto",
+    "description": "Descrição do produto — atualizar ao fazer fork."
+  },
+  "Marketing": {
+    "hero": {
+      "heading": "O seu título aqui",
+      "subheading": "O seu subtítulo aqui.",
+      "cta": "Começar"
+    },
+    "templateLabel": "Modelo",
+    "bodyLine1": "Isto é um marcador mínimo. Adicione a história do produto e depois crie rotas autenticadas em",
+    "bodyAuthSegment": "app/(auth)",
+    "bodySuffix": ".",
+    "jsonLdOrganizationName": "Nome do Produto"
+  },
+  "Auth": {
+    "login": {
+      "title": "Entrar",
+      "submit": "Entrar"
+    },
+    "forgotPassword": {
+      "title": "Esqueci a password"
+    }
+  },
+  "Nav": {
+    "brand": "Marca",
+    "login": "Entrar"
+  }
+}

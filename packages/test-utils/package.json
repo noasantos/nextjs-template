@@ -1,0 +1,35 @@
+{
+  "name": "@workspace/test-utils",
+  "version": "0.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "lint": "eslint",
+    "format": "prettier --write \"**/*.{ts,tsx}\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.100.0",
+    "@workspace/supabase-infra": "workspace:*"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@types/node": "^25.1.0",
+    "@workspace/eslint-config": "workspace:*",
+    "@workspace/typescript-config": "workspace:*",
+    "eslint": "^9.39.2",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  },
+  "exports": {
+    "./supabase/assertions": "./src/supabase/assertions.ts",
+    "./supabase/clients": "./src/supabase/clients.ts",
+    "./supabase/env": "./src/supabase/env.ts",
+    "./supabase/reset": "./src/supabase/reset.ts",
+    "./supabase/users": "./src/supabase/users.ts",
+    "./vitest/setup-db": "./src/vitest/setup-db.ts",
+    "./vitest/setup-dom": "./src/vitest/setup-dom.ts",
+    "./vitest/setup-node": "./src/vitest/setup-node.ts"
+  }
+}
