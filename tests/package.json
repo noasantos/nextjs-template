@@ -9,14 +9,14 @@
   },
   "devDependencies": {
     "@supabase/ssr": "^0.9.0",
-    "@types/node": "^25.1.0",
+    "@types/node": "^25.5.0",
     "@workspace/supabase-auth": "workspace:*",
     "@workspace/supabase-data": "workspace:*",
     "@workspace/supabase-infra": "workspace:*",
     "@workspace/test-utils": "workspace:*",
     "@workspace/typescript-config": "workspace:*",
     "@workspace/vitest-config": "workspace:*",
-    "typescript": "^5.9.3",
-    "vitest": "^3.2.4"
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2"
   }
 }
