@@ -15,13 +15,10 @@ type TestUser = {
   userId: string
 }
 
-async function createTestUser(
-  overrides: CreateTestUserOptions = {}
-): Promise<TestUser> {
+async function createTestUser(overrides: CreateTestUserOptions = {}): Promise<TestUser> {
   const admin = await createServiceRoleTestClient()
   const email = overrides.email ?? `user.${crypto.randomUUID()}@example.test`
-  const password =
-    overrides.password ?? process.env.TEST_USER_PASSWORD ?? "Password123!"
+  const password = overrides.password ?? process.env.TEST_USER_PASSWORD ?? "Password123!"
 
   const { data, error } = await admin.auth.admin.createUser({
     app_metadata: overrides.appMetadata ?? {},
@@ -59,9 +56,4 @@ async function signInAsTestUser(overrides: CreateTestUserOptions = {}) {
   }
 }
 
-export {
-  createTestUser,
-  signInAsTestUser,
-  type CreateTestUserOptions,
-  type TestUser,
-}
+export { createTestUser, signInAsTestUser, type CreateTestUserOptions, type TestUser }

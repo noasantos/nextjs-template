@@ -1,0 +1,1 @@
+../../../skills/test-location-guide/SKILL.md

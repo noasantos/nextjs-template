@@ -1,0 +1,63 @@
+> **Contributors without Cursor:** Same rule as
+> [`.cursor/rules/single-responsibility.mdc`](../../../.cursor/rules/single-responsibility.mdc).
+> Regenerate: `node scripts/ci/sync-cursor-rules-to-docs.mjs`.
+
+---
+
+# 🏛️ Single Responsibility Principle
+
+**This is a CURSOR-SPECIFIC rule file.**
+
+**Full documentation:**
+[docs/standards/rules/single-responsibility.md](../../docs/standards/rules/single-responsibility.md)
+
+## Rule for Cursor
+
+Cursor MUST enforce SRP:
+
+- **NEVER** suggest multiple responsibilities in one file
+- **ALWAYS** extract when approaching size limit
+- **FAIL** if giant files detected (> 250 lines)
+
+## Quick Reference
+
+```typescript
+// ✅ CORRECT - One responsibility per file
+export async function createTaskAction() {
+  /* create only */
+}
+export async function updateTaskAction() {
+  /* update only */
+}
+
+// ❌ FORBIDDEN - Multiple responsibilities
+export async function taskActions() {
+  // create, update, delete all in one
+}
+```
+
+## File Size Limits
+
+| Type                     | Max Lines |
+| ------------------------ | --------- |
+| Component                | 250       |
+| Server Action            | 100       |
+| Repository               | 200       |
+| Edge Function (index.ts) | 50        |
+| Hook                     | 100       |
+
+## AI Agent Instructions
+
+When seeing large files:
+
+1. WARN user about size
+2. IDENTIFY extractable pieces
+3. SUGGEST specific extractions
+4. NEVER add code to large files
+
+---
+
+**Rule ID:** SINGLE-RESPONSIBILITY  
+**Severity:** REQUIRED  
+**Full Docs:**
+[docs/standards/rules/single-responsibility.md](../../docs/standards/rules/single-responsibility.md)

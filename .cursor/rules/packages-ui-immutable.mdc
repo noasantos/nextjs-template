@@ -30,4 +30,8 @@ alwaysApply: true
 
 - Any Git change under `packages/ui/**` (working tree, index, or commits on `HEAD` vs merge-base with the default branch) fails **`pnpm check:forbidden`** unless **`ALLOW_PACKAGES_UI_CHANGES=1`** (use only for intentional shadcn CLI output). Optional: **`FORBIDDEN_DIFF_BASE`** to point at the base ref (e.g. `origin/develop`).
 
+## Oxlint
+
+- **`packages/ui/**` is in root `.oxlintrc.json` → `ignorePatterns`.** Oxlint does not analyze that tree; agents must not “fix” vendored files for lint. Policy: `docs/tools/oxlint-oxfmt.md`.
+
 Canonical: `AGENTS.md` → Critical rules → `@workspace/ui` immutable.

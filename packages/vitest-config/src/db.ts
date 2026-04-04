@@ -20,9 +20,7 @@ function createDbProject({ include, name, root }: DbProjectOptions) {
     plugins: [tsconfigPaths()],
     resolve: {
       alias: {
-        "server-only": fileURLToPath(
-          new URL("./server-only-stub.js", import.meta.url)
-        ),
+        "server-only": fileURLToPath(new URL("./server-only-stub.js", import.meta.url)),
       },
     },
     test: {

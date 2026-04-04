@@ -1,3 +1,4 @@
+import { createServerClient } from "@supabase/ssr"
 /**
  * Verifies **JWKS-backed claims** after password sign-in, including `app_metadata` from the
  * custom access token hook (`roles`, `permissions`, `subscription`).
@@ -6,15 +7,13 @@
  */
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { createServerClient } from "@supabase/ssr"
+import { getClaims } from "@workspace/supabase-auth/session/get-claims"
+import { getSupabaseCookieOptions } from "@workspace/supabase-auth/shared/get-supabase-cookie-options"
+import { ACCESS_CONTROL_TEMPLATE } from "@workspace/supabase-auth/testing/access-control-template"
 import { getSupabasePublicEnv } from "@workspace/supabase-infra/env/public"
 import type { Database } from "@workspace/supabase-infra/types/database"
-import { ACCESS_CONTROL_TEMPLATE } from "@workspace/supabase-auth/testing/access-control-template"
 import { createServiceRoleTestClient } from "@workspace/test-utils/supabase/clients"
 import { createTestUser } from "@workspace/test-utils/supabase/users"
-
-import { getSupabaseCookieOptions } from "@workspace/supabase-auth/shared/get-supabase-cookie-options"
-import { getClaims } from "@workspace/supabase-auth/session/get-claims"
 
 const { privilegedRole: R } = ACCESS_CONTROL_TEMPLATE
 
@@ -46,25 +45,21 @@ async function signInServerSession(overrides?: {
   cookiesMock.mockResolvedValue(cookieStore)
 
   const { supabaseUrl, supabasePublishableKey } = getSupabasePublicEnv()
-  const bootstrap = createServerClient<Database>(
-    supabaseUrl,
-    supabasePublishableKey,
-    {
-      cookieOptions: getSupabaseCookieOptions(),
-      cookies: {
-        getAll: () => cookieStore.getAll(),
-        setAll: (cookiesToSet) => {
-          try {
-            cookiesToSet.forEach(({ name, options, value }) => {
-              cookieStore.set(name, value, options)
-            })
-          } catch {
-            // Mirrors create-server-auth-client: RSC may not allow writes.
-          }
-        },
+  const bootstrap = createServerClient<Database>(supabaseUrl, supabasePublishableKey, {
+    cookieOptions: getSupabaseCookieOptions(),
+    cookies: {
+      getAll: () => cookieStore.getAll(),
+      setAll: (cookiesToSet) => {
+        try {
+          cookiesToSet.forEach(({ name, options, value }) => {
+            cookieStore.set(name, value, options)
+          })
+        } catch {
+          // Mirrors create-server-auth-client: RSC may not allow writes.
+        }
       },
-    }
-  )
+    },
+  })
 
   const user = await createTestUser(overrides)
   await overrides?.beforeSignIn?.(user.userId)

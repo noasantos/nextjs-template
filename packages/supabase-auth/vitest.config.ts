@@ -2,8 +2,9 @@ import { createRequire } from "node:module"
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
-import { createReactProject } from "@workspace/vitest-config/react"
 import { mergeConfig } from "vitest/config"
+
+import { createReactProject } from "@workspace/vitest-config/react"
 
 const require = createRequire(import.meta.url)
 const dir = dirname(fileURLToPath(import.meta.url))

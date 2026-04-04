@@ -1,36 +1,37 @@
 {
   "name": "@workspace/forms",
   "version": "0.0.0",
-  "type": "module",
   "private": true,
+  "type": "module",
+  "exports": {
+    "./components/form-field": "./src/components/form-field.component.tsx",
+    "./hooks/use-app-form": "./src/hooks/use-app-form.hook.ts",
+    "./lib/get-form-error-text": "./src/lib/get-form-error-text.ts"
+  },
   "scripts": {
-    "lint": "eslint",
-    "format": "prettier --write \"**/*.{ts,tsx}\"",
+    "lint": "oxlint",
+    "format": "oxfmt --write",
     "test": "mkdir -p coverage/.tmp && vitest run --config vitest.config.ts",
     "test:watch": "vitest --config vitest.config.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "check:exports": "publint"
   },
   "dependencies": {
-    "@tanstack/react-form": "^1.28.5",
+    "@tanstack/react-form": "^1.28.6",
     "@workspace/ui": "workspace:*",
     "react": "^19.2.4",
-    "react-dom": "^19.2.4",
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@types/node": "^25.1.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@types/node": "^25.5.2",
     "@types/react": "^19.2.10",
     "@types/react-dom": "^19.2.3",
-    "@workspace/eslint-config": "workspace:*",
-    "@workspace/vitest-config": "workspace:*",
     "@workspace/typescript-config": "workspace:*",
-    "eslint": "^9.39.2",
+    "@workspace/vitest-config": "workspace:*",
+    "publint": "^0.3.18",
     "typescript": "^5.9.3",
-    "vitest": "^3.2.4"
-  },
-  "exports": {
-    "./components/form-field": "./src/components/form-field.tsx",
-    "./hooks/use-app-form": "./src/hooks/use-app-form.ts",
-    "./lib/get-form-error-text": "./src/lib/get-form-error-text.ts"
+    "vitest": "^4.1.2"
   }
 }

@@ -1,18 +1,29 @@
 # ADR-001: Monorepo Structure with Zero-Barrel Policy
 
 **Date:** 2026-03-11  
-**Status:** Accepted (historical); **current layout and package names supersede the Vite-era details below**  
-**Supersedes details:** [docs/standards/repository-standards.md](../../standards/repository-standards.md), [system.md](../system.md), [apps/README.md](../../apps/README.md)
+**Status:** Accepted (historical); **current layout and package names supersede
+the Vite-era details below**  
+**Supersedes details:**
+[docs/standards/repository-standards.md](../../standards/repository-standards.md),
+[system.md](../system.md), [apps/README.md](../../apps/README.md)
 
 ---
 
 ## Context
 
-We are implementing a frontend-focused monorepo (originally Vite-era; **now Next.js apps + `pnpm` workspaces**) with strong engineering standards. The codebase must be predictable for humans and machines alike, with explicit architectural boundaries and AI-friendly conventions.
+We are implementing a frontend-focused monorepo (originally Vite-era; **now
+Next.js apps + `pnpm` workspaces**) with strong engineering standards. The
+codebase must be predictable for humans and machines alike, with explicit
+architectural boundaries and AI-friendly conventions.
 
 Key requirements:
-- Multiple apps sharing common code — **today** see [apps/README.md](../../apps/README.md): a single template app **`example`** (default dev port **3000**) with marketing and auth (`/sign-in`, callbacks). Add more apps under `apps/` when you need them.
-- Historical draft below listed 517x Vite ports and split apps; **ignore those port numbers** for local dev.
+
+- Multiple apps sharing common code — **today** see
+  [apps/README.md](../../apps/README.md): a single template app **`example`**
+  (default dev port **3000**) with marketing and auth (`/sign-in`, callbacks).
+  Add more apps under `apps/` when you need them.
+- Historical draft below listed 517x Vite ports and split apps; **ignore those
+  port numbers** for local dev.
 - Strong typing with TypeScript strict mode
 - Clear import boundaries to prevent circular dependencies
 - Machine-checkable rules for AI agents and human developers
@@ -22,7 +33,8 @@ Key requirements:
 
 ## Decision
 
-We will use **pnpm workspaces** with **Turborepo** for task orchestration, implementing a **zero-barrel policy** with explicit subpath exports.
+We will use **pnpm workspaces** with **Turborepo** for task orchestration,
+implementing a **zero-barrel policy** with explicit subpath exports.
 
 ### Structure
 
@@ -33,7 +45,7 @@ We will use **pnpm workspaces** with **Turborepo** for task orchestration, imple
 ├── packages/
 │   ├── ui/            # @workspace/ui — shadcn primitives
 │   ├── supabase-auth/, supabase-data/, supabase-infra/
-│   ├── eslint-config/
+│   ├── oxlint-config/
 │   ├── typescript-config/
 │   └── vitest-config/
 ├── docs/
@@ -59,27 +71,39 @@ Each package uses explicit subpath exports, NO barrel files:
 ```
 
 **Imports are always explicit:**
+
 ```typescript
-import { UserSchema } from "@workspace/types/schemas/user";
+import { UserSchema } from "@workspace/types/schemas/user"
 // NOT: import { UserSchema } from "@workspace/types";
 ```
 
 ### TypeScript Configuration
 
 All strict flags enabled in `packages/typescript-config/base.json`:
+
 - `strict: true`
 - `exactOptionalPropertyTypes: true`
 - `noUncheckedIndexedAccess: true`
 - `noImplicitReturns: true`
 - `noFallthroughCasesInSwitch: true`
 
-### ESLint Rules
+### Oxlint Rules
 
-Key rules enforced:
-- `max-lines`: warn at 250, error at 300
-- `no-console`: warn for log/warn/error
-- `@typescript-eslint/consistent-type-assertions`: error
-- `no-restricted-imports`: block barrel imports
+Key rules enforced (see `.oxlintrc.json` for full config):
+
+- `no-console`: error in production files
+- `typescript/no-explicit-any`: error in production files; off in test files
+- `typescript/no-non-null-assertion`: error in production files; off in test
+  files
+- `typescript/no-unsafe-type-assertion`: error in production files; off in test
+  files
+- `typescript/consistent-type-assertions`: error (no object literal casts); off
+  in test files
+- `no-unused-vars`: error with standard ignorePatterns
+
+Rules claimed in earlier versions of this document (`max-lines`,
+`no-restricted-imports`) are not currently in `.oxlintrc.json`. Add them if
+desired or remove the claims.
 
 ---
 
@@ -87,7 +111,8 @@ Key rules enforced:
 
 ### Positive
 
-1. **Explicit Dependencies:** Every import path clearly shows what is being imported and from where
+1. **Explicit Dependencies:** Every import path clearly shows what is being
+   imported and from where
 2. **Better Tree-Shaking:** Bundlers can eliminate unused code more effectively
 3. **Machine-Checkable:** ESLint can enforce import boundaries automatically
 4. **AI-Friendly:** Clear patterns for AI agents to follow
@@ -97,13 +122,16 @@ Key rules enforced:
 ### Negative
 
 1. **More Verbose Imports:** Developers must type longer import paths
-2. **Migration Overhead:** Converting existing barrel imports requires bulk changes
+2. **Migration Overhead:** Converting existing barrel imports requires bulk
+   changes
 3. **Learning Curve:** New developers must learn subpath export patterns
-4. **Package.json Complexity:** Export maps are more complex than simple main fields
+4. **Package.json Complexity:** Export maps are more complex than simple main
+   fields
 
 ### Neutral
 
-1. **File Structure Discipline:** Requires consistent directory naming conventions
+1. **File Structure Discipline:** Requires consistent directory naming
+   conventions
 2. **Documentation Overhead:** Must maintain ADRs and golden rules
 3. **Config Package Management:** Shared configs must be versioned carefully
 

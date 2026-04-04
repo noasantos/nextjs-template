@@ -80,8 +80,17 @@ function getRootPublicEnv() {
   )
 }
 
+// FORK: Configure remotePatterns before using next/image with any external image source.
+// See: https://nextjs.org/docs/app/api-reference/next-config-js/images
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  compress: true,
+  poweredByHeader: false,
+  images: {
+    formats: ["image/avif", "image/webp"],
+    // FORK: Add remotePatterns here when using next/image with external domains.
+    remotePatterns: [],
+  },
   env: getRootPublicEnv(),
   async headers() {
     return [
@@ -96,7 +105,10 @@ const nextConfig = {
   // Sharp and @img/* must not be bundled: Webpack cannot resolve optional native/wasm subpaths
   // (e.g. @img/sharp-wasm32/versions); Node loads the correct binary at runtime.
   serverExternalPackages: ["sharp", "@img/colour", "@img/sharp-wasm32"],
-  transpilePackages: ["@workspace/brand", "@workspace/forms", "@workspace/ui"],
+  transpilePackages: ["@workspace/core", "@workspace/forms", "@workspace/seo", "@workspace/ui"],
+  experimental: {
+    optimizePackageImports: ["lucide-react", "recharts", "@radix-ui/react-icons", "date-fns"],
+  },
 }
 
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts")

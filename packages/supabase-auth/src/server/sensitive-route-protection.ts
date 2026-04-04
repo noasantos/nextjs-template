@@ -64,10 +64,7 @@ function getClientAddress(headers: Headers) {
   return "unknown"
 }
 
-function getMemoryKey({
-  headers,
-  key,
-}: SensitiveRouteProtectionContext): string {
+function getMemoryKey({ headers, key }: SensitiveRouteProtectionContext): string {
   return `${key}:${getClientAddress(headers)}`
 }
 
@@ -92,10 +89,7 @@ function createMemorySensitiveRouteProtector(): SensitiveRouteProtector {
         key,
         ok: false,
         reason: "rate_limited",
-        retryAfterSeconds: Math.max(
-          1,
-          Math.ceil((current.resetAt - now) / 1000)
-        ),
+        retryAfterSeconds: Math.max(1, Math.ceil((current.resetAt - now) / 1000)),
       }
     }
 
@@ -167,9 +161,7 @@ function resolveSensitiveRouteProtector(): SensitiveRouteProtector {
   return cachedResolvedProtector
 }
 
-async function protectSensitiveAuthRoute(
-  context: SensitiveRouteProtectionContext
-) {
+async function protectSensitiveAuthRoute(context: SensitiveRouteProtectionContext) {
   return resolveSensitiveRouteProtector()(context)
 }
 

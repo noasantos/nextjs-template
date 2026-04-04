@@ -86,9 +86,8 @@ describe("protectSensitiveAuthRoute env resolution", () => {
 
   it("uses fail-closed response in production when AUTH_RATE_LIMIT_MODE is unset", async () => {
     vi.stubEnv("NODE_ENV", "production")
-    const { protectSensitiveAuthRoute } = await import(
-      "@workspace/supabase-auth/server/sensitive-route-protection"
-    )
+    const { protectSensitiveAuthRoute } =
+      await import("@workspace/supabase-auth/server/sensitive-route-protection")
 
     const decision = await protectSensitiveAuthRoute({
       headers: new Headers(),
@@ -106,9 +105,8 @@ describe("protectSensitiveAuthRoute env resolution", () => {
   it("allows pass-through in production when AUTH_RATE_LIMIT_MODE is off", async () => {
     vi.stubEnv("NODE_ENV", "production")
     vi.stubEnv("AUTH_RATE_LIMIT_MODE", "off")
-    const { protectSensitiveAuthRoute } = await import(
-      "@workspace/supabase-auth/server/sensitive-route-protection"
-    )
+    const { protectSensitiveAuthRoute } =
+      await import("@workspace/supabase-auth/server/sensitive-route-protection")
 
     await expect(
       protectSensitiveAuthRoute({
@@ -120,15 +118,14 @@ describe("protectSensitiveAuthRoute env resolution", () => {
 
   it("uses memory limiting in test when mode is unset", async () => {
     vi.stubEnv("NODE_ENV", "test")
-    const { protectSensitiveAuthRoute } = await import(
-      "@workspace/supabase-auth/server/sensitive-route-protection"
-    )
+    const { protectSensitiveAuthRoute } =
+      await import("@workspace/supabase-auth/server/sensitive-route-protection")
 
     const headers = new Headers({ "x-forwarded-for": "203.0.113.50" })
     for (let i = 0; i < 12; i += 1) {
-      await expect(
-        protectSensitiveAuthRoute({ headers, key: "auth_callback" })
-      ).resolves.toEqual({ ok: true })
+      await expect(protectSensitiveAuthRoute({ headers, key: "auth_callback" })).resolves.toEqual({
+        ok: true,
+      })
     }
 
     const blocked = await protectSensitiveAuthRoute({

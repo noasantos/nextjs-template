@@ -1,6 +1,7 @@
 # Anti-Patterns Catalogue
 
-These patterns are forbidden. Each entry includes detection method and preferred alternative.
+These patterns are forbidden. Each entry includes detection method and preferred
+alternative.
 
 ---
 
@@ -70,7 +71,8 @@ export * from "./components/input";
 
 **Why Harmful:** Duplicated boundaries, drift from package implementations.
 
-**Preferred Alternative:** Import from `@workspace/supabase-data` (or the relevant `@workspace/*` package) near the feature.
+**Preferred Alternative:** Import from `@workspace/supabase-data` (or the
+relevant `@workspace/*` package) near the feature.
 
 **Detection:**
 
@@ -83,7 +85,7 @@ find apps -path "*/lib/db/actions/*" -o -path "*/lib/repositories/*"
 
 ```typescript
 // ✅ GOOD: Import from package
-import { useUser } from '@workspace/supabase-data/hooks/...';
+import { useUser } from "@workspace/supabase-data/hooks/..."
 
 // ❌ BAD: apps/web/lib/db/user.actions.ts
 export async function getUser(id: string) {
@@ -104,7 +106,8 @@ export async function getUser(id: string) {
 **Detection:**
 
 - File contains >10 exported functions
-- Functions have unrelated names (e.g., `formatDate`, `calculateTax`, `validateEmail`)
+- Functions have unrelated names (e.g., `formatDate`, `calculateTax`,
+  `validateEmail`)
 
 **Example:**
 
@@ -128,7 +131,8 @@ export function validateEmail() {} // lib/validation/email.ts
 
 **Why Harmful:** Hidden runtime dependencies, unclear data flow.
 
-**Preferred Alternative:** Local state first; context only for true globals (theme, auth).
+**Preferred Alternative:** Local state first; context only for true globals
+(theme, auth).
 
 **Detection:**
 
@@ -139,14 +143,14 @@ export function validateEmail() {} // lib/validation/email.ts
 
 ```typescript
 // ❌ BAD: Context for single-component state
-const UserContext = createContext();
+const UserContext = createContext()
 function UserProfile() {
-  const [user, setUser] = useContext(UserContext);
+  const [user, setUser] = useContext(UserContext)
 }
 
 // ✅ GOOD: Local state
 function UserProfile() {
-  const [user, setUser] = useState();
+  const [user, setUser] = useState()
 }
 ```
 
@@ -169,20 +173,20 @@ function UserProfile() {
 
 ```typescript
 // ❌ BAD: Only tests success
-test('loads user data', () => {
+test("loads user data", () => {
   /* ... */
-});
+})
 
 // ✅ GOOD: Tests all paths
-test('loads user data on success', () => {
+test("loads user data on success", () => {
   /* ... */
-});
-test('shows error on failure', () => {
+})
+test("shows error on failure", () => {
   /* ... */
-});
-test('shows loading state', () => {
+})
+test("shows loading state", () => {
   /* ... */
-});
+})
 ```
 
 ---
@@ -223,10 +227,10 @@ grep -r "as [A-Z]" src --include="*.ts" --include="*.tsx"
 
 ```typescript
 // ❌ BAD
-const user = response as User;
+const user = response as User
 
 // ✅ GOOD
-const user = UserSchema.parse(response);
+const user = UserSchema.parse(response)
 ```
 
 ---
@@ -259,7 +263,8 @@ export function createAdapter() {
 
 **Why Harmful:** Unclear placement for new code, poor discoverability.
 
-**Preferred Alternative:** `_hooks/_utils/_components` convention for private directories.
+**Preferred Alternative:** `_hooks/_utils/_components` convention for private
+directories.
 
 **Detection:**
 
@@ -286,9 +291,11 @@ src/routes/admin/_hooks/
 
 **Pattern:** Creating Supabase server client at module scope.
 
-**Why Harmful:** Leaks authentication state between requests in serverless environments.
+**Why Harmful:** Leaks authentication state between requests in serverless
+environments.
 
-**Preferred Alternative:** Fluid compute - new client per request inside handler.
+**Preferred Alternative:** Fluid compute - new client per request inside
+handler.
 
 **Detection:**
 
@@ -313,7 +320,8 @@ export async function myAction() {
 }
 ```
 
-**See:** [BACKEND.md → Authentication](../architecture/backend.md#authentication)
+**See:**
+[BACKEND.md → Authentication](../architecture/backend.md#authentication)
 
 ---
 
@@ -321,9 +329,11 @@ export async function myAction() {
 
 **Pattern:** Using `getSession()` for server-side auth decisions.
 
-**Why Harmful:** `getSession()` reads cookie without verifying JWT. Unsafe for security decisions.
+**Why Harmful:** `getSession()` reads cookie without verifying JWT. Unsafe for
+security decisions.
 
-**Preferred Alternative:** Always use `getClaims()` (verifies JWT via cached JWKS).
+**Preferred Alternative:** Always use `getClaims()` (verifies JWT via cached
+JWKS).
 
 **Detection:**
 
@@ -336,24 +346,31 @@ grep -r "getSession()" --include="*.ts" --include="*.tsx" | grep -v "node_module
 
 ```typescript
 // ❌ BAD: Not verified, unsafe for auth
-const { data: { session } } = await supabase.auth.getSession();
-const userId = session.user.id; // Could be tampered!
+const {
+  data: { session },
+} = await supabase.auth.getSession()
+const userId = session.user.id // Could be tampered!
 
 // ✅ GOOD: Verified via JWKS
-const supabase = await createServerAuthClient();
-const { data: { claims } } = await supabase.auth.getClaims();
-const userId = claims.sub; // Verified!
+const supabase = await createServerAuthClient()
+const {
+  data: { claims },
+} = await supabase.auth.getClaims()
+const userId = claims.sub // Verified!
 ```
 
-**See:** [BACKEND.md → Authentication](../architecture/backend.md#authentication)
+**See:**
+[BACKEND.md → Authentication](../architecture/backend.md#authentication)
 
 ---
 
 ## BAD-013: Raw Queries Outside Repositories
 
-**Pattern:** Using `supabase.from().select()` outside repository infrastructure layer.
+**Pattern:** Using `supabase.from().select()` outside repository infrastructure
+layer.
 
-**Why Harmful:** Database types leak to domain, business logic scattered, poor testability.
+**Why Harmful:** Database types leak to domain, business logic scattered, poor
+testability.
 
 **Preferred Alternative:** Repository pattern with DTOs and mappers.
 
@@ -370,23 +387,22 @@ grep -r "\.from(" --include="*.ts" | grep -v "infrastructure/repositories"
 // ❌ BAD: Raw query in action
 export const getEntityAction = createAction({
   handler: async (input, context) => {
-    const { data } = await context.supabase
-      .from("entities")
-      .select("*");  // Database types leak!
-    return ok(data);
+    const { data } = await context.supabase.from("entities").select("*") // Database types leak!
+    return ok(data)
   },
-});
+})
 
 // ✅ GOOD: Repository with DTO
 export const getEntityAction = createAction({
   handler: async (input, context) => {
-    const repo = new EntitySupabaseRepository(context.supabase);
-    return await repo.findById(input.id);  // Returns EntityDTO
+    const repo = new EntitySupabaseRepository(context.supabase)
+    return await repo.findById(input.id) // Returns EntityDTO
   },
-});
+})
 ```
 
-**See:** [BACKEND.md → Repository Pattern](../architecture/backend.md#repository-pattern)
+**See:**
+[BACKEND.md → Repository Pattern](../architecture/backend.md#repository-pattern)
 
 ---
 
@@ -422,17 +438,23 @@ CREATE POLICY "Users can view own" ON entities FOR SELECT
   TO authenticated USING (user_id = auth.uid());
 ```
 
-**See:** [DATABASE.md → RLS-First Design](../architecture/database.md#rls-first-design)
+**See:**
+[DATABASE.md → RLS-First Design](../architecture/database.md#rls-first-design)
 
 ---
 
 ## BAD-015: Manual Migration Files (CRITICAL - PROHIBITED)
 
-**Pattern:** Creating migration files under `supabase/migrations/` without `pnpm supabase:migration:new`, or using `pnpm supabase db diff -f <name>` as the **only** step (unstamped file).
+**Pattern:** Creating migration files under `supabase/migrations/` without
+`pnpm supabase:migration:new`, or using `pnpm supabase db diff -f <name>` as the
+**only** step (unstamped file).
 
-**Why Harmful:** Schema drift, missing stamped metadata, inconsistent review — **CAN BREAK PRODUCTION DEPLOYMENTS**.
+**Why Harmful:** Schema drift, missing stamped metadata, inconsistent review —
+**CAN BREAK PRODUCTION DEPLOYMENTS**.
 
-**Preferred Alternative:** `pnpm supabase:migration:new -- <name>`, then `pnpm supabase db diff -o <that path>` (and `pnpm supabase:migration:stamp` if the header was overwritten).
+**Preferred Alternative:** `pnpm supabase:migration:new -- <name>`, then
+`pnpm supabase db diff -o <that path>` (and `pnpm supabase:migration:stamp` if
+the header was overwritten).
 
 **Detection:**
 
@@ -458,14 +480,20 @@ pnpm supabase db diff -o supabase/migrations/YYYYMMDDHHMMSS_create_users_table.s
 **⚠️ CRITICAL WARNING FOR AI AGENTS:**
 
 **YOU ARE STRICTLY PROHIBITED FROM:**
-1. Creating files in `supabase/migrations/` without `pnpm supabase:migration:new`
+
+1. Creating files in `supabase/migrations/` without
+   `pnpm supabase:migration:new`
 2. Providing SQL to paste into a hand-made migration path
 3. Suggesting `db diff -f` / `--file` alone as the create step
-4. Bypassing [docs/guides/migration-workflow.md](../docs/guides/migration-workflow.md)
+4. Bypassing
+   [docs/guides/migration-workflow.md](../docs/guides/migration-workflow.md)
 
 **YOU MUST ALWAYS:**
-1. Instruct: local DDL → `pnpm supabase:migration:new -- <name>` → `pnpm supabase db diff -o <path>`
-2. Review the file; restore the header with `pnpm supabase:migration:stamp` if needed
+
+1. Instruct: local DDL → `pnpm supabase:migration:new -- <name>` →
+   `pnpm supabase db diff -o <path>`
+2. Review the file; restore the header with `pnpm supabase:migration:stamp` if
+   needed
 3. Commit the migration file
 
 **This is a NON-NEGOTIABLE rule. Violations can break production.**
@@ -506,28 +534,44 @@ RETURNS TABLE (id uuid, name text) AS $$
 $$ LANGUAGE plpgsql SECURITY INVOKER SET search_path = '';
 ```
 
-**See:** [DATABASE.md → Database Functions](../architecture/database.md#database-functions)
+**See:**
+[DATABASE.md → Database Functions](../architecture/database.md#database-functions)
 
 ---
 
 ## BAD-017: Skipping TDD or Migration-Safe Order
 
-**Pattern:** Implementing repositories, actions, or UI before failing tests and contracts; or hand-writing migration SQL / editing `supabase/migrations/` to “match” tests.
+**Pattern:** Implementing repositories, actions, or UI before failing tests and
+contracts; or hand-writing migration SQL / editing `supabase/migrations/` to
+“match” tests.
 
-**Why Harmful:** False confidence, schema drift, RLS mistakes, production incidents (with manual migrations).
+**Why Harmful:** False confidence, schema drift, RLS mistakes, production
+incidents (with manual migrations).
 
-**Preferred Alternative:** [TDD.md](../architecture/tdd.md) lifecycle; [TESTING.md](../architecture/testing.md) for suites; [GR-016](./golden-rules.md#gr-016-tdd-process-compliance).
+**Preferred Alternative:** [TDD.md](../architecture/tdd.md) lifecycle;
+[TESTING.md](../architecture/testing.md) for suites;
+[GR-016](./golden-rules.md#gr-016-tdd-process-compliance).
 
-**Detection:** PR checklist; missing tests for new behavior; migration files not CLI-generated; RLS-only verified via mocks.
+**Detection:** PR checklist; missing tests for new behavior; migration files not
+CLI-generated; RLS-only verified via mocks.
 
 ---
 
 ## BAD-018: Wrong tier for business documentation
 
-**Pattern:** Putting **product or business** material in the **monorepo root** `docs/`, or putting **cross-app** business docs only under **`apps/<app>/docs/`** (fragmented), or putting **template standards** under `apps/docs/`.
+**Pattern:** Putting **product or business** material in the **monorepo root**
+`docs/`, or putting **cross-app** business docs only under
+**`apps/<app>/docs/`** (fragmented), or putting **template standards** under
+`apps/docs/`.
 
-**Why Harmful:** Forks inherit noise; LLMs and contributors cannot find domain truth; engineering vs product boundaries blur.
+**Why Harmful:** Forks inherit noise; LLMs and contributors cannot find domain
+truth; engineering vs product boundaries blur.
 
-**Preferred Alternative:** Three tiers — **Level 1** root `docs/` = template only; **Level 2** `apps/docs/` = business **across apps**; **Level 3** `apps/<app>/docs/` = **one app’s** domain. See [GR-019](./golden-rules.md#gr-019-three-level-documentation-layout).
+**Preferred Alternative:** Three tiers — **Level 1** root `docs/` = template
+only; **Level 2** `apps/docs/` = business **across apps**; **Level 3**
+`apps/<app>/docs/` = **one app’s** domain. See
+[GR-019](./golden-rules.md#gr-019-three-level-documentation-layout).
 
-**Detection:** Product glossary or multi-app flows only in per-app `docs/`; stakeholder specs in root `docs/`; missing `apps/docs/README.md` when the product has cross-app docs.
+**Detection:** Product glossary or multi-app flows only in per-app `docs/`;
+stakeholder specs in root `docs/`; missing `apps/docs/AGENTS.md` when the
+product has cross-app docs.

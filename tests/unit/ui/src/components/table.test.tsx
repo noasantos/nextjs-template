@@ -36,10 +36,7 @@ describe("Table primitives", () => {
     )
 
     expect(screen.getByTestId("tbl")).toBeInTheDocument()
-    expect(screen.getByText("Legenda")).toHaveAttribute(
-      "data-slot",
-      "table-caption"
-    )
+    expect(screen.getByText("Legenda")).toHaveAttribute("data-slot", "table-caption")
     expect(screen.getByText("1")).toHaveAttribute("data-slot", "table-cell")
     expect(screen.getByText("Rodapé")).toBeInTheDocument()
   })

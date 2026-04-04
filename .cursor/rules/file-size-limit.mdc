@@ -1,0 +1,47 @@
+# 📏 File Size Limit
+
+**This is a CURSOR-SPECIFIC rule file.**
+
+**Full documentation:** [docs/standards/rules/file-size-limit.md](../../docs/standards/rules/file-size-limit.md)
+
+## Rule for Cursor
+
+Cursor MUST enforce file size limits:
+
+- **WARN** at 200 lines
+- **ERROR** at 250 lines
+- **SUGGEST** extraction to components
+
+## Quick Reference
+
+```typescript
+// ❌ BEFORE - 300 lines
+export default function DashboardPage() {
+  // ... 300 lines
+}
+
+// ✅ AFTER - Extracted
+export default function DashboardPage() {
+  return (
+    <div>
+      <DashboardHeader />
+      <StatsCards />
+      <RecentActivity />
+    </div>
+  )
+}
+```
+
+## AI Agent Instructions
+
+When file > 200 lines:
+1. WARN user about file size
+2. IDENTIFY extractable components
+3. SUGGEST specific extractions
+4. NEVER add more code to large files
+
+---
+
+**Rule ID:** FILE-SIZE-LIMIT  
+**Severity:** WARNING (200), ERROR (250)  
+**Full Docs:** [docs/standards/rules/file-size-limit.md](../../docs/standards/rules/file-size-limit.md)

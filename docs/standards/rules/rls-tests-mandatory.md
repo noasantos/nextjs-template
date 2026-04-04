@@ -1,0 +1,57 @@
+> **Contributors without Cursor:** Same rule as
+> [`.cursor/rules/rls-tests-mandatory.mdc`](../../../.cursor/rules/rls-tests-mandatory.mdc).
+> Regenerate: `node scripts/ci/sync-cursor-rules-to-docs.mjs`.
+
+---
+
+# 🛡️ RLS Tests Mandatory
+
+**This is a CURSOR-SPECIFIC rule file.**
+
+**Full documentation:**
+[docs/standards/rules/rls-tests-mandatory.md](../../docs/standards/rules/rls-tests-mandatory.md)
+
+## Rule for Cursor
+
+Cursor MUST enforce RLS tests:
+
+- **ALWAYS** create RLS test for new tables
+- **NEVER** merge schema without RLS tests
+- **REMIND** user to run `pnpm test:rls`
+
+## Test Structure
+
+```typescript
+// tests/rls/supabase-data/{table}.rls.test.ts
+describe("{Table} RLS", () => {
+  it("allows user to view their own data", async () => {
+    // Test own data access
+  })
+
+  it("prevents user from viewing other users' data", async () => {
+    // Test data isolation
+  })
+})
+```
+
+## When Required
+
+- ✅ New table created
+- ✅ RLS policy modified
+- ✅ Schema changed
+
+## AI Agent Instructions
+
+When creating/modifying tables:
+
+1. CREATE `tests/rls/supabase-data/{table}.rls.test.ts`
+2. TEST all 4 operations (SELECT, INSERT, UPDATE, DELETE)
+3. TEST both authorized and unauthorized
+4. REMIND user: `pnpm test:rls`
+
+---
+
+**Rule ID:** RLS-TESTS-MANDATORY  
+**Severity:** CRITICAL  
+**Full Docs:**
+[docs/standards/rules/rls-tests-mandatory.md](../../docs/standards/rules/rls-tests-mandatory.md)

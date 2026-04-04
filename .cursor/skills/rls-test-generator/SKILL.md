@@ -1,0 +1,1 @@
+../../../skills/rls-test-generator/SKILL.md

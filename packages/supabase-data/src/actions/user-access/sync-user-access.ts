@@ -1,15 +1,11 @@
 import "server-only"
-
 import { logServerEvent } from "@workspace/logging/server"
-import { createAdminClient } from "@workspace/supabase-infra/clients/create-admin-client"
-import {
-  expandRolesForAdmin,
-  type AuthRole,
-} from "@workspace/supabase-auth/shared/auth-role"
+import { expandRolesForAdmin, type AuthRole } from "@workspace/supabase-auth/shared/auth-role"
 import {
   UserAccessDTOSchema,
   type UserAccessDTO,
 } from "@workspace/supabase-data/modules/user-access/domain/dto/user-access.dto"
+import { createAdminClient } from "@workspace/supabase-infra/clients/admin"
 
 function parseUserAccess(
   userId: string,
@@ -41,18 +37,17 @@ function parseUserAccess(
  * permissions are enforced in application code (or a future migration) — the hook emits an empty
  * `permissions` array. Subscription and `access_version` come from `profiles` when present.
  */
-async function syncUserAccess(
-  userId: string,
-  roles: readonly AuthRole[]
-): Promise<UserAccessDTO> {
+async function syncUserAccess(userId: string, roles: readonly AuthRole[]): Promise<UserAccessDTO> {
   const startedAt = Date.now()
   const admin = createAdminClient()
   const effectiveRoles = expandRolesForAdmin(roles)
 
-  const { error: syncDbError } = await admin.rpc("sync_user_roles", {
+  const syncRolesArgs = {
     p_roles: effectiveRoles,
     p_user_id: userId,
-  })
+  }
+  // @type-escape: BOUNDARY — rpc sync_user_roles args vs generated Database types; tracked: https://github.com/supabase/supabase-js
+  const { error: syncDbError } = await admin.rpc("sync_user_roles", syncRolesArgs as never)
 
   if (syncDbError) {
     await logServerEvent({
@@ -104,14 +99,16 @@ async function syncUserAccess(
     throw profileResult.error
   }
 
+  const profileData = profileResult.data as {
+    access_version: number
+    subscription: Record<string, unknown>
+  } | null
+
   const accessVersion =
-    typeof profileResult.data?.access_version === "number"
-      ? profileResult.data.access_version
-      : 1
-  const subscriptionRaw = profileResult.data?.subscription
+    typeof profileData?.access_version === "number" ? profileData.access_version : 1
+  const subscriptionRaw = profileData?.subscription
   const subscription =
     subscriptionRaw !== null &&
-    subscriptionRaw !== undefined &&
     typeof subscriptionRaw === "object" &&
     !Array.isArray(subscriptionRaw)
       ? (subscriptionRaw as Record<string, unknown>)
@@ -125,8 +122,7 @@ async function syncUserAccess(
       actorType: "service",
       component: "user_access.sync",
       durationMs: Date.now() - startedAt,
-      error:
-        userResult.error ?? new Error("Failed to load auth user metadata."),
+      error: userResult.error ?? new Error("Failed to load auth user metadata."),
       eventFamily: "privileged.operation",
       eventName: "sync_user_access_load_user_failed",
       metadata: {
@@ -143,25 +139,21 @@ async function syncUserAccess(
   }
 
   const currentAppMetadata =
-    userResult.data.user.app_metadata &&
-    typeof userResult.data.user.app_metadata === "object"
+    userResult.data.user.app_metadata && typeof userResult.data.user.app_metadata === "object"
       ? userResult.data.user.app_metadata
       : {}
 
   const effectivePermissions: string[] = []
 
-  const { error: updateUserError } = await admin.auth.admin.updateUserById(
-    userId,
-    {
-      app_metadata: {
-        ...currentAppMetadata,
-        access_version: accessVersion,
-        permissions: effectivePermissions,
-        roles: effectiveRoles,
-        subscription,
-      },
-    }
-  )
+  const { error: updateUserError } = await admin.auth.admin.updateUserById(userId, {
+    app_metadata: {
+      ...currentAppMetadata,
+      access_version: accessVersion,
+      permissions: effectivePermissions,
+      roles: effectiveRoles,
+      subscription,
+    },
+  })
 
   if (updateUserError) {
     await logServerEvent({

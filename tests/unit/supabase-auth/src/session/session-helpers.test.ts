@@ -8,19 +8,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ACCESS_CONTROL_TEMPLATE } from "@workspace/supabase-auth/testing/access-control-template"
 
-const {
-  createServerAuthClientMock,
-  getClaimsMock,
-  getRequestUrlMock,
-  redirectMock,
-} = vi.hoisted(() => ({
-  createServerAuthClientMock: vi.fn(),
-  getClaimsMock: vi.fn(),
-  getRequestUrlMock: vi.fn(),
-  redirectMock: vi.fn((value: string) => {
-    throw new Error(`REDIRECT:${value}`)
-  }),
-}))
+const { createServerAuthClientMock, getClaimsMock, getRequestUrlMock, redirectMock } = vi.hoisted(
+  () => ({
+    createServerAuthClientMock: vi.fn(),
+    getClaimsMock: vi.fn(),
+    getRequestUrlMock: vi.fn(),
+    redirectMock: vi.fn((value: string) => {
+      throw new Error(`REDIRECT:${value}`)
+    }),
+  })
+)
 
 vi.mock("@workspace/supabase-auth/server/create-server-auth-client", () => ({
   createServerAuthClient: createServerAuthClientMock,
@@ -44,8 +41,8 @@ vi.mock("@workspace/supabase-auth/shared/auth-redirect", () => ({
 
 import { getAccess } from "@workspace/supabase-auth/session/get-access"
 import { getSession } from "@workspace/supabase-auth/session/get-session"
-import { getUserRoles } from "@workspace/supabase-auth/session/get-user-roles"
 import { getUser } from "@workspace/supabase-auth/session/get-user"
+import { getUserRoles } from "@workspace/supabase-auth/session/get-user-roles"
 import { requireUser } from "@workspace/supabase-auth/session/require-user"
 
 const { exampleJwtPermission: P, privilegedRole: R } = ACCESS_CONTROL_TEMPLATE
@@ -157,9 +154,7 @@ describe("session helpers (access: mocked claims + RPC)", () => {
     getClaimsMock.mockResolvedValueOnce(null)
     getRequestUrlMock.mockResolvedValue("http://localhost:3000/account")
 
-    await expect(requireUser()).rejects.toThrow(
-      "REDIRECT:sign-in:http://localhost:3000/account"
-    )
+    await expect(requireUser()).rejects.toThrow("REDIRECT:sign-in:http://localhost:3000/account")
 
     getClaimsMock.mockResolvedValueOnce({
       sub: "user-1",

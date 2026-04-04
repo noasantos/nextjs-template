@@ -1,11 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-const { createBrowserAuthClientMock, signInWithPasswordMock } = vi.hoisted(
-  () => ({
-    createBrowserAuthClientMock: vi.fn(),
-    signInWithPasswordMock: vi.fn(),
-  })
-)
+const { createBrowserAuthClientMock, signInWithPasswordMock } = vi.hoisted(() => ({
+  createBrowserAuthClientMock: vi.fn(),
+  signInWithPasswordMock: vi.fn(),
+}))
 
 vi.mock("@workspace/supabase-auth/browser/create-browser-auth-client", () => ({
   createBrowserAuthClient: createBrowserAuthClientMock,

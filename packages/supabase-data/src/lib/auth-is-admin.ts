@@ -1,4 +1,4 @@
-import type { TypedSupabaseClient } from "@workspace/supabase-infra/types/supabase"
+import type { TypedSupabaseClient } from "@workspace/supabase-infra/types"
 
 /**
  * Matches Postgres `public.auth_is_admin()` (JWT and/or `user_roles`), same as RLS.

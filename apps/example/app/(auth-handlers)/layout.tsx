@@ -12,8 +12,6 @@ export const metadata: Metadata = {
   },
 }
 
-export default function AuthHandlersLayout({
-  children,
-}: Readonly<{ children: ReactNode }>) {
+export default function AuthHandlersLayout({ children }: Readonly<{ children: ReactNode }>) {
   return children
 }

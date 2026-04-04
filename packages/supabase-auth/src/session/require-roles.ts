@@ -1,13 +1,11 @@
 import "server-only"
-
-import type { JwtPayload } from "@supabase/supabase-js"
 import { redirect } from "next/navigation"
 
-import { getAccess } from "@workspace/supabase-auth/session/get-access"
-import { getClaims } from "@workspace/supabase-auth/session/get-claims"
 import { getRequestUrl } from "@workspace/supabase-auth/server/get-request-url"
-import { buildAuthSignInUrl } from "@workspace/supabase-auth/shared/auth-redirect"
+import { getAccess } from "@workspace/supabase-auth/session/get-access"
+import { getClaims, type JWTClaims } from "@workspace/supabase-auth/session/get-claims"
 import { buildAuthContinueUrl } from "@workspace/supabase-auth/shared/app-destination"
+import { buildAuthSignInUrl } from "@workspace/supabase-auth/shared/auth-redirect"
 import type { AuthRole } from "@workspace/supabase-auth/shared/auth-role"
 
 type RequireRolesOptions = {
@@ -15,10 +13,7 @@ type RequireRolesOptions = {
   redirectTo?: string
 }
 
-async function requireRoles({
-  anyOf,
-  redirectTo,
-}: RequireRolesOptions): Promise<JwtPayload> {
+async function requireRoles({ anyOf, redirectTo }: RequireRolesOptions): Promise<JWTClaims> {
   const claims = await getClaims()
   const safeRedirectTo = redirectTo ?? (await getRequestUrl()) ?? undefined
 

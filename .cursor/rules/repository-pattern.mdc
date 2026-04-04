@@ -1,0 +1,45 @@
+# 🏛️ Repository Pattern
+
+**This is a CURSOR-SPECIFIC rule file.**
+
+**Full documentation:** [docs/standards/rules/repository-pattern.md](../../docs/standards/rules/repository-pattern.md)
+
+## Rule for Cursor
+
+Cursor MUST enforce repository pattern:
+
+- **NEVER** suggest direct Supabase calls in apps
+- **ALWAYS** use repositories from `@workspace/supabase-data`
+- **FAIL** if direct DB access detected
+
+## Quick Reference
+
+```typescript
+// ✅ CORRECT - Use repository
+import { TaskRepository } from "@workspace/supabase-data/modules/tasks"
+
+const repo = new TaskRepository(supabase)
+const task = await repo.findById(id)
+
+// ❌ FORBIDDEN - Direct Supabase
+const { data } = await supabase.from("tasks").select().eq("id", id)
+```
+
+## Structure
+
+```
+packages/supabase-data/src/modules/{module}/
+├── domain/
+│   ├── dto/
+│   ├── schemas/
+│   └── ports/
+└── infrastructure/
+    ├── mappers/
+    └── repositories/
+```
+
+---
+
+**Rule ID:** REPOSITORY-PATTERN  
+**Severity:** REQUIRED  
+**Full Docs:** [docs/standards/rules/repository-pattern.md](../../docs/standards/rules/repository-pattern.md)

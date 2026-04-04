@@ -1,109 +1,145 @@
+#!/usr/bin/env node
 /**
- * CI guard: obvious secret-exposure patterns and unsafe public env naming.
- * Run: pnpm check:security-smells
+ * Security Smells Check
+ *
+ * Scans codebase for common security issues:
+ * - NEXT_PUBLIC_*SECRET* patterns
+ * - Hardcoded credentials
+ * - Insecure patterns
  */
-import { readFileSync, readdirSync, statSync } from "node:fs"
-import { dirname, join, relative } from "node:path"
-import { fileURLToPath } from "node:url"
 
-const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..")
+import { readdirSync, readFileSync, statSync } from "node:fs"
+import { join, relative } from "node:path"
 
-/** @param {string} dir */
-function existsDir(dir) {
-  try {
-    return statSync(dir).isDirectory()
-  } catch {
-    return false
-  }
-}
-
-/** @param {string} dir */
-function walkTsFiles(dir, out = []) {
-  let names
-  try {
-    names = readdirSync(dir)
-  } catch {
-    return out
-  }
-  for (const name of names) {
-    if (name === "node_modules" || name === ".next" || name === "dist" || name === "coverage") {
-      continue
-    }
-    const p = join(dir, name)
-    const st = statSync(p)
-    if (st.isDirectory()) {
-      walkTsFiles(p, out)
-    } else if (/\.(ts|tsx|mts|cts)$/.test(name)) {
-      out.push(p)
-    }
-  }
-  return out
-}
-
-/** @param {string} p */
 function normalizePathPosix(p) {
   return p.replace(/\\/g, "/")
 }
 
-/** @param {string} rel */
-function isTestFile(rel) {
-  return (
-    /\.(test|spec)\.(ts|tsx)$/.test(rel) ||
-    /\.integration\.(test|spec)\.ts$/.test(rel) ||
-    /\.rls\.test\.ts$/.test(rel)
-  )
+const forbiddenPatterns = [
+  {
+    pattern: /NEXT_PUBLIC_.*SECRET/i,
+    message: "NEXT_PUBLIC_ should not contain SECRET",
+  },
+  {
+    pattern: /SUPABASE_SERVICE_ROLE_KEY.*NEXT_PUBLIC/i,
+    message: "Service role key exposed to client",
+  },
+  {
+    pattern: /password\s*[:=]\s*['"][^'"]+['"]/i,
+    message: "Hardcoded password detected",
+  },
+  {
+    pattern: /api[_-]?key\s*[:=]\s*['"][^'"]+['"]/i,
+    message: "Hardcoded API key detected",
+  },
+  {
+    pattern: /secret\s*[:=]\s*['"][^'"]+['"]/i,
+    message: "Hardcoded secret detected",
+  },
+  {
+    pattern: /console\.log.*password/i,
+    message: "Logging sensitive data (password)",
+  },
+  {
+    pattern: /console\.log.*token/i,
+    message: "Logging sensitive data (token)",
+  },
+  {
+    pattern: /console\.log.*secret/i,
+    message: "Logging sensitive data (secret)",
+  },
+]
+
+const sensitiveFiles = new Set([".env", ".env.local", ".env.test", ".env.remote"])
+
+function shouldSkipScannedFile(filePath) {
+  const rel = normalizePathPosix(relative(process.cwd(), filePath))
+  if (rel.startsWith("tests/") || rel.startsWith("skills/")) return true
+  if (rel.endsWith(".md")) return true
+  return false
 }
 
-const errors = []
+function checkFile(filePath) {
+  if (shouldSkipScannedFile(filePath)) {
+    return true
+  }
 
-// Dangerous NEXT_PUBLIC_* names (never expose secrets or service role to the browser)
-const unsafeNextPublicName = /\bNEXT_PUBLIC_[A-Z0-9_]*(SECRET|SERVICE_ROLE|PRIVATE_KEY)\b/g
-
-for (const scope of ["apps", "packages"]) {
-  const scopeRoot = join(root, scope)
-  if (!existsDir(scopeRoot)) continue
-
-  for (const file of walkTsFiles(scopeRoot)) {
-    const rel = normalizePathPosix(relative(root, file))
-    if (isTestFile(rel)) continue
-
-    const text = readFileSync(file, "utf8")
-    const badNames = text.match(unsafeNextPublicName)
-    if (badNames?.length) {
-      const unique = [...new Set(badNames)]
-      errors.push(
-        `Unsafe NEXT_PUBLIC_ env name(s) in ${rel}: ${unique.join(", ")}\n  Browser-exposed vars must not encode secrets, service role, or private keys.`,
-      )
+  try {
+    const stat = statSync(filePath)
+    if (stat.isSymbolicLink()) {
+      return true // Skip symlinks
     }
+  } catch {
+    return true // Skip files we can't read
+  }
 
-    if (/^["']use client["']/m.test(text) && /\bSUPABASE_SERVICE_ROLE_KEY\b/.test(text)) {
-      errors.push(
-        `SUPABASE_SERVICE_ROLE_KEY referenced in a client module: ${rel}\n  Service role belongs in server-only secret stores, never in client bundles.`,
-      )
+  const content = readFileSync(filePath, "utf-8")
+  const fileName = filePath.split("/").pop()
+
+  // Skip sensitive files (should be in .gitignore)
+  if (sensitiveFiles.has(fileName)) {
+    return true
+  }
+
+  let hasErrors = false
+
+  for (const { pattern, message } of forbiddenPatterns) {
+    if (pattern.test(content)) {
+      console.error(`❌ ${filePath}: ${message}`)
+      hasErrors = true
     }
   }
+
+  return !hasErrors
 }
 
-// Tracked env template must not ship a literal service-role assignment
-const envExample = join(root, ".env.example")
-try {
-  const envText = readFileSync(envExample, "utf8")
-  for (const line of envText.split("\n")) {
-    const trimmed = line.trim()
-    if (trimmed.startsWith("#") || !trimmed) continue
-    if (/^SUPABASE_SERVICE_ROLE_KEY=.+/.test(trimmed)) {
-      errors.push(
-        `.env.example must not set SUPABASE_SERVICE_ROLE_KEY to a value (comment-only). Found: ${trimmed.slice(0, 60)}…`,
-      )
+function walkDir(dir) {
+  const files = readdirSync(dir, { withFileTypes: true })
+  let allValid = true
+
+  for (const file of files) {
+    const filePath = join(dir, file.name)
+
+    if (file.isDirectory()) {
+      // Skip node_modules and other ignored directories
+      if (
+        !file.name.startsWith(".") &&
+        file.name !== "node_modules" &&
+        file.name !== ".next" &&
+        file.name !== "dist" &&
+        file.name !== "coverage" &&
+        file.name !== "tests" &&
+        file.name !== "skills"
+      ) {
+        const valid = walkDir(filePath)
+        allValid = allValid && valid
+      }
+    } else if (
+      file.name.endsWith(".ts") ||
+      file.name.endsWith(".tsx") ||
+      file.name.endsWith(".js") ||
+      file.name.endsWith(".jsx") ||
+      file.name.endsWith(".json") ||
+      file.name.endsWith(".md")
+    ) {
+      const valid = checkFile(filePath)
+      allValid = allValid && valid
     }
   }
-} catch {
-  // optional file
+
+  return allValid
 }
 
-if (errors.length) {
-  console.error("check-security-smells failed:\n", errors.join("\n"))
+console.log("🔍 Scanning for security smells...")
+console.log("")
+
+const isValid = walkDir(process.cwd())
+
+console.log("")
+if (isValid) {
+  console.log("✅ No security smells found")
+  process.exit(0)
+} else {
+  console.log("❌ Security smells detected! Please fix violations.")
   process.exit(1)
 }
-
-console.log("check-security-smells: OK")

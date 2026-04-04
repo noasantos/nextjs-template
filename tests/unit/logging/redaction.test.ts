@@ -29,9 +29,7 @@ describe("redaction helpers", () => {
   it("hashes identifiers deterministically", async () => {
     vi.stubEnv("OBSERVABILITY_HASH_SECRET", "test-secret")
 
-    await expect(hashDeterministic("user-1")).resolves.toBe(
-      await hashDeterministic("user-1")
-    )
+    await expect(hashDeterministic("user-1")).resolves.toBe(await hashDeterministic("user-1"))
   })
 
   it("normalizes request details", () => {
@@ -40,8 +38,8 @@ describe("redaction helpers", () => {
     })
 
     expect(getIpAddressFromHeaders(headers)).toBe("192.168.1.10")
-    expect(
-      sanitizeRequestPath("https://example.test/auth/callback?token=secret")
-    ).toBe("/auth/callback")
+    expect(sanitizeRequestPath("https://example.test/auth/callback?token=secret")).toBe(
+      "/auth/callback"
+    )
   })
 })

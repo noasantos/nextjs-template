@@ -9,12 +9,9 @@ import { describe, expect, it } from "vitest"
 
 import { expandRolesForAdmin } from "@workspace/supabase-auth/shared/auth-role"
 import { ACCESS_CONTROL_TEMPLATE } from "@workspace/supabase-auth/testing/access-control-template"
-import { createServiceRoleTestClient } from "@workspace/test-utils/supabase/clients"
-import {
-  createTestUser,
-  signInAsTestUser,
-} from "@workspace/test-utils/supabase/users"
 import { syncUserAccess } from "@workspace/supabase-data/actions/user-access/sync-user-access"
+import { createServiceRoleTestClient } from "@workspace/test-utils/supabase/clients"
+import { createTestUser, signInAsTestUser } from "@workspace/test-utils/supabase/users"
 
 const { privilegedRole: R } = ACCESS_CONTROL_TEMPLATE
 

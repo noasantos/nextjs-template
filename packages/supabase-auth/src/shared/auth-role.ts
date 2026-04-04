@@ -16,10 +16,4 @@ function expandRolesForAdmin(roles: readonly AuthRole[]): AuthRole[] {
   return roles.includes("admin") ? [...AUTH_ROLES] : [...roles]
 }
 
-export {
-  AUTH_ROLES,
-  AUTH_ROLE_LABELS,
-  expandRolesForAdmin,
-  isAuthRole,
-  type AuthRole,
-}
+export { AUTH_ROLES, AUTH_ROLE_LABELS, expandRolesForAdmin, isAuthRole, type AuthRole }

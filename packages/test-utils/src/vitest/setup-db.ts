@@ -1,5 +1,4 @@
-import { beforeAll, afterEach } from "vitest"
-import { vi } from "vitest"
+import { afterEach, beforeAll, vi } from "vitest"
 
 import { ensureSupabaseTestEnv } from "@workspace/test-utils/supabase/env"
 

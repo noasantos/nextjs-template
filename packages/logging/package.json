@@ -1,40 +1,36 @@
 {
   "name": "@workspace/logging",
-  "version": "0.0.0",
-  "type": "module",
+  "version": "0.0.1",
   "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./server": "./src/server.ts",
+    "./client": "./src/client.ts",
+    "./edge": "./src/edge.ts",
+    "./errors": "./src/errors.ts",
+    "./redaction": "./src/redaction.ts",
+    "./contracts": "./src/contracts.ts",
+    "./correlation": "./src/correlation.ts"
+  },
   "scripts": {
-    "lint": "eslint",
-    "format": "prettier --write \"**/*.{ts,tsx}\"",
-    "test": "mkdir -p coverage/.tmp && vitest run --config vitest.config.ts",
-    "test:watch": "vitest --config vitest.config.ts",
-    "typecheck": "tsc --noEmit"
+    "lint": "oxlint .",
+    "lint:strict": "oxlint --deny-warnings .",
+    "typecheck": "tsc --noEmit",
+    "check:exports": "publint"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.100.0",
+    "@supabase/supabase-js": "^2.101.1",
     "@workspace/supabase-infra": "workspace:*",
     "server-only": "^0.0.1",
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@types/node": "^25.1.0",
-    "@workspace/eslint-config": "workspace:*",
+    "@types/deno": "^2.0.0",
     "@workspace/typescript-config": "workspace:*",
     "@workspace/vitest-config": "workspace:*",
-    "eslint": "^9.39.2",
-    "typescript": "^5.9.3",
-    "vitest": "^3.2.4"
-  },
-  "exports": {
-    "./client": "./src/client.ts",
-    "./contracts": "./src/contracts.ts",
-    "./correlation": "./src/correlation.ts",
-    "./edge": "./src/edge.ts",
-    "./errors": "./src/errors.ts",
-    "./redaction": "./src/redaction.ts",
-    "./server-console-sink": "./src/server-console-sink.ts",
-    "./server": "./src/server.ts",
-    "./server-error": "./src/server-error.ts",
-    "./testing": "./src/testing.ts"
+    "oxlint": "^1.58.0",
+    "publint": "^0.3.18",
+    "typescript": "^5.9.3"
   }
 }

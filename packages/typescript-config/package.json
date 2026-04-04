@@ -1,9 +1,16 @@
 {
   "name": "@workspace/typescript-config",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": true,
-  "license": "PROPRIETARY",
+  "license": "MIT",
+  "type": "commonjs",
   "publishConfig": {
     "access": "public"
+  },
+  "scripts": {
+    "check:exports": "publint"
+  },
+  "devDependencies": {
+    "publint": "^0.3.18"
   }
 }

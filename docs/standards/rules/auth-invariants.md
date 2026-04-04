@@ -1,0 +1,58 @@
+> **Contributors without Cursor:** Same rule as
+> [`.cursor/rules/auth-invariants.mdc`](../../../.cursor/rules/auth-invariants.mdc).
+> Regenerate: `node scripts/ci/sync-cursor-rules-to-docs.mjs`.
+
+---
+
+# 🔒 Auth Invariants
+
+**This is a CURSOR-SPECIFIC rule file.**
+
+**Full documentation:**
+[docs/standards/rules/auth-invariants.md](../../docs/standards/rules/auth-invariants.md)
+
+## Rule for Cursor
+
+Cursor MUST enforce auth invariants:
+
+- **ALWAYS** use `getClaims()` for auth (fast, JWKS cached)
+- **NEVER** use `getUser()` for simple auth checks (slow, DB call)
+- **NEVER** use `getSession()` on server (deprecated)
+
+## Quick Reference
+
+```typescript
+// ✅ CORRECT - getClaims() is primary
+const claims = await getClaims() // JWKS cached (0 network calls)
+if (!claims?.sub) throw new Error("Unauthorized")
+
+// ❌ FORBIDDEN - getUser() for simple auth
+const user = await getUser() // Makes DB call - slow!
+
+// ❌ FORBIDDEN - getSession() on server
+const session = await getSession() // Deprecated
+```
+
+## Performance
+
+| Method         | Network Calls | Latency | Use When           |
+| -------------- | ------------- | ------- | ------------------ |
+| `getClaims()`  | 0 (cached)    | <1ms    | **Always primary** |
+| `getUser()`    | 1 (DB)        | ~50ms   | Need full profile  |
+| `getSession()` | 0             | <1ms    | Need tokens (rare) |
+
+## AI Agent Instructions
+
+When implementing auth:
+
+1. ALWAYS use `getClaims()` first
+2. ONLY use `getUser()` if need full profile
+3. NEVER use `getSession()` unless need tokens
+4. DOCUMENT why if using getUser/getSession
+
+---
+
+**Rule ID:** AUTH-INVARIANTS  
+**Severity:** CRITICAL  
+**Full Docs:**
+[docs/standards/rules/auth-invariants.md](../../docs/standards/rules/auth-invariants.md)

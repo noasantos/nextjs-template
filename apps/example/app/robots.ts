@@ -1,29 +1,11 @@
 import type { MetadataRoute } from "next"
 
 import { getSiteUrl, isRobotsAllowIndexing } from "@/lib/site-url"
+import { buildAuthRobotsDisallowPaths } from "@workspace/supabase-auth/shared/auth-route-paths"
 
-const authAdminDisallow = [
-  "/sign-in",
-  "/logout",
-  "/callback",
-  "/forgot-password",
-  "/reset-password",
-  "/magic-link",
-  "/mfa",
-  "/access-denied",
-  "/continue",
-  "/auth/",
-  "/*/sign-in",
-  "/*/logout",
-  "/*/callback",
-  "/*/forgot-password",
-  "/*/reset-password",
-  "/*/magic-link",
-  "/*/mfa",
-  "/*/access-denied",
-  "/*/continue",
-  "/*/auth/",
-]
+const authAdminDisallow = buildAuthRobotsDisallowPaths({
+  localeSegmentPattern: "/*",
+})
 
 export default function robots(): MetadataRoute.Robots {
   const base = getSiteUrl()

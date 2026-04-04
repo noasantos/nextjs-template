@@ -44,9 +44,7 @@ describe("getSupabasePublicEnv", () => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "")
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:54321")
 
-    expect(() => getSupabasePublicEnv()).toThrow(
-      "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"
-    )
+    expect(() => getSupabasePublicEnv()).toThrow("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY")
   })
 
   it("normalizes auth app URL when the scheme is omitted (e.g. Vercel env typo)", () => {

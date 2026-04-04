@@ -63,9 +63,7 @@ describe("syncUserRoles (wraps syncUserAccess)", () => {
   })
 
   it("propagates errors from syncUserAccess", async () => {
-    syncUserAccessMock.mockRejectedValue(
-      new Error("simulated GoTrue failure after DB sync")
-    )
+    syncUserAccessMock.mockRejectedValue(new Error("simulated GoTrue failure after DB sync"))
 
     await expect(syncUserRoles(userId, [R])).rejects.toThrow(
       "simulated GoTrue failure after DB sync"

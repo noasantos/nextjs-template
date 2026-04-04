@@ -46,10 +46,7 @@ import { verifyTotpChallenge } from "@workspace/supabase-auth/browser/verify-tot
 
 beforeEach(() => {
   getSupabasePublicEnvMock.mockReturnValue({
-    authAllowedRedirectOrigins: [
-      "http://localhost:3000",
-      "http://localhost:3000",
-    ],
+    authAllowedRedirectOrigins: ["http://localhost:3000", "http://localhost:3000"],
     authAppUrl: "http://localhost:3000",
     supabasePublishableKey: "anon-key",
     supabaseUrl: "http://localhost:54321",
@@ -117,9 +114,7 @@ describe("browser MFA and session actions", () => {
       data: { id: "factor-1" },
       error: null,
     })
-    await expect(
-      verifyTotpChallenge({ code: "123456", factorId: "factor-1" })
-    ).resolves.toEqual({
+    await expect(verifyTotpChallenge({ code: "123456", factorId: "factor-1" })).resolves.toEqual({
       data: { access_token: "token" },
       error: null,
     })

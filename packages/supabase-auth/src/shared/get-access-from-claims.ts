@@ -1,5 +1,5 @@
-import type { ClaimsLike } from "@workspace/supabase-auth/shared/get-user-roles-from-claims"
 import { getUserPermissionsFromClaims } from "@workspace/supabase-auth/shared/get-user-permissions-from-claims"
+import type { ClaimsLike } from "@workspace/supabase-auth/shared/get-user-roles-from-claims"
 import { getUserRolesFromClaims } from "@workspace/supabase-auth/shared/get-user-roles-from-claims"
 
 type AccessFromClaims = {
@@ -24,9 +24,7 @@ function getAccessVersionFromClaims(claims: ClaimsLike) {
   return null
 }
 
-function getSubscriptionFromClaims(
-  claims: ClaimsLike
-): Record<string, unknown> {
+function getSubscriptionFromClaims(claims: ClaimsLike): Record<string, unknown> {
   const raw = claims?.app_metadata?.subscription
 
   if (raw !== null && typeof raw === "object" && !Array.isArray(raw)) {

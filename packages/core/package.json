@@ -1,0 +1,33 @@
+{
+  "name": "@workspace/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./providers/app": "./src/providers/app-providers.provider.tsx",
+    "./providers/query-client": "./src/providers/query-client.ts",
+    "./hooks/use-mounted": "./src/hooks/use-mounted.hook.ts",
+    "./components/theme-provider": "./src/components/theme-provider.component.tsx"
+  },
+  "scripts": {
+    "lint": "oxlint",
+    "format": "oxfmt --write",
+    "typecheck": "tsc --noEmit",
+    "check:exports": "publint"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.96.2",
+    "@workspace/ui": "workspace:*",
+    "next-themes": "^0.4.6",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.2",
+    "@types/react": "^19.2.10",
+    "@types/react-dom": "^19.2.3",
+    "@workspace/typescript-config": "workspace:*",
+    "publint": "^0.3.18",
+    "typescript": "^5.9.3"
+  }
+}

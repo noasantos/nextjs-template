@@ -1,13 +1,10 @@
 import { execFileSync } from "node:child_process"
-import { fileURLToPath } from "node:url"
 import path from "node:path"
+import { fileURLToPath } from "node:url"
 
 let cached = false
 
-const repoRoot = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "../../../../"
-)
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../../")
 
 function resolveLocalSupabaseEnv() {
   const output = execFileSync("pnpm", ["supabase", "status", "-o", "env"], {
@@ -31,10 +28,7 @@ async function ensureSupabaseTestEnv() {
     return
   }
 
-  if (
-    !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-    !process.env.SUPABASE_SERVICE_ROLE_KEY
-  ) {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     const env = resolveLocalSupabaseEnv()
 
     process.env.NEXT_PUBLIC_SUPABASE_URL ??= env.API_URL
@@ -47,9 +41,7 @@ async function ensureSupabaseTestEnv() {
     !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
     !process.env.SUPABASE_SERVICE_ROLE_KEY
   ) {
-    throw new Error(
-      "Local Supabase is not ready. Run `pnpm test:integration:prepare`."
-    )
+    throw new Error("Local Supabase is not ready. Run `pnpm test:integration:prepare`.")
   }
 
   process.env.NEXT_PUBLIC_AUTH_APP_URL ??= "http://127.0.0.1:3000"

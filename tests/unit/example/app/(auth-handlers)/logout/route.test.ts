@@ -17,7 +17,7 @@ beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://localhost:54321")
   vi.stubEnv(
     "NEXT_PUBLIC_AUTH_ALLOWED_REDIRECT_ORIGINS",
-    "http://localhost:3001"
+    "http://localhost:3000,http://localhost:3001"
   )
 
   signOutMock.mockResolvedValue({ error: null })
@@ -43,13 +43,9 @@ describe("auth logout route", () => {
   })
 
   it("redirects to sign-in with signed_out when redirect_to is missing", async () => {
-    const response = await GET(
-      new Request("http://localhost:3000/logout") as never
-    )
+    const response = await GET(new Request("http://localhost:3000/logout") as never)
 
-    expect(response.headers.get("location")).toBe(
-      "http://localhost:3000/sign-in?auth=signed_out"
-    )
+    expect(response.headers.get("location")).toBe("http://localhost:3000/sign-in?auth=signed_out")
   })
 
   it("redirects to an allowed redirect_to origin", async () => {
@@ -69,8 +65,6 @@ describe("auth logout route", () => {
       ) as never
     )
 
-    expect(response.headers.get("location")).toBe(
-      "http://localhost:3000/sign-in?auth=signed_out"
-    )
+    expect(response.headers.get("location")).toBe("http://localhost:3000/sign-in?auth=signed_out")
   })
 })

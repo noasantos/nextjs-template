@@ -1,10 +1,19 @@
 import { describe, expect, it } from "vitest"
 
-import {
-  mfaCodeSchema,
-  passwordResetSchema,
-  signInSchema,
-} from "@/app/[locale]/(auth)/_lib/auth-form-schemas"
+import { createAuthFormSchemas } from "@workspace/supabase-auth/shared/auth-form-schemas"
+
+const testMessages = {
+  emailRequired: "Enter your email.",
+  emailInvalid: "Enter a valid email address.",
+  passwordMin: "Password must be at least 8 characters.",
+  confirmPasswordRequired: "Confirm your password.",
+  passwordsMatch: "Passwords must match.",
+  mfaCodeFormat: "Enter the 6-digit code from your authenticator app.",
+}
+
+const { signInSchema, passwordResetSchema, mfaCodeSchema } = createAuthFormSchemas(
+  (key) => testMessages[key]
+)
 
 describe("auth form schemas", () => {
   it("normalizes sign-in emails", () => {

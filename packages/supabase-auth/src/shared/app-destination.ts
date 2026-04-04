@@ -1,16 +1,16 @@
 import type { JwtPayload } from "@supabase/supabase-js"
 
-import { normalizePublicAppUrl } from "@workspace/supabase-infra/env/public"
-
-import { AUTH_ROLE_LABELS } from "@workspace/supabase-auth/shared/auth-role"
-import { getUserRolesFromClaims } from "@workspace/supabase-auth/shared/get-user-roles-from-claims"
 import {
   buildAuthAccessDeniedUrl,
   buildAuthSignInUrl,
   getAuthAppOrigin,
   getSafeRedirectTo,
 } from "@workspace/supabase-auth/shared/auth-redirect"
+import { AUTH_ROLE_LABELS } from "@workspace/supabase-auth/shared/auth-role"
 import type { AuthRole } from "@workspace/supabase-auth/shared/auth-role"
+import { getUserRolesFromClaims } from "@workspace/supabase-auth/shared/get-user-roles-from-claims"
+
+import { AUTH_ROUTE_PATH_PREFIXES } from "./auth-route-paths"
 
 /**
  * URL segments for the primary Next.js app (same origin as auth).
@@ -33,18 +33,6 @@ const ROLE_APP_MAP: Record<AuthRole, AppSegmentKey> = {
 }
 
 const AUTH_LOGIN_PATH = "/sign-in" as const
-const AUTH_ROUTE_PREFIXES = [
-  "/access-denied",
-  "/auth/confirm",
-  "/callback",
-  "/continue",
-  "/forgot-password",
-  AUTH_LOGIN_PATH,
-  "/logout",
-  "/magic-link",
-  "/mfa",
-  "/reset-password",
-] as const
 
 type AppSurfaceKey = AppSegmentKey | "auth"
 type AppDestination = {
@@ -64,7 +52,7 @@ const APP_SEGMENT_KEYS = Object.keys(APP_SEGMENT_PATHS) as AppSegmentKey[]
 function getPrimaryAppOrigin(): string {
   const auth = process.env.NEXT_PUBLIC_AUTH_APP_URL?.trim()
   if (auth) {
-    return new URL(normalizePublicAppUrl(auth)).origin
+    return new URL(auth).origin
   }
   return "http://localhost:3000"
 }
@@ -96,7 +84,7 @@ function isAuthAppLandingOrSignIn(value: string): boolean {
 }
 
 function isAuthRoutePath(pathname: string): boolean {
-  return AUTH_ROUTE_PREFIXES.some(
+  return AUTH_ROUTE_PATH_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
   )
 }
@@ -110,15 +98,12 @@ function getAppKeyForUrl(value: string): AppSurfaceKey | null {
       return "auth"
     }
 
-    const sorted = [...APP_SEGMENT_KEYS].sort(
+    const sorted = [...APP_SEGMENT_KEYS].toSorted(
       (a, b) => APP_SEGMENT_PATHS[b].length - APP_SEGMENT_PATHS[a].length
     )
     for (const key of sorted) {
       const prefix = APP_SEGMENT_PATHS[key]
-      if (
-        redirectUrl.pathname === prefix ||
-        redirectUrl.pathname.startsWith(`${prefix}/`)
-      ) {
+      if (redirectUrl.pathname === prefix || redirectUrl.pathname.startsWith(`${prefix}/`)) {
         return key
       }
     }
@@ -145,9 +130,7 @@ function getDestinationsForRoles(roles: readonly AuthRole[]): AppDestination[] {
     }))
     .filter(
       (destination, index, destinations) =>
-        destinations.findIndex(
-          (candidate) => candidate.role === destination.role
-        ) === index
+        destinations.findIndex((candidate) => candidate.role === destination.role) === index
     )
 }
 
@@ -174,10 +157,7 @@ function resolveAuthorizedRedirect({
     return requestedRedirectTo
   }
 
-  if (
-    requestedApp === "auth" &&
-    isAuthAppLandingOrSignIn(requestedRedirectTo)
-  ) {
+  if (requestedApp === "auth" && isAuthAppLandingOrSignIn(requestedRedirectTo)) {
     return getDefaultAppForRoles(roles) ?? getConfiguredAppUrl("institutional")
   }
 
@@ -214,10 +194,7 @@ function getContinueDecision({
     return { kind: "redirect", href: requestedRedirectTo }
   }
 
-  if (
-    requestedApp === "auth" &&
-    isAuthAppLandingOrSignIn(requestedRedirectTo)
-  ) {
+  if (requestedApp === "auth" && isAuthAppLandingOrSignIn(requestedRedirectTo)) {
     if (roles.length === 1 && roles[0]) {
       return {
         kind: "redirect",

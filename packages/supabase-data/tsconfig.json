@@ -1,13 +1,13 @@
 {
-  "extends": "@workspace/typescript-config/nextjs.json",
+  "extends": "../../packages/typescript-config/base.json",
   "compilerOptions": {
     "baseUrl": ".",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "paths": {
-      "@workspace/supabase-data/*": ["./src/*"],
-      "@workspace/supabase-auth/*": ["../supabase-auth/src/*"],
-      "@workspace/supabase-infra/*": ["../supabase-infra/src/*"]
+      "@workspace/supabase-data/*": ["./src/*"]
     }
   },
-  "include": ["src", "test"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.test.tsx"]
+  "include": ["."],
+  "exclude": ["node_modules", "dist"]
 }

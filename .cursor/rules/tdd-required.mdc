@@ -1,0 +1,43 @@
+# ✅ TDD Required
+
+**This is a CURSOR-SPECIFIC rule file.**
+
+**Full documentation:** [docs/standards/rules/tdd-required.md](../../docs/standards/rules/tdd-required.md)
+
+## Rule for Cursor
+
+Cursor MUST enforce TDD:
+
+- **ALWAYS** create test FIRST
+- **NEVER** implement without test
+- **ENSURE** coverage thresholds met
+
+## Workflow
+
+```
+1. Write failing test
+2. Make test pass (minimal)
+3. Refactor
+4. Repeat
+```
+
+## Coverage Requirements
+
+- Lines: 80%
+- Statements: 80%
+- Branches: 75%
+- Functions: 80%
+
+## AI Agent Instructions
+
+When implementing features:
+1. CREATE test file first in `/tests`
+2. WRITE failing test
+3. IMPLEMENT to pass
+4. RUN tests before committing
+
+---
+
+**Rule ID:** TDD-REQUIRED  
+**Severity:** REQUIRED  
+**Full Docs:** [docs/standards/rules/tdd-required.md](../../docs/standards/rules/tdd-required.md)

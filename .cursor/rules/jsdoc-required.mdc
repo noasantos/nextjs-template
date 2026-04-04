@@ -1,0 +1,53 @@
+# 📝 JSDoc Required
+
+**This is a CURSOR-SPECIFIC rule file.**
+
+**Full documentation:** [docs/standards/rules/jsdoc-required.md](../../docs/standards/rules/jsdoc-required.md)
+
+## Rule for Cursor
+
+Cursor MUST enforce JSDoc:
+
+- **ALWAYS** add JSDoc to exported functions
+- **ALWAYS** add file header JSDoc
+- **INCLUDE** usage examples
+- **DOCUMENT** security considerations
+
+## Required Structure
+
+```typescript
+/**
+ * [Brief description]
+ * 
+ * [Extended description]
+ * 
+ * ## Usage
+ * 
+ * ```typescript
+ * const result = myFunction(params)
+ * ```
+ * 
+ * @param paramName - Description
+ * @returns What this returns
+ * @security Security warnings
+ * 
+ * @module @workspace/package/path
+ */
+export function myFunction(paramName: string): ReturnType {
+  // Implementation
+}
+```
+
+## AI Agent Instructions
+
+When creating files:
+1. ADD JSDoc header to file
+2. ADD JSDoc to all exports
+3. INCLUDE usage examples
+4. DOCUMENT security/performance
+
+---
+
+**Rule ID:** JSDOC-REQUIRED  
+**Severity:** REQUIRED  
+**Full Docs:** [docs/standards/rules/jsdoc-required.md](../../docs/standards/rules/jsdoc-required.md)

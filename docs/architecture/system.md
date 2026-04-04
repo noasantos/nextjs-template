@@ -1,22 +1,32 @@
 # Architecture Overview
 
-**Operational contract (repo-wide rules, implementation truth):** [docs/standards/repository-standards.md](../standards/repository-standards.md)
+**Operational contract (repo-wide rules, implementation truth):**
+[docs/standards/repository-standards.md](../standards/repository-standards.md)
 
-**Technology stack (versions and libraries):** [docs/reference/stack.md](../reference/stack.md) — Next.js 16, React 19, Tailwind v4, shadcn, Zod v4, TanStack, Supabase, etc.
+**Technology stack (versions and libraries):**
+[docs/reference/stack.md](../reference/stack.md) — Next.js 16, React 19,
+Tailwind v4, shadcn, Zod v4, TanStack, Supabase, etc.
 
 ## Core Principles
 
-This document provides the unified architectural vision for the system. All development MUST align with these patterns.
+This document provides the unified architectural vision for the system. All
+development MUST align with these patterns.
 
 ### Golden Rules
 
-- **NEVER** cross package boundaries incorrectly (`@workspace/supabase-auth` must not import `@workspace/supabase-data`; `@workspace/supabase-data` may import `@workspace/supabase-auth` only where needed for server authorization)
+- **NEVER** cross package boundaries incorrectly (`@workspace/supabase-auth`
+  must not import `@workspace/supabase-data`; `@workspace/supabase-data` may
+  import `@workspace/supabase-auth` only where needed for server authorization)
 - **ALWAYS** use the repository pattern for data access
 - **NEVER** create app-local database abstraction layers
 - **ALWAYS** seed correlation context at app boundaries (`proxy.ts`)
 - **ALWAYS** use subpath exports (NO barrel files)
 
-**Migrations:** New files only via `pnpm supabase:migration:new` + `pnpm supabase db diff -o …` (never invent paths under `supabase/migrations/`). Canonical rules: [Database → Migrations](./database.md#migrations), [TDD](./tdd.md), [docs/guides/migration-workflow.md](../guides/migration-workflow.md).
+**Migrations:** New files only via `pnpm supabase:migration:new` +
+`pnpm supabase db diff -o …` (never invent paths under `supabase/migrations/`).
+Canonical rules: [Database → Migrations](./database.md#migrations),
+[TDD](./tdd.md),
+[docs/guides/migration-workflow.md](../guides/migration-workflow.md).
 
 ---
 
@@ -137,7 +147,8 @@ packages/supabase-auth/
 
 ### @workspace/supabase-data
 
-**Responsibility**: Data access and business logic (SSoT for "What data exists?")
+**Responsibility**: Data access and business logic (SSoT for "What data
+exists?")
 
 ```
 @workspace/supabase-data/
@@ -162,7 +173,11 @@ packages/supabase-auth/
 
 **MAY** (where needed for server-side authorization and session plumbing):
 
-- Import from `@workspace/supabase-auth` (for example `@workspace/supabase-auth/server/create-server-auth-client`, session/claims helpers, role types) at action boundaries or infrastructure that must run with the authenticated server context. Do not duplicate identity or session primitives here; keep them in `@workspace/supabase-auth`.
+- Import from `@workspace/supabase-auth` (for example
+  `@workspace/supabase-auth/server/create-server-auth-client`, session/claims
+  helpers, role types) at action boundaries or infrastructure that must run with
+  the authenticated server context. Do not duplicate identity or session
+  primitives here; keep them in `@workspace/supabase-auth`.
 
 **NEVER**:
 
@@ -454,13 +469,15 @@ const userId = session.user.id;  // Not verified!
 
 ## Observability
 
-Observability in this repo is defined in [`docs/guides/observability-architecture.md`](../guides/observability-architecture.md).
+Observability in this repo is defined in
+[`docs/guides/observability-architecture.md`](../guides/observability-architecture.md).
 
 Important distinction:
 
 - the document above is the canonical standard
 - runtime adoption is incremental
-- current code must not claim that every server action or boundary is fully instrumented unless it actually is
+- current code must not claim that every server action or boundary is fully
+  instrumented unless it actually is
 
 Current required invariants:
 

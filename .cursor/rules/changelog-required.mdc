@@ -1,0 +1,221 @@
+---
+description: Mandatory CHANGELOG.md updates for all template changes
+alwaysApply: true
+globs: **/*
+---
+
+# 📝 CHANGELOG Update Required
+
+**This is a CURSOR-SPECIFIC rule file.**
+
+**Full documentation:** [CHANGELOG.md](../../CHANGELOG.md)
+
+## When to Update CHANGELOG.md
+
+You MUST update `CHANGELOG.md` in the `[Unreleased]` section when making changes to:
+
+### Documentation Changes
+- **docs/** - Any documentation files
+- **skills/** - Agent skill files (SKILL.md)
+- **.cursor/rules/** - Cursor rule files (.mdc)
+- **AGENTS.md** - Main AI agent documentation
+- **README.md** - Project README
+
+### Feature Changes
+- **New Server Actions** - Any new `actions/*.ts` files
+- **API Routes** - New or modified route handlers
+- **Components** - New React components or significant UI changes
+- **Packages** - Changes to `packages/*` shared code
+- **Apps** - New features in `apps/*/app`
+
+### Configuration Changes
+- **lefthook.yml** - Hook configuration changes
+- **turbo.json** - Turborepo pipeline changes
+- **tsconfig.json** - TypeScript configuration
+- **tailwind.config.ts** - Styling configuration
+- **vite.config.ts** - Test/build configuration
+- **package.json** - Dependency changes (major updates)
+
+### Type & Schema Changes
+- **Zod schemas** - Validation schema modifications
+- **TypeScript types** - Interface/type definitions
+- **Database migrations** - `supabase/migrations/*.sql`
+- **Generated types** - `packages/supabase-infra/types/*`
+
+### Code Quality & Security
+- **Linting rules** - Oxlint, dependency-cruiser configs
+- **Security fixes** - Vulnerability patches, auth changes
+- **Performance improvements** - Caching, bundle optimization
+- **Refactoring** - Significant code reorganization
+
+## When NOT to Update CHANGELOG.md
+
+You do NOT need to update CHANGELOG.md for:
+
+### Configuration Files (Minor)
+- `.gitignore` - Ignore pattern additions
+- `.npmrc` - npm configuration
+- `.env.example` - Environment variable examples
+- `.prettierignore` - Format ignore patterns
+
+### Lock Files
+- `pnpm-lock.yaml` - Dependency lock updates
+- `package-lock.json` - npm lock files
+
+### Test Files
+- `*.test.ts`, `*.test.tsx` - Test file additions/modifications
+- `*.spec.ts` - Specification files
+- `tests/**/*.ts` - Test directory files
+- **Exception:** Document new test *infrastructure* or RLS test additions
+
+### Work in Progress
+- WIP commits - Incomplete feature branches
+- Temporary fixes - Hotfixes being actively developed
+- **Exception:** Document when merging to main/release
+
+### Automated Changes
+- Generated files - `packages/supabase-infra/types/database.ts` (auto-generated)
+- Build artifacts - `dist/`, `build/`, `.next/`
+- **Exception:** Document when generation logic changes
+
+## How to Add an Entry
+
+### Step 1: Find the Unreleased Section
+
+Locate the `## [Unreleased]` section in `CHANGELOG.md`.
+
+### Step 2: Choose the Appropriate Category
+
+Select the most relevant category under `[Unreleased]`:
+
+- **Added** - New features, files, or functionality
+- **Changed** - Modifications to existing behavior
+- **Deprecated** - Features marked for future removal
+- **Removed** - Deleted features or files
+- **Fixed** - Bug fixes and error corrections
+- **Security** - Security patches and vulnerability fixes
+
+### Step 3: Use Type Labels
+
+Prefix each entry with a type label in brackets:
+
+- `[feat]` - New feature or capability
+- `[fix]` - Bug fix or correction
+- `[docs]` - Documentation update
+- `[break]` - Breaking change (requires migration)
+- `[security]` - Security improvement
+- `[perf]` - Performance optimization
+- `[refactor]` - Code refactoring without behavior change
+
+### Step 4: Write Clear Description
+
+Format: `- [type] Brief but specific description`
+
+**Good:** `- [feat] Add user profile Server Action with avatar upload`
+**Bad:** `- Add new feature`
+
+### Step 5: Stage the Change
+
+Add `CHANGELOG.md` to git staging along with your code changes.
+
+## Examples
+
+### Example 1: Updating Authentication Documentation
+
+**Scenario:** You updated `docs/auth/session-management.md` and `skills/auth/SKILL.md`
+
+**CHANGELOG entry:**
+```markdown
+### Added
+- [docs] Update session management documentation with refresh token flow
+- [docs] Enhance auth skill with Clerk integration examples
+```
+
+### Example 2: Adding New Server Action
+
+**Scenario:** You created `packages/supabase-data/src/actions/tasks/create-task.ts`
+
+**CHANGELOG entry:**
+```markdown
+### Added
+- [feat] Add create-task Server Action with Zod validation for task creation
+```
+
+### Example 3: Fixing Type Error
+
+**Scenario:** You fixed TypeScript errors in `apps/web/app/dashboard/page.tsx`
+
+**CHANGELOG entry:**
+```markdown
+### Fixed
+- [fix] Resolve type mismatch in dashboard page component props
+```
+
+### Example 4: Configuration Change
+
+**Scenario:** You modified `lefthook.yml` to add pre-push hook
+
+**CHANGELOG entry:**
+```markdown
+### Changed
+- [refactor] Add pre-push hook to run tests before pushing
+```
+
+### Example 5: Security Patch
+
+**Scenario:** You updated dependencies to patch vulnerabilities
+
+**CHANGELOG entry:**
+```markdown
+### Security
+- [security] Update Zod to v1.23.0 to fix CVE-2026-1234
+```
+
+## Why This Matters
+
+### Traceability for Downstream Projects
+- Template consumers rely on CHANGELOG to understand what changed between versions
+- Enables informed decisions about when to upgrade
+- Provides clear migration path for breaking changes
+
+### AI Consistency
+- AI agents use CHANGELOG to understand codebase evolution
+- Ensures consistent behavior across different AI assistants
+- Helps AI make context-aware suggestions based on recent changes
+
+### Template Integrity
+- Maintains professional quality expected from production templates
+- Demonstrates commitment to documentation and best practices
+- Sets example for downstream projects to follow
+
+### Version Control Accuracy
+- Complements git history with human-readable summaries
+- Enables quick scanning of changes without commit diving
+- Supports semantic versioning decisions (major/minor/patch)
+
+## AI Agent Instructions
+
+Before committing any changes to this template:
+
+1. **REVIEW** what files you modified
+2. **CHECK** if changes fall into "When to Update" categories
+3. **OPEN** `CHANGELOG.md` and locate `[Unreleased]` section
+4. **ADD** entry under appropriate category with type label
+5. **STAGE** `CHANGELOG.md` along with your code changes
+6. **COMMIT** with message referencing the changelog entry
+
+**Exception:** If uncertain whether change requires changelog entry, add one anyway. It's better to over-document than under-document.
+
+## Enforcement
+
+This rule is enforced by:
+- Pre-commit hooks (lefthook) verify CHANGELOG.md is staged
+- CI checks validate changelog format
+- Code review requires changelog for template changes
+
+---
+
+**Rule ID:** CHANGELOG-REQUIRED  
+**Severity:** CRITICAL  
+**Enforcement:** Pre-commit hook + CI validation  
+**Full Docs:** [CHANGELOG.md](../../CHANGELOG.md)

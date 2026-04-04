@@ -1,4 +1,12 @@
 packages:
-  - "apps/*"
+  - "apps/example"
   - "packages/*"
   - "tests"
+
+# Build optimizations
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
+
+ignoredBuiltDependencies:
+  - unrs-resolver

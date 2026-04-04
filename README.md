@@ -1,66 +1,133 @@
-# Turborepo + Next.js + Supabase template
+# Next.js + Supabase + Tailwind CSS Template
 
-Monorepo starter: **Next.js 16**, **React 19**, **Tailwind CSS v4**, **shadcn/ui** (in `packages/ui`), **Zod v4**, **TanStack** (Query / Table / Form as wired per app), **Supabase** (local-first), **pnpm** + **Turborepo**. Canonical version list: **[docs/reference/stack.md](./docs/reference/stack.md)**.
+**Enterprise-grade monorepo template for AI-assisted development.**
 
-## Local development (Supabase)
+## 🤖 For AI Agents
 
-Backend auth and data run against a **local Supabase** stack by default. Read this before you run the apps.
+**⚠️ CRITICAL: Read These First (Non-Negotiable)**
 
-### What you must install
+- **[CRITICAL ARCHITECTURE RULES](./docs/architecture/CRITICAL-RULES.md)** — 5
+  rules that WILL GET YOUR PR REJECTED if violated
+- **[AGENTS.md](./AGENTS.md)** - Main instructions for all AI agents
+- **[Golden Rules](./docs/standards/rules/README.md)** - Non-negotiable rules
+- **[Skills](./skills/README.md)** - AI agent skills (17 available)
 
-1. **Docker** — **Docker Desktop** (macOS/Windows) or Docker Engine + Compose (Linux). The Supabase CLI runs Postgres, Auth, Storage, etc. in containers. **Docker must be running** before you start the stack.  
-   - Install: [Get Docker](https://docs.docker.com/get-docker/) · [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+**Common Mistakes That Get Rejected:**
 
-2. **Supabase CLI** — Required to run `supabase start`, migrations, and codegen. This repo already lists the CLI as a dev dependency; use it via **`pnpm`** from the repository root (e.g. `pnpm supabase start`).  
-   - Official install options (Homebrew, Scoop, npm, etc.): [Supabase CLI — getting started](https://supabase.com/docs/guides/cli/getting-started)  
-   - How local dev works (images, ports, Studio): [Local development with Supabase CLI](https://supabase.com/docs/guides/cli/local-development)  
-   - Command reference: [CLI reference](https://supabase.com/docs/reference/cli/introduction)
+1. ❌ Creating actions in `apps/` → MUST be in
+   `packages/supabase-data/src/actions/`
+2. ❌ Using `.schema()` → MUST use `.inputSchema()` (v8)
+3. ❌ Missing `()` on validators → `z.string().uuid()` not `.uuid`
+4. ❌ Server imports in client components → Use Server Actions
+5. ❌ Barrel exports → Explicit imports only (GR-001)
 
-3. **Node.js** and **pnpm** — Install dependencies with `pnpm install` at the monorepo root.
+**See:**
+[`docs/architecture/CRITICAL-RULES.md`](./docs/architecture/CRITICAL-RULES.md)
+for complete list with examples.
 
-### Quick start (after Docker is running)
+## 📚 Documentation
+
+**Architecture:**
+
+- [Testing Strategy](./docs/architecture/testing.md)
+- [Edge Functions](./docs/architecture/edge-functions.md)
+- [Logging](./docs/architecture/logging.md)
+- [Auth](./docs/architecture/auth.md)
+
+**Standards:**
+
+- [Golden Rules](./docs/standards/rules/README.md) - GR-001 to GR-021
+- [Package file suffixes](./docs/standards/package-file-suffixes.md) —
+  `*.component.tsx` / `*.hook.*` / `*.provider.tsx` in composition packages
+  (`brand`, `core`, `forms`, `seo`); not `apps/`; not `packages/ui`
+- [JSDoc Style Guide](./docs/standards/jsdoc-style-guide.md)
+- [Test File Location](./docs/standards/rules/test-file-location.md)
+
+**Guides:**
+
+- [Supabase Setup](./docs/guides/supabase-setup.md)
+- [Migration Workflow](./docs/guides/migration-workflow.md)
+- [Security](./docs/guides/security.md)
+
+## 🛠️ Quick Commands
 
 ```bash
-pnpm install
-pnpm supabase start          # first run may take a while (image download)
-cp .env.example .env.local   # then fill NEXT_PUBLIC_* from `pnpm exec supabase status`
-pnpm supabase db reset       # migrations + seed (when you need a clean DB)
-pnpm dev                     # or apps individually, e.g. pnpm --filter example dev
+# Development
+pnpm dev                    # Start all apps
+pnpm workflow               # lint → typecheck → build → format
+
+# Testing
+pnpm test                   # Unit tests
+pnpm test:rls               # RLS tests (mandatory for schema changes)
+pnpm test:all               # All tests
+
+# Creation (use templates)
+pnpm action:new -- <module> <name>     # Server Action
+pnpm edge:new -- <name>                # Edge Function
+pnpm supabase:migration:new -- <name>  # Migration
+
+# AI Skills
+pnpm skills:update          # Update all skills from docs
+pnpm skills:validate        # Validate skills
 ```
 
-Full workflow, `.env.local` rules, and safety notes: **[docs/guides/supabase-setup.md](./docs/guides/supabase-setup.md)**.
+## 📁 Structure
+
+```
+nextjs-template/
+├── apps/
+│   └── example/             # Main Next.js 16 app
+├── packages/
+│   ├── supabase-infra/      # Types, clients, env
+│   ├── supabase-auth/       # Auth, session, guards
+│   ├── supabase-data/       # Repositories, actions, hooks
+│   ├── ui/                  # shadcn/ui (CLI-only)
+│   ├── brand/               # Custom UI
+│   └── logging/             # Structured logging
+├── tests/                   # ALL tests live here
+├── docs/                    # Level 1 docs
+├── scripts/                 # Automation scripts
+└── skills/                  # AI agent skills
+```
+
+## 🎯 Golden Rules
+
+**GR-001:** Zero-Barrel Policy - Explicit subpath imports only  
+**GR-004:** Auth Invariants - getClaims() primary, getUser() secondary  
+**GR-005:** No Console Logging - Use structured logging  
+**GR-007:** Edge Function Template - Always use template  
+**GR-010:** Test File Location - All tests in /tests  
+**GR-015:** CLI Migrations Only - Never manual  
+**GR-017:** Server Actions Boundary - ActionResult<T>  
+**GR-021:** JSDoc Required - All exports documented
+
+**See [Golden Rules](./docs/standards/rules/README.md) for all 21 rules.**
+
+## 🤖 AI Agent Instructions
+
+**When working with this codebase:**
+
+1. **READ** [AGENTS.md](./AGENTS.md) first
+2. **USE** skills when available (auto-trigger or manual)
+3. **FOLLOW** Golden Rules strictly
+4. **LOG** with structured logging (never console)
+5. **TEST** in /tests directory (mirror structure)
+6. **DOCUMENT** with JSDoc (all exports)
+
+**Skills auto-trigger for:**
+
+- Server Actions → server-action-template
+- Tests → test-location-guide + test-generator
+- Logging → logging-required
+- Auth → auth-invariants
+- Edge Functions → edge-function-template
+- Repositories → repository-pattern
+- Migrations → migration-workflow
+- RLS Tests → rls-test-generator
+- Documentation → three-level-docs + doc-template
 
 ---
 
-## Standards and TDD
-
-- **[docs/README.md](./docs/README.md)** — index of all Level 1 docs; **[docs/getting-started.md](./docs/getting-started.md)** — quick navigation  
-- **[docs/reference/stack.md](./docs/reference/stack.md)** — pinned technology stack (Next 16, Zod 4, Tailwind 4, TanStack, Supabase, …)  
-- **[docs/standards/repository-standards.md](./docs/standards/repository-standards.md)** — canonical repo contract (agents + contributors)  
-- [docs/architecture/system.md](./docs/architecture/system.md) — system layers and package boundaries  
-- [docs/architecture/tdd.md](./docs/architecture/tdd.md) — strict test-driven development (migration-safe)  
-- [docs/architecture/testing.md](./docs/architecture/testing.md) — Vitest, coverage, integration/RLS; `pnpm test:all` runs full tests (coverage + DB suites)  
-- [AGENTS.md](./AGENTS.md) — AI/agent entry (links all rules; local Supabase only for agents)  
-- [docs/guides/supabase-setup.md](./docs/guides/supabase-setup.md) — Supabase prerequisites + env + migrations
-
-## Adding components
-
-Shared primitives live in **`packages/ui`**. Add or update them **only** via the shadcn CLI (do not hand-edit for product features):
-
-```bash
-pnpm dlx shadcn@latest add button -c packages/ui
-```
-
-This installs into `packages/ui/src/components` (see [packages/ui/README.md](./packages/ui/README.md)).
-
-## Using components
-
-To use the components in your app, import them from the `ui` package.
-
-```tsx
-import { Button } from "@workspace/ui/components/button";
-```
-
-**Do not hand-edit `packages/ui`.** Shared product UI for multiple apps lives in **`@workspace/brand`** (`packages/brand`). See [packages/ui/README.md](./packages/ui/README.md) and [packages/brand/README.md](./packages/brand/README.md).
-
-The **`example`** app (`pnpm --filter example dev`, default port **3000** in this template) is a shell for marketing, auth, and admin routes. See [apps/example/README.md](./apps/example/README.md). Post-login behaviour lives in `@workspace/supabase-auth` (e.g. `app-destination.ts`) — adjust when you fork.
+**Template Version:** 0.1.0  
+**Last Updated:** 2026-04-04  
+**For:** AI-assisted development (Cursor, Claude, Copilot, Gemini)

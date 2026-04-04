@@ -1,0 +1,42 @@
+# 📝 CLI-Generated Migrations Only
+
+**This is a CURSOR-SPECIFIC rule file.**
+
+**Full documentation:** [docs/standards/rules/cli-migrations-only.md](../../docs/standards/rules/cli-migrations-only.md)
+
+## Rule for Cursor
+
+Cursor MUST enforce CLI-only migrations:
+
+- **NEVER** suggest creating migration files manually
+- **ALWAYS** use `pnpm supabase:migration:new -- <name>`
+- **FAIL** if manual migrations detected
+
+## Quick Reference
+
+```bash
+# ✅ CORRECT - CLI command
+pnpm supabase:migration:new -- create_users_table
+
+# ❌ FORBIDDEN - Manual file
+touch supabase/migrations/manual.sql
+```
+
+## Workflow
+
+1. `pnpm supabase:migration:new -- <name>`
+2. Develop in Supabase Studio
+3. `pnpm supabase db diff -o <path>`
+4. `pnpm test:rls`
+
+## AI Agent Restrictions
+
+- NEVER suggest manual SQL files
+- NEVER provide SQL for hand-made paths
+- ALWAYS instruct CLI workflow
+
+---
+
+**Rule ID:** CLI-MIGRATIONS-ONLY  
+**Severity:** CRITICAL  
+**Full Docs:** [docs/standards/rules/cli-migrations-only.md](../../docs/standards/rules/cli-migrations-only.md)

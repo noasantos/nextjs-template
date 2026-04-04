@@ -1,0 +1,1 @@
+../../../skills/repository-pattern/SKILL.md

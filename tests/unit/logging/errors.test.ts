@@ -4,9 +4,7 @@ import { categorizeError, serializeUnknownError } from "@workspace/logging/error
 
 describe("error serialization", () => {
   it("classifies postgres conflicts as database failures", () => {
-    expect(categorizeError({ code: "23503", message: "fk failed" })).toBe(
-      "database"
-    )
+    expect(categorizeError({ code: "23503", message: "fk failed" })).toBe("database")
   })
 
   it("classifies auth api failures", () => {

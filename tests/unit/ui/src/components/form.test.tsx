@@ -3,8 +3,6 @@ import userEvent from "@testing-library/user-event"
 import { useForm } from "react-hook-form"
 import { describe, expect, it, vi } from "vitest"
 
-import { Input } from "@workspace/ui/components/input"
-
 import {
   Form,
   FormControl,
@@ -15,6 +13,7 @@ import {
   FormMessage,
   useFormField,
 } from "@workspace/ui/components/form"
+import { Input } from "@workspace/ui/components/input"
 
 function MisplacedUseFormField() {
   useFormField()
@@ -86,10 +85,7 @@ describe("Form primitives (react-hook-form)", () => {
   it("renders description and form item structure", () => {
     render(<TestForm defaultValues={{ email: "a@b.co" }} />)
 
-    expect(screen.getByText("Descrição do campo")).toHaveAttribute(
-      "data-slot",
-      "form-description"
-    )
+    expect(screen.getByText("Descrição do campo")).toHaveAttribute("data-slot", "form-description")
     expect(screen.getByTestId("item")).toHaveAttribute("data-slot", "form-item")
   })
 
@@ -131,8 +127,6 @@ describe("useFormField guard rails", () => {
       )
     }
 
-    expect(() => render(<Test />)).toThrow(
-      /useFormField deve ser usado dentro de <FormItem>/
-    )
+    expect(() => render(<Test />)).toThrow(/useFormField deve ser usado dentro de <FormItem>/)
   })
 })

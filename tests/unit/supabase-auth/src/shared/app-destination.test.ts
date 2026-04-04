@@ -6,10 +6,7 @@ const { getSupabasePublicEnvMock } = vi.hoisted(() => ({
 }))
 
 vi.mock("@workspace/supabase-infra/env/public", async (importOriginal) => {
-  const actual =
-    await importOriginal<
-      typeof import("@workspace/supabase-infra/env/public")
-    >()
+  const actual = await importOriginal<typeof import("@workspace/supabase-infra/env/public")>()
   return {
     ...actual,
     getSupabasePublicEnv: getSupabasePublicEnvMock,
@@ -92,7 +89,6 @@ describe("getContinueDecision", () => {
       kind: "redirect",
     })
   })
-
 })
 
 describe("resolveAuthorizedRedirect", () => {

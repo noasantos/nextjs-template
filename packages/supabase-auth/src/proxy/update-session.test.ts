@@ -23,10 +23,7 @@ import {
 
 beforeEach(() => {
   getSupabasePublicEnvMock.mockReturnValue({
-    authAllowedRedirectOrigins: [
-      "http://localhost:3000",
-      "http://localhost:3000",
-    ],
+    authAllowedRedirectOrigins: ["http://localhost:3000", "http://localhost:3000"],
     authAppUrl: "http://localhost:3000",
     authCookieDomain: undefined,
     supabasePublishableKey: "anon-key",
@@ -77,12 +74,8 @@ describe("updateSession", () => {
     const response = await updateSession(request as never)
 
     expect(createServerClientMock).toHaveBeenCalled()
-    expect(response.headers.get("x-middleware-override-headers")).toContain(
-      "x-app-request-url"
-    )
-    expect(response.headers.get("x-middleware-override-headers")).toContain(
-      "cookie"
-    )
+    expect(response.headers.get("x-middleware-override-headers")).toContain("x-app-request-url")
+    expect(response.headers.get("x-middleware-override-headers")).toContain("cookie")
     expect(response.headers.get("x-middleware-request-cookie")).toContain(
       "sb-local-auth-token=refreshed-token"
     )

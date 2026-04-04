@@ -1,14 +1,8 @@
 import type { JwtPayload } from "@supabase/supabase-js"
 
-import {
-  isAuthRole,
-  type AuthRole,
-} from "@workspace/supabase-auth/shared/auth-role"
+import { isAuthRole, type AuthRole } from "@workspace/supabase-auth/shared/auth-role"
 
-type ClaimsLike =
-  | Pick<JwtPayload, "app_metadata" | "user_metadata">
-  | null
-  | undefined
+type ClaimsLike = Pick<JwtPayload, "app_metadata" | "user_metadata"> | null | undefined
 
 function toAuthRoles(value: unknown): AuthRole[] {
   if (typeof value === "string") {
@@ -21,9 +15,7 @@ function toAuthRoles(value: unknown): AuthRole[] {
 
   return value.filter(
     (role, index): role is AuthRole =>
-      typeof role === "string" &&
-      isAuthRole(role) &&
-      value.indexOf(role) === index
+      typeof role === "string" && isAuthRole(role) && value.indexOf(role) === index
   )
 }
 

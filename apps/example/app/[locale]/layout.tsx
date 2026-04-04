@@ -1,16 +1,19 @@
-import type { Metadata } from "next"
-import { connection } from "next/server"
-import { Fustat, Geist_Mono } from "next/font/google"
-import { notFound } from "next/navigation"
+import type { Metadata, Viewport } from "next"
 import { NextIntlClientProvider } from "next-intl"
 import { getMessages, getTranslations } from "next-intl/server"
+import { Fustat, Geist_Mono } from "next/font/google"
+import { notFound } from "next/navigation"
+import { connection } from "next/server"
 import type { ReactNode } from "react"
 
 import "@workspace/ui/globals.css"
-import { AppProviders } from "@/app/_providers/app-providers"
+import { AppProviders } from "@/app/_providers/app-providers.example"
 import { routing } from "@/i18n/routing"
 import { getSiteUrl } from "@/lib/site-url"
+import { buildAlternateLanguages, buildCanonicalUrl } from "@workspace/seo"
 import { cn } from "@workspace/ui/lib/utils"
+
+import { WebVitals } from "./_components/web-vitals"
 
 const fontSans = Fustat({
   subsets: ["latin", "latin-ext"],
@@ -41,6 +44,17 @@ function openGraphLocaleTag(locale: string): string {
   return "en_US"
 }
 
+// FORK: Align themeColor with manifest.ts and your brand palette.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  // FORK: Set themeColor to match your brand. Must match manifest.ts theme_color.
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
+  ],
+}
+
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }))
 }
@@ -53,14 +67,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const siteUrl = getSiteUrl()
   const metadataBase = new URL(`${siteUrl}/`)
 
-  const languageAlternates = Object.fromEntries(
-    routing.locales.map((l) => {
-      const path = l === routing.defaultLocale ? "/" : `/${l}`
-      return [l, new URL(path, metadataBase).toString()]
-    })
-  )
+  const canonicalUrl = buildCanonicalUrl({
+    siteUrl,
+    locale,
+    defaultLocale: routing.defaultLocale,
+    path: "/",
+  })
 
-  const canonicalPath = locale === routing.defaultLocale ? "/" : `/${locale}`
+  const languageAlternates = buildAlternateLanguages({
+    siteUrl,
+    locales: routing.locales,
+    defaultLocale: routing.defaultLocale,
+    path: "/",
+  })
 
   return {
     metadataBase,
@@ -70,30 +89,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
     description: t("description"),
     alternates: {
-      canonical: canonicalPath,
+      canonical: canonicalUrl,
       languages: languageAlternates,
     },
     openGraph: {
       type: "website",
       locale: openGraphLocaleTag(locale),
-      url: canonicalPath,
+      url: canonicalUrl,
       siteName: t("title"),
       title: t("title"),
       description: t("description"),
-      images: [
-        {
-          url: "/og-default.png",
-          width: 1200,
-          height: 630,
-          alt: t("title"),
-        },
-      ],
+      // `(marketing)/opengraph-image.tsx` supplies og:image for the marketing route tree (file convention wins over static paths).
+      // FORK: For routes without `opengraph-image.tsx`, set `openGraph.images` / `twitter.images` in `generateMetadata`, or use tracked `/og-default.png` (1200×630, <200KB). See docs/guides/seo.md.
     },
     twitter: {
       card: "summary_large_image",
       title: t("title"),
       description: t("description"),
-      images: ["/og-default.png"],
     },
   }
 }
@@ -111,6 +123,7 @@ export default async function LocaleLayout({ children, params }: Props) {
   return (
     <html lang={locale} suppressHydrationWarning>
       <body className={cn("antialiased", fontMono.variable, fontSans.variable)}>
+        <WebVitals />
         <NextIntlClientProvider messages={messages}>
           <AppProviders>{children}</AppProviders>
         </NextIntlClientProvider>

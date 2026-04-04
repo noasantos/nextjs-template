@@ -1,67 +1,30 @@
-import { z } from "zod"
+"use client"
 
-const emailSchema = z.object({
-  email: z
-    .string()
-    .trim()
-    .min(1, "Indique o e-mail.")
-    .email("Indique um endereço de e-mail válido.")
-    .transform((value) => value.toLowerCase()),
-})
+import { useTranslations } from "next-intl"
+import { useMemo } from "react"
 
-const passwordSchema = z
-  .string()
-  .min(8, "A palavra-passe deve ter pelo menos 8 caracteres.")
+import {
+  createAuthFormSchemas,
+  type AuthFormValidationMessages,
+} from "@workspace/supabase-auth/shared/auth-form-schemas"
 
-const signInSchema = emailSchema.extend({
-  password: passwordSchema,
-})
+export type { AuthFormValidationMessages } from "@workspace/supabase-auth/shared/auth-form-schemas"
 
-const passwordResetSchema = z
-  .object({
-    password: passwordSchema,
-    confirmPassword: z.string().min(1, "Confirme a palavra-passe."),
-  })
-  .refine((value) => value.password === value.confirmPassword, {
-    message: "As palavras-passe têm de coincidir.",
-    path: ["confirmPassword"],
-  })
-
-const mfaCodeSchema = z.object({
-  code: z
-    .string()
-    .trim()
-    .regex(
-      /^\d{6}$/,
-      "Introduza o código de 6 dígitos da aplicação de autenticação."
-    ),
-})
-
-const signInDefaultValues: z.input<typeof signInSchema> = {
-  email: "",
-  password: "",
-}
-
-const emailDefaultValues: z.input<typeof emailSchema> = {
-  email: "",
-}
-
-const passwordResetDefaultValues: z.input<typeof passwordResetSchema> = {
-  confirmPassword: "",
-  password: "",
-}
-
-const mfaCodeDefaultValues: z.input<typeof mfaCodeSchema> = {
-  code: "",
-}
-
-export {
-  emailDefaultValues,
-  emailSchema,
-  mfaCodeDefaultValues,
-  mfaCodeSchema,
-  passwordResetDefaultValues,
-  passwordResetSchema,
-  signInDefaultValues,
-  signInSchema,
+export function useAuthFormSchemas() {
+  const t = useTranslations("Auth")
+  return useMemo(
+    () =>
+      createAuthFormSchemas((key) =>
+        t(
+          `validation.${key}` as
+            | "validation.emailRequired"
+            | "validation.emailInvalid"
+            | "validation.passwordMin"
+            | "validation.confirmPasswordRequired"
+            | "validation.passwordsMatch"
+            | "validation.mfaCodeFormat"
+        )
+      ),
+    [t]
+  )
 }

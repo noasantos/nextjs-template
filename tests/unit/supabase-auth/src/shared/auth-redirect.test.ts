@@ -19,10 +19,7 @@ import {
 
 beforeEach(() => {
   getSupabasePublicEnvMock.mockReturnValue({
-    authAllowedRedirectOrigins: [
-      "http://localhost:3000",
-      "http://localhost:3001",
-    ],
+    authAllowedRedirectOrigins: ["http://localhost:3000", "http://localhost:3001"],
     authAppUrl: "http://localhost:3000",
     supabasePublishableKey: "pk",
     supabaseUrl: "http://localhost:54321",
@@ -35,9 +32,7 @@ describe("auth redirect helpers", () => {
   })
 
   it("falls back when the redirect origin is not allowed", () => {
-    expect(getSafeRedirectTo("https://evil.example/steal")).toBe(
-      "http://localhost:3000/sign-in"
-    )
+    expect(getSafeRedirectTo("https://evil.example/steal")).toBe("http://localhost:3000/sign-in")
   })
 
   it("builds callback and sign-in URLs with sanitized redirect params", () => {
@@ -50,9 +45,7 @@ describe("auth redirect helpers", () => {
   })
 
   it("includes required access context and logout fallback", () => {
-    expect(
-      buildAuthAccessDeniedUrl("http://localhost:3000/account", ["admin"])
-    ).toBe(
+    expect(buildAuthAccessDeniedUrl("http://localhost:3000/account", ["admin"])).toBe(
       "http://localhost:3000/access-denied?redirect_to=http%3A%2F%2Flocalhost%3A3000%2Faccount&required=admin"
     )
     expect(buildAuthLogoutUrl("https://evil.example")).toBe(

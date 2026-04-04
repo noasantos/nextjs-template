@@ -1,10 +1,9 @@
 import "server-only"
-
 import { redirect } from "next/navigation"
 
+import { getRequestUrl } from "@workspace/supabase-auth/server/get-request-url"
 import { getAccess } from "@workspace/supabase-auth/session/get-access"
 import { getClaims } from "@workspace/supabase-auth/session/get-claims"
-import { getRequestUrl } from "@workspace/supabase-auth/server/get-request-url"
 import {
   buildAuthAccessDeniedUrl,
   buildAuthSignInUrl,

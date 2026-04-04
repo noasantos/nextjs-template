@@ -1,5 +1,10 @@
+import type { JwtPayload } from "@supabase/supabase-js"
 import { redirect } from "next/navigation"
 
+import { AuthSplitShell } from "@/app/[locale]/(auth)/_components/auth-split-shell"
+import { AuthenticatedSessionCard } from "@/app/[locale]/(auth)/_components/authenticated-session-card"
+import { SignInForm } from "@/app/[locale]/(auth)/_components/sign-in-form"
+import { authPageMainClass } from "@/app/[locale]/(auth)/_lib/auth-page-classes"
 import { getAccess } from "@workspace/supabase-auth/session/get-access"
 import { getClaims } from "@workspace/supabase-auth/session/get-claims"
 import { getUser } from "@workspace/supabase-auth/session/get-user"
@@ -9,29 +14,20 @@ import {
   getContinueDecision,
 } from "@workspace/supabase-auth/shared/app-destination"
 import { getDefaultRedirectTo } from "@workspace/supabase-auth/shared/auth-redirect"
-
-import { AuthenticatedSessionCard } from "@/app/[locale]/(auth)/_components/authenticated-session-card"
-import { AuthSplitShell } from "@/app/[locale]/(auth)/_components/auth-split-shell"
-import { SignInForm } from "@/app/[locale]/(auth)/_components/sign-in-form"
-import { authPageMainClass } from "@/app/[locale]/(auth)/_lib/auth-page-classes"
 import {
   resolveAuthSearchParams,
   type AuthSearchParams,
-} from "@/app/[locale]/(auth)/_lib/auth-search-params"
+} from "@workspace/supabase-auth/shared/resolve-auth-search-params"
 
 type LoginPageProps = {
   searchParams: AuthSearchParams
 }
 
 const AUTH_MESSAGES: Record<string, string> = {
-  callback_error:
-    "O Supabase não conseguiu concluir a troca de código OAuth para esta sessão.",
-  callback_missing_code:
-    "O pedido de retorno não inclui o código de autenticação do Supabase.",
-  confirm_error:
-    "Não foi possível confirmar este e-mail ou a ligação de recuperação.",
-  confirm_missing_token:
-    "A ligação de confirmação de e-mail não contém o token necessário.",
+  callback_error: "O Supabase não conseguiu concluir a troca de código OAuth para esta sessão.",
+  callback_missing_code: "O pedido de retorno não inclui o código de autenticação do Supabase.",
+  confirm_error: "Não foi possível confirmar este e-mail ou a ligação de recuperação.",
+  confirm_missing_token: "A ligação de confirmação de e-mail não contém o token necessário.",
   signed_out: "A sessão foi terminada com sucesso.",
 }
 
@@ -39,7 +35,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const [claims, user] = await Promise.all([getClaims(), getUser()])
   const { auth, redirectTo } = await resolveAuthSearchParams(searchParams)
   const notice = auth ? AUTH_MESSAGES[auth] : null
-  const access = claims?.sub ? await getAccess(claims) : null
+  const access = claims?.sub ? await getAccess(claims as JwtPayload | null) : null
 
   if (claims?.sub && access) {
     const decision = getContinueDecision({

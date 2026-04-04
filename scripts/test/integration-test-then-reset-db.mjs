@@ -13,10 +13,10 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..")
 const integration = spawnSync(
   "pnpm",
   ["exec", "dotenv", "-e", ".env.test", "--", "turbo", "test:integration"],
-  { cwd: root, stdio: "inherit" },
+  { cwd: root, stdio: "inherit" }
 )
 
 spawnSync("pnpm", ["supabase:db:reset"], { cwd: root, stdio: "inherit" })
 
 const code = integration.status
-process.exit(code === 0 ? 0 : code ?? 1)
+process.exit(code === 0 ? 0 : (code ?? 1))

@@ -1,0 +1,44 @@
+name: Check Changelog
+
+on:
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  changelog:
+    name: Check Changelog
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Check Changelog
+        run: node scripts/ci/check-changelog.mjs
+
+      - name: Provide fix instructions if failed
+        if: failure()
+        run: |
+          echo "::error::CHANGELOG CHECK FAILED"
+          echo "::error::"
+          echo "::error::This PR modifies documentation or code but is missing a changelog entry."
+          echo "::error::"
+          echo "::error::HOW TO FIX:"
+          echo "::error::1. Create a new file in the .changelog/ directory"
+          echo "::error::2. Name it: .changelog/<PR_NUMBER>.<TYPE>.md"
+          echo "::error::3. Available types: added, changed, deprecated, removed, fixed, security"
+          echo "::error::4. Example: .changelog/123.added.md"
+          echo "::error::5. Content should describe the change in one paragraph"
+          echo "::error::"
+          echo "::error::For detailed instructions, see: .cursor/rules/changelog-required.mdc"
+          exit 1

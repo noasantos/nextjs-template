@@ -1,10 +1,13 @@
 # Observability Architecture
 
-Observability standard for this repository (structured logging, correlation, redaction).
+Observability standard for this repository (structured logging, correlation,
+redaction).
 
 ## Why this exists
 
-This repo does not want more logs. It wants fewer, richer, correlateable events that explain what happened without leaking sensitive data. The goal is boundary-first observability:
+This repo does not want more logs. It wants fewer, richer, correlateable events
+that explain what happened without leaking sensitive data. The goal is
+boundary-first observability:
 
 - correlation begins at ingress
 - important boundaries emit structured lifecycle events
@@ -16,13 +19,20 @@ This repo does not want more logs. It wants fewer, richer, correlateable events 
 
 Use `@workspace/logging` everywhere for observability concerns.
 
-- Use `@workspace/logging/contracts` — source: [`packages/logging/src/contracts.ts`](../packages/logging/src/contracts.ts).
-- Use `@workspace/logging/correlation` — [`packages/logging/src/correlation.ts`](../packages/logging/src/correlation.ts).
-- Use `@workspace/logging/redaction` — [`packages/logging/src/redaction.ts`](../packages/logging/src/redaction.ts).
-- Use `@workspace/logging/errors` — [`packages/logging/src/errors.ts`](../packages/logging/src/errors.ts).
-- Use `@workspace/logging/server` — [`packages/logging/src/server.ts`](../packages/logging/src/server.ts).
-- Use `@workspace/logging/client` — [`packages/logging/src/client.ts`](../packages/logging/src/client.ts).
-- Use `@workspace/logging/edge` — [`packages/logging/src/edge.ts`](../packages/logging/src/edge.ts).
+- Use `@workspace/logging/contracts` — source:
+  [`packages/logging/src/contracts.ts`](../packages/logging/src/contracts.ts).
+- Use `@workspace/logging/correlation` —
+  [`packages/logging/src/correlation.ts`](../packages/logging/src/correlation.ts).
+- Use `@workspace/logging/redaction` —
+  [`packages/logging/src/redaction.ts`](../packages/logging/src/redaction.ts).
+- Use `@workspace/logging/errors` —
+  [`packages/logging/src/errors.ts`](../packages/logging/src/errors.ts).
+- Use `@workspace/logging/server` —
+  [`packages/logging/src/server.ts`](../packages/logging/src/server.ts).
+- Use `@workspace/logging/client` —
+  [`packages/logging/src/client.ts`](../packages/logging/src/client.ts).
+- Use `@workspace/logging/edge` —
+  [`packages/logging/src/edge.ts`](../packages/logging/src/edge.ts).
 
 Do not create:
 
@@ -31,18 +41,31 @@ Do not create:
 - copied correlation parsers
 - direct `console.*` in product code
 
-Exception: `@workspace/logging/client` `reportBrowserUiError` intentionally writes a single JSON line to the browser `console.error` for local debugging. That is **not** persisted to Postgres and **not** the same as the server dual sink below.
+Exception: `@workspace/logging/client` `reportBrowserUiError` intentionally
+writes a single JSON line to the browser `console.error` for local debugging.
+That is **not** persisted to Postgres and **not** the same as the server dual
+sink below.
 
 ## What counts as a “meaningful” action (scope)
 
 The standard is **boundary-first**, not “every line of code”:
 
-- **In scope for structured events:** HTTP/app ingress, auth lifecycle (sign-in/out/callback), server actions and mutations, privileged or service-role work, security-relevant changes, integration failures, and UI error boundaries.
-- **Out of scope for success-path spam:** routine repository reads (including session/claims resolution like `getClaims`) unless the read is privileged, incident-driven, or you explicitly need an audit trail for that path. Those stay **failure-only by default**.
+- **In scope for structured events:** HTTP/app ingress, auth lifecycle
+  (sign-in/out/callback), server actions and mutations, privileged or
+  service-role work, security-relevant changes, integration failures, and UI
+  error boundaries.
+- **Out of scope for success-path spam:** routine repository reads (including
+  session/claims resolution like `getClaims`) unless the read is privileged,
+  incident-driven, or you explicitly need an audit trail for that path. Those
+  stay **failure-only by default**.
 
-“Every meaningful user action” in product language means **user-visible or security-relevant boundaries**, aligned with the lists in [Success and failure guidance](#success-and-failure-guidance) — not a literal log line on every successful `select`.
+“Every meaningful user action” in product language means **user-visible or
+security-relevant boundaries**, aligned with the lists in
+[Success and failure guidance](#success-and-failure-guidance) — not a literal
+log line on every successful `select`.
 
-Adoption of older code paths remains **incremental**; new work should implement this contract at touched boundaries.
+Adoption of older code paths remains **incremental**; new work should implement
+this contract at touched boundaries.
 
 ## Canonical event contract
 
@@ -78,19 +101,32 @@ Every high-value event uses the same shape:
 
 Rules:
 
-- `request_path` must be normalized path only. Never log full URLs with secrets or query strings.
-- `metadata` must be shaped and bounded. Do not dump arbitrary request or response objects.
+- `request_path` must be normalized path only. Never log full URLs with secrets
+  or query strings.
+- `metadata` must be shaped and bounded. Do not dump arbitrary request or
+  response objects.
 - `actor_id_hash` and `ip_hash` are hashed, not raw.
-- `persisted` means the event was successfully inserted into `observability_events`.
+- `persisted` means the event was successfully inserted into
+  `observability_events`.
 
 ## Server sinks: console and database
 
 `logServerEvent` uses **two independent sinks**:
 
-1. **Process console** (`console.info` / `warn` / `error`) — always evaluated; formatting is controlled by `OBSERVABILITY_SERVER_CONSOLE` (see [Environment variables for observability](#environment-variables-for-observability)).
-2. **Postgres** (`public.observability_events`) — gated by `shouldPersistEvent` / `persist:`; failures to insert must not break the request.
+1. **Process console** (`console.info` / `warn` / `error`) — always evaluated;
+   formatting is controlled by `OBSERVABILITY_SERVER_CONSOLE` (see
+   [Environment variables for observability](#environment-variables-for-observability)).
+2. **Postgres** (`public.observability_events`) — gated by `shouldPersistEvent`
+   / `persist:`; failures to insert must not break the request.
 
-Persistence is **additional** evidence, not a replacement for console. In **production**, the default console mode is **`minimal`** (one line with correlation/trace/family/name/outcome) so hosted logs stay grep-friendly. Set `OBSERVABILITY_SERVER_CONSOLE=full` when you need full JSON in stdout (for example log drains that parse the full event). Set `OBSERVABILITY_SERVER_CONSOLE=off` to suppress server console emission while still persisting when rules match (use sparingly; you lose live tail visibility).
+Persistence is **additional** evidence, not a replacement for console. In
+**production**, the default console mode is **`minimal`** (one line with
+correlation/trace/family/name/outcome) so hosted logs stay grep-friendly. Set
+`OBSERVABILITY_SERVER_CONSOLE=full` when you need full JSON in stdout (for
+example log drains that parse the full event). Set
+`OBSERVABILITY_SERVER_CONSOLE=off` to suppress server console emission while
+still persisting when rules match (use sparingly; you lose live tail
+visibility).
 
 ## Event families
 
@@ -110,7 +146,8 @@ Use one rich event per important boundary, not thin checkpoint spam.
 
 Good event:
 
-- one `action.lifecycle` failure with `failure_phase`, `error_code`, `duration_ms`, `actor_id_hash`, and domain metadata
+- one `action.lifecycle` failure with `failure_phase`, `error_code`,
+  `duration_ms`, `actor_id_hash`, and domain metadata
 
 Bad event:
 
@@ -127,7 +164,8 @@ Seed correlation in:
 
 - [`apps/example/proxy.ts`](../apps/example/proxy.ts)
 
-Apps that do not use the session `proxy` must document their own ingress/correlation story.
+Apps that do not use the session `proxy` must document their own
+ingress/correlation story.
 
 Ingress behavior:
 
@@ -138,13 +176,15 @@ Ingress behavior:
 
 ### Server runtime propagation
 
-Use `createServerObservabilityContext` plus `withServerObservabilityContext` at major boundaries:
+Use `createServerObservabilityContext` plus `withServerObservabilityContext` at
+major boundaries:
 
 - route handlers
 - app-layer server actions
 - page/server-component boundaries where failures are meaningful
 
-Inner action and service code should read correlation from the shared server logger rather than threading IDs through business DTOs.
+Inner action and service code should read correlation from the shared server
+logger rather than threading IDs through business DTOs.
 
 ### Outbound propagation
 
@@ -172,7 +212,8 @@ Failure events are required for:
 - service-role failures
 - browser error boundaries
 
-Repository read successes are failure-only by default unless the read is itself privileged or incident-relevant.
+Repository read successes are failure-only by default unless the read is itself
+privileged or incident-relevant.
 
 ## Error semantics
 
@@ -207,11 +248,13 @@ Allowed `failure_phase` values today:
 - `webhook_verify`
 - `edge_handler`
 
-Keep `error_message` short and sanitized. Preserve upstream machine codes in `error_code` where available.
+Keep `error_message` short and sanitized. Preserve upstream machine codes in
+`error_code` where available.
 
 ## Metadata guidance
 
-Meaningful metadata answers “what changed or was attempted?” without replaying the full payload.
+Meaningful metadata answers “what changed or was attempted?” without replaying
+the full payload.
 
 Good metadata examples:
 
@@ -248,7 +291,8 @@ Never log raw:
 - full names
 - free-form request and response bodies
 
-Use deterministic hashing for correlating identifiers. The hash key is `OBSERVABILITY_HASH_SECRET`.
+Use deterministic hashing for correlating identifiers. The hash key is
+`OBSERVABILITY_HASH_SECRET`.
 
 Production rule:
 
@@ -260,15 +304,17 @@ Local development rule:
 
 ## Environment variables for observability
 
-Document these in root [`.env.example`](../../.env.example) (this section summarizes behavior):
+Document these in root [`.env.example`](../../.env.example) (this section
+summarizes behavior):
 
-| Variable | Role |
-|----------|------|
-| `OBSERVABILITY_HASH_SECRET` | Server-only secret for deterministic `actor_id_hash` / `ip_hash`. **Required in production** secure config; local may use the package fallback for dev. |
+| Variable                       | Role                                                                                                                                                                                                                                                                                                 |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `OBSERVABILITY_HASH_SECRET`    | Server-only secret for deterministic `actor_id_hash` / `ip_hash`. **Required in production** secure config; local may use the package fallback for dev.                                                                                                                                              |
 | `OBSERVABILITY_PERSIST_EVENTS` | If `true`, all emitted server events attempt DB insert (see `shouldPersistEvent` in code). If unset, non-production still persists failures, `privileged.operation`, and `security.audit`; production persists broadly per [`packages/logging/src/server.ts`](../../packages/logging/src/server.ts). |
-| `OBSERVABILITY_SERVER_CONSOLE` | `full` \| `minimal` \| `off`. Default: `full` outside production, **`minimal` in production** (see [Server sinks](#server-sinks-console-and-database)). |
+| `OBSERVABILITY_SERVER_CONSOLE` | `full` \| `minimal` \| `off`. Default: `full` outside production, **`minimal` in production** (see [Server sinks](#server-sinks-console-and-database)).                                                                                                                                              |
 
-Turbo passes these through `globalEnv` so tasks invalidate caches when they change.
+Turbo passes these through `globalEnv` so tasks invalidate caches when they
+change.
 
 ## Persistence and querying
 
@@ -314,7 +360,8 @@ Do not create parallel helper files inside `supabase/functions/*`.
 
 ## Privileged operation rules
 
-Any service-role or admin-style mutation must emit `privileged.operation` or `security.audit`.
+Any service-role or admin-style mutation must emit `privileged.operation` or
+`security.audit`.
 
 Minimum required metadata:
 
@@ -331,20 +378,20 @@ Current highest-priority privileged surface:
 ## Example: server action with context (success and failure)
 
 ```typescript
-import { headers } from "next/headers";
+import { headers } from "next/headers"
 
 import {
   createServerObservabilityContext,
   logServerEvent,
   withServerObservabilityContext,
-} from "@workspace/logging/server";
+} from "@workspace/logging/server"
 
 export async function exampleAction() {
-  const headerList = await headers();
+  const headerList = await headers()
   const ctx = await createServerObservabilityContext({
     headers: headerList,
     requestPath: "/example",
-  });
+  })
 
   return withServerObservabilityContext(ctx, async () => {
     try {
@@ -361,8 +408,8 @@ export async function exampleAction() {
         outcome: "success",
         persist: true,
         service: "example-app",
-      });
-      return { ok: true };
+      })
+      return { ok: true }
     } catch (error) {
       await logServerEvent({
         actorId: userId,
@@ -376,10 +423,10 @@ export async function exampleAction() {
         outcome: "failure",
         persist: true,
         service: "example-app",
-      });
-      throw error;
+      })
+      throw error
     }
-  });
+  })
 }
 ```
 
@@ -387,4 +434,6 @@ Adjust `headers` / `userId` to your app’s auth and request helpers.
 
 ## Implementation status note
 
-This document defines the target standard. Adoption is incremental, but every new logging or observability change must move toward this contract rather than inventing a side path.
+This document defines the target standard. Adoption is incremental, but every
+new logging or observability change must move toward this contract rather than
+inventing a side path.

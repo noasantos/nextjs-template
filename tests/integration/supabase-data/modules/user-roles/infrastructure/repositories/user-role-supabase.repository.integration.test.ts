@@ -7,13 +7,9 @@
 import { describe, expect, it } from "vitest"
 
 import { ACCESS_CONTROL_TEMPLATE } from "@workspace/supabase-auth/testing/access-control-template"
-import { createServiceRoleTestClient } from "@workspace/test-utils/supabase/clients"
-import {
-  createTestUser,
-  signInAsTestUser,
-} from "@workspace/test-utils/supabase/users"
-
 import { UserRoleSupabaseRepository } from "@workspace/supabase-data/modules/user-roles/infrastructure/repositories/user-role-supabase.repository"
+import { createServiceRoleTestClient } from "@workspace/test-utils/supabase/clients"
+import { createTestUser, signInAsTestUser } from "@workspace/test-utils/supabase/users"
 
 const { memberRole, privilegedRole } = ACCESS_CONTROL_TEMPLATE
 
@@ -34,9 +30,7 @@ describe("UserRoleSupabaseRepository (integration template)", () => {
 
     const repository = new UserRoleSupabaseRepository(client)
 
-    const replaced = await repository.replaceUserRoles(target.userId, [
-      privilegedRole,
-    ])
+    const replaced = await repository.replaceUserRoles(target.userId, [privilegedRole])
     const loaded = await repository.findByUserId(target.userId)
 
     expect(replaced).toHaveLength(1)
@@ -53,14 +47,11 @@ describe("UserRoleSupabaseRepository (integration template)", () => {
     })
     const repository = new UserRoleSupabaseRepository(client)
 
-    await expect(
-      repository.replaceUserRoles(target.userId, [privilegedRole])
-    ).rejects.toThrow("Failed to persist user roles.")
+    await expect(repository.replaceUserRoles(target.userId, [privilegedRole])).rejects.toThrow(
+      "Failed to persist user roles."
+    )
 
-    const loaded = await admin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", target.userId)
+    const loaded = await admin.from("user_roles").select("role").eq("user_id", target.userId)
 
     expect(loaded.error).toBeNull()
     expect(loaded.data).toEqual([])

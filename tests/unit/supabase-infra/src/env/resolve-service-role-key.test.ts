@@ -62,8 +62,6 @@ describe("resolveServiceRoleKeyWhenUnset", () => {
     const { resolveServiceRoleKeyWhenUnset } =
       await import("@workspace/supabase-infra/env/resolve-service-role-key")
 
-    expect(() => resolveServiceRoleKeyWhenUnset()).toThrow(
-      "Missing SUPABASE_SERVICE_ROLE_KEY"
-    )
+    expect(() => resolveServiceRoleKeyWhenUnset()).toThrow("Missing SUPABASE_SERVICE_ROLE_KEY")
   })
 })

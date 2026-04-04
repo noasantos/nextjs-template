@@ -6,9 +6,7 @@ type UnenrollFactorInput = {
   factorId: string
 }
 
-async function unenrollFactor({
-  factorId,
-}: UnenrollFactorInput): Promise<AuthMFAUnenrollResponse> {
+async function unenrollFactor({ factorId }: UnenrollFactorInput): Promise<AuthMFAUnenrollResponse> {
   const supabase = createBrowserAuthClient()
 
   return supabase.auth.mfa.unenroll({

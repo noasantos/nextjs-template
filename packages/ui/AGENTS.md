@@ -1,16 +1,21 @@
 # @workspace/ui - shadcn/ui Components Package
 
-> **Human-readable summary (Portuguese):** [README.md](./README.md) — **do not hand-edit this package;** shared product UI belongs in **`@workspace/brand`** (`packages/brand`).
+> **Human-readable summary (Portuguese):** [README.md](./README.md) — **do not
+> hand-edit this package;** shared product UI belongs in **`@workspace/brand`**
+> (`packages/brand`).
 
 ## ⚠️ CRITICAL: This Package is READ-ONLY
 
-**This package contains shadcn/ui components that are AUTO-GENERATED and MUST NEVER be manually modified for product logic.**
+**This package contains shadcn/ui components that are AUTO-GENERATED and MUST
+NEVER be manually modified for product logic.**
 
-**Hand-written shared UI (compositions, brand-specific blocks used across apps) belongs in `@workspace/brand`, not here.**
+**Hand-written shared UI (compositions, brand-specific blocks used across apps)
+belongs in `@workspace/brand`, not here.**
 
 ## What Lives Here
 
 This package contains ONLY:
+
 - ✅ shadcn/ui base components (installed via `pnpm dlx shadcn@latest add`)
 - ✅ shadcn/ui hooks (auto-generated with components)
 - ✅ Utility functions (utils, lib)
@@ -23,7 +28,8 @@ This package contains ONLY:
 - ❌ Domain-specific components (e.g., UserCard, ProductForm)
 - ❌ Customized versions of shadcn components
 - ❌ Any manual modifications to shadcn components
-- ❌ **Cross-app product UI** — put those in **`packages/brand`** (`@workspace/brand`) instead
+- ❌ **Cross-app product UI** — put those in **`packages/brand`**
+  (`@workspace/brand`) instead
 
 ## Rules
 
@@ -58,18 +64,15 @@ When you need a customized component, create it in your app:
 
 ```tsx
 // apps/example/app/adm/_components/custom-input.tsx
-import { Input as ShadcnInput } from "@workspace/ui/components/input";
+import { Input as ShadcnInput } from "@workspace/ui/components/input"
 
 export function CustomInput({ error, ...props }) {
   return (
     <div>
-      <ShadcnInput 
-        className={error ? 'border-red-500' : ''}
-        {...props} 
-      />
+      <ShadcnInput className={error ? "border-red-500" : ""} {...props} />
       {error && <span className="error">{error}</span>}
     </div>
-  );
+  )
 }
 ```
 
@@ -83,6 +86,7 @@ pnpm dlx shadcn@latest add <component-name>
 ```
 
 This will:
+
 - Download the component from shadcn registry
 - Place it in `src/components/`
 - Install any required dependencies
@@ -121,5 +125,7 @@ packages/ui/
 - **Need a new component?** → Run `pnpm dlx shadcn@latest add <name>`
 - **Need to customize?** → Create wrapper in your app
 - **Need business logic?** → Create component in your app
-- **Need shared UI across several apps?** → **`packages/brand`** (`@workspace/brand`) — see [README.md](./README.md) and [packages/brand/README.md](../brand/README.md)
+- **Need shared UI across several apps?** → **`packages/brand`**
+  (`@workspace/brand`) — see [README.md](./README.md) and
+  [packages/brand/README.md](../brand/README.md)
 - **Component has bug?** → Report to shadcn, don't patch locally

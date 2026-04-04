@@ -1,0 +1,106 @@
+---
+description: Enforce @workspace imports instead of relative paths
+globs: **/*.{ts,tsx,js,jsx}
+---
+
+# Import Path Rules
+
+## CRITICAL: Never Use Relative Imports
+
+**ALWAYS** use `@workspace/*` path aliases for imports within the monorepo. **NEVER** use relative imports like `./` or `../`.
+
+## ❌ WRONG - Relative Imports
+
+```typescript
+// NEVER DO THIS:
+import { something } from "../../packages/supabase-infra/src/types/database"
+import { helper } from "../utils/helper"
+import type { Foo } from "./types"
+import { bar } from "../../../supabase-auth/src/session"
+```
+
+## ✅ CORRECT - @workspace Aliases
+
+```typescript
+// ALWAYS DO THIS:
+import { something } from "@workspace/supabase-infra/types/database"
+import { helper } from "@workspace/ui/utils/helper"
+import type { Foo } from "@workspace/supabase-data/types"
+import { bar } from "@workspace/supabase-auth/session"
+```
+
+## Why This Rule Exists
+
+1. **Refactoring Safety**: Relative imports break when you move files. @workspace imports never break.
+2. **Clear Dependencies**: You can immediately see which package you're importing from.
+3. **Monorepo Best Practice**: This is the standard pattern for Turborepo/pnpm workspaces.
+4. **Easier Code Reviews**: Reviewers can quickly understand cross-package dependencies.
+
+## Available Workspace Packages
+
+- `@workspace/supabase-infra/*` - Database types, Supabase clients, env config
+- `@workspace/supabase-data/*` - Server Actions, repositories, business logic
+- `@workspace/supabase-auth/*` - Auth clients, session management, guards
+- `@workspace/logging/*` - Server/client logging utilities
+- `@workspace/ui/*` - UI components, hooks, utilities
+- `@workspace/forms/*` - Form components and hooks
+- `@workspace/core/*` - Shared app infra (providers, theme, cross-app hooks) — see `docs/architecture/core-package.md`
+- `@workspace/brand/*` - Product UI compositions (legacy `@workspace/brand/components/theme-provider` re-exports core)
+- `@workspace/test-utils/*` - Testing utilities
+- `@workspace/vitest-config/*` - Vitest configuration
+
+## TypeScript Configuration
+
+All `tsconfig.json` files are configured with path mappings:
+
+```json
+{
+  "compilerOptions": {
+    "paths": {
+      "@workspace/*": ["./packages/*"]
+    }
+  }
+}
+```
+
+## Enforcement
+
+- **CI + pre-commit**: `pnpm check:workspace-imports` (Lefthook `workspace-imports`, and Quality workflow) fails if any `../` import is found under `apps/` or `packages/`. Run locally after edits: `pnpm check:workspace-imports`.
+- **TypeScript**: Path aliases must resolve (`@workspace/*`, `@/*` in apps).
+- **Cursor**: This rule file guides the editor; the script above is the hard gate.
+
+## Migration Guide
+
+If you find relative imports in your code:
+
+1. Identify the package: `../packages/supabase-infra/src/...` → `@workspace/supabase-infra/...`
+2. Remove relative path segments: `../../` → `@workspace/`
+3. Use the package's public export path (check package.json exports)
+
+Example migration:
+```typescript
+// BEFORE
+import type { Database } from "../../../supabase-infra/src/types/database"
+
+// AFTER
+import type { Database } from "@workspace/supabase-infra/types/database"
+```
+
+## Exceptions
+
+**Imports within the same `src/` directory**: When both files are in the same `src/` directory (e.g., `packages/supabase-infra/src/types/database.ts` importing `packages/supabase-infra/src/types/database.types.ts`), relative imports are acceptable:
+
+```typescript
+// ACCEPTABLE - same src directory
+import type { Database } from "./database.types.js"
+import { helper } from "./utils/helper.js"
+```
+
+However, using `@workspace/*` is still preferred for consistency.
+
+**NEVER use relative imports to cross package boundaries:**
+```typescript
+// ❌ NEVER DO THIS:
+import { something } from "../../packages/supabase-infra/src/types"
+import { other } from "../../../supabase-auth/src/session"
+```

@@ -1,0 +1,47 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 100,
+  "tabWidth": 2,
+  "useTabs": false,
+  "semi": false,
+  "singleQuote": false,
+  "quoteProps": "as-needed",
+  "jsxSingleQuote": false,
+  "trailingComma": "es5",
+  "bracketSpacing": true,
+  "bracketSameLine": false,
+  "arrowParens": "always",
+  "endOfLine": "lf",
+  "htmlWhitespaceSensitivity": "css",
+  "proseWrap": "preserve",
+  "ignorePatterns": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/.next/**",
+    "**/.turbo/**",
+    "**/coverage/**",
+    "packages/supabase-infra/src/types/database.types.ts"
+  ],
+  "sortImports": {
+    "internalPattern": ["@/", "~/", "@workspace/"],
+    "newlinesBetween": true
+  },
+  "sortTailwindcss": {
+    "functions": ["cn", "cva"]
+  },
+  "overrides": [
+    {
+      "files": ["*.json"],
+      "options": {
+        "printWidth": 120
+      }
+    },
+    {
+      "files": ["*.md"],
+      "options": {
+        "proseWrap": "always",
+        "printWidth": 80
+      }
+    }
+  ]
+}

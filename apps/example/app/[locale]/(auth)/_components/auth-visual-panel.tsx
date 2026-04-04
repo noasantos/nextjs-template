@@ -50,8 +50,8 @@ function AuthVisualPanel({ className }: { className?: string }) {
           Rede de comércio solidário no Porto
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-pretty text-white/90 [text-shadow:0_1px_8px_rgba(15,23,42,0.25)]">
-          Liga pessoas, comércios de bairro e parceiros para alargar o acesso a
-          bens essenciais — com vouchers, proximidade e respeito.
+          Liga pessoas, comércios de bairro e parceiros para alargar o acesso a bens essenciais —
+          com vouchers, proximidade e respeito.
         </p>
       </div>
     </div>

@@ -1,7 +1,7 @@
 "use client"
 
-import * as React from "react"
 import { Slot } from "radix-ui"
+import * as React from "react"
 import {
   Controller,
   type ControllerProps,
@@ -11,8 +11,8 @@ import {
   useFormContext,
 } from "react-hook-form"
 
-import { cn } from "@workspace/ui/lib/utils"
 import { Label } from "@workspace/ui/components/label"
+import { cn } from "@workspace/ui/lib/utils"
 
 const Form = FormProvider
 
@@ -75,19 +75,12 @@ function FormItem({ className, ...props }: React.ComponentProps<"div">) {
 
   return (
     <FormItemContext.Provider value={{ id }}>
-      <div
-        data-slot="form-item"
-        className={cn("grid gap-2", className)}
-        {...props}
-      />
+      <div data-slot="form-item" className={cn("grid gap-2", className)} {...props} />
     </FormItemContext.Provider>
   )
 }
 
-function FormLabel({
-  className,
-  ...props
-}: React.ComponentProps<typeof Label>) {
+function FormLabel({ className, ...props }: React.ComponentProps<typeof Label>) {
   const { error, formItemId } = useFormField()
 
   return (
@@ -108,11 +101,7 @@ function FormControl({ ...props }: React.ComponentProps<typeof Slot.Root>) {
     <Slot.Root
       data-slot="form-control"
       id={formItemId}
-      aria-describedby={
-        !error
-          ? `${formDescriptionId}`
-          : `${formDescriptionId} ${formMessageId}`
-      }
+      aria-describedby={!error ? `${formDescriptionId}` : `${formDescriptionId} ${formMessageId}`}
       aria-invalid={Boolean(error)}
       {...props}
     />
@@ -126,17 +115,13 @@ function FormDescription({ className, ...props }: React.ComponentProps<"p">) {
     <p
       data-slot="form-description"
       id={formDescriptionId}
-      className={cn("text-xs/relaxed text-muted-foreground", className)}
+      className={cn("text-muted-foreground text-xs/relaxed", className)}
       {...props}
     />
   )
 }
 
-function FormMessage({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<"p">) {
+function FormMessage({ className, children, ...props }: React.ComponentProps<"p">) {
   const { error, formMessageId } = useFormField()
   const body = error ? String(error.message ?? "") : children
 
@@ -148,7 +133,7 @@ function FormMessage({
     <p
       data-slot="form-message"
       id={formMessageId}
-      className={cn("text-xs/relaxed text-destructive", className)}
+      className={cn("text-destructive text-xs/relaxed", className)}
       {...props}
     >
       {body}

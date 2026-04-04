@@ -1,12 +1,8 @@
 import { describe, expect, it } from "vitest"
 
-import { createServiceRoleTestClient } from "@workspace/test-utils/supabase/clients"
-import {
-  createTestUser,
-  signInAsTestUser,
-} from "@workspace/test-utils/supabase/users"
-
 import { ProfileSupabaseRepository } from "@workspace/supabase-data/modules/profiles/infrastructure/repositories/profile-supabase.repository"
+import { createServiceRoleTestClient } from "@workspace/test-utils/supabase/clients"
+import { createTestUser, signInAsTestUser } from "@workspace/test-utils/supabase/users"
 
 describe("ProfileSupabaseRepository", () => {
   it("returns null when no profile exists", async () => {

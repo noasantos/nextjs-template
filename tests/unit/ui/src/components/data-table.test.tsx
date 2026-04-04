@@ -1,6 +1,6 @@
+import type { ColumnDef } from "@tanstack/react-table"
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import type { ColumnDef } from "@tanstack/react-table"
 import { describe, expect, it } from "vitest"
 
 import { DataTable } from "@workspace/ui/components/data-table"
@@ -25,9 +25,7 @@ describe("DataTable", () => {
   })
 
   it("shows empty state when there is no data", () => {
-    render(
-      <DataTable columns={columns} data={[]} emptyMessage="Nada por aqui" />
-    )
+    render(<DataTable columns={columns} data={[]} emptyMessage="Nada por aqui" />)
 
     expect(screen.getByText("Nada por aqui")).toBeInTheDocument()
   })

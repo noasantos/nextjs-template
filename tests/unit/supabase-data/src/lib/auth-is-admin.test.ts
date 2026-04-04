@@ -1,8 +1,7 @@
 import { describe, expect, it, vi } from "vitest"
 
-import type { TypedSupabaseClient } from "@workspace/supabase-infra/types/supabase"
-
 import { getAuthIsAdmin } from "@workspace/supabase-data/lib/auth-is-admin"
+import type { TypedSupabaseClient } from "@workspace/supabase-infra/types/supabase"
 
 describe("getAuthIsAdmin", () => {
   it("returns isAdmin true when RPC returns true", async () => {

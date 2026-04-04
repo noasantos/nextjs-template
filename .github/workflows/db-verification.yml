@@ -42,6 +42,6 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - run: pnpm test:integration:prepare
+      - run: pnpm supabase start
 
-      - run: pnpm test:db
+      - run: pnpm test:integration

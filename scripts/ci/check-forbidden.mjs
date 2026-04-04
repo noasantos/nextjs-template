@@ -1,6 +1,9 @@
 /**
  * CI guard: forbidden filesystem paths and patterns (BAD-003, GR-013, packages/ui,
- * generated types, barrel re-exports, unstamped migrations, createAdminClient boundaries).
+ * generated types, barrel re-exports, unstamped migrations, createAdminClient boundaries,
+ * no Server Actions in apps/ ("use server" directive; forbid per-app actions/ dirs);
+ * apps/ must not use package suffix filenames (.hook, .component, .provider);
+ * packages/brand|core|forms|seo (not ui) must follow those suffixes under src/.
  * Run: pnpm check:forbidden
  *
  * packages/ui: fails if Git reports changes under packages/ui/ (staged, unstaged, or
@@ -10,7 +13,7 @@
  */
 import { execSync } from "node:child_process"
 import { readdirSync, readFileSync, statSync } from "node:fs"
-import { dirname, join, relative } from "node:path"
+import { basename, dirname, join, relative } from "node:path"
 import { fileURLToPath } from "node:url"
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..")
@@ -19,6 +22,12 @@ const ALLOWED_SERVER_GET_SESSION_PATHS = new Set([
 ])
 const IMMUTABLE_GENERATED_PATHS = new Set([
   join("packages", "supabase-infra", "src", "types", "database.types.ts"),
+])
+
+/** GR-001 barrel exceptions: package root `exports["."]` entrypoints (prefer explicit subpaths in new code). */
+const ALLOWED_BARREL_INDEX_FILES = new Set([
+  "packages/logging/src/index.ts",
+  "packages/seo/src/index.ts",
 ])
 
 /** @param {string} dir */
@@ -39,11 +48,17 @@ function walkTsFiles(dir, out = []) {
     return out
   }
   for (const name of names) {
-    if (name === "node_modules" || name === ".next" || name === "dist" || name === "coverage") continue
+    if (name === "node_modules" || name === ".next" || name === "dist" || name === "coverage")
+      continue
     const p = join(dir, name)
-    const st = statSync(p)
-    if (st.isDirectory()) walkTsFiles(p, out)
-    else if (/\.(ts|tsx)$/.test(name)) out.push(p)
+    try {
+      const st = statSync(p)
+      if (st.isSymbolicLink()) continue
+      if (st.isDirectory()) walkTsFiles(p, out)
+      else if (/\.(ts|tsx)$/.test(name)) out.push(p)
+    } catch {
+      continue
+    }
   }
   return out
 }
@@ -133,12 +148,12 @@ if (!allowPackagesUi && isGitRepository()) {
   for (const p of collectGitChangedPaths()) {
     if (isUnderPackagesUi(p)) {
       errors.push(
-        `Forbidden change under packages/ui (GR-001 / shadcn-only): ${p}\n  Set ALLOW_PACKAGES_UI_CHANGES=1 when committing intentional shadcn CLI output.`,
+        `Forbidden change under packages/ui (GR-001 / shadcn-only): ${p}\n  Set ALLOW_PACKAGES_UI_CHANGES=1 when committing intentional shadcn CLI output.`
       )
     }
     if (IMMUTABLE_GENERATED_PATHS.has(p)) {
       errors.push(
-        `Forbidden change to generated file: ${p}\n  Regenerate with pnpm supabase:types:local or pnpm supabase:types:linked instead of editing it by hand.`,
+        `Forbidden change to generated file: ${p}\n  Regenerate with pnpm supabase:types:local or pnpm supabase:types:linked instead of editing it by hand.`
       )
     }
   }
@@ -149,7 +164,7 @@ function isTestFile(rel) {
   return (
     /\.(test|spec)\.(ts|tsx)$/.test(rel) ||
     /\.integration\.(test|spec)\.ts$/.test(rel) ||
-    /\.rls\.test\.ts$/.test(rel)
+    rel.endsWith(".rls.test.ts")
   )
 }
 
@@ -165,13 +180,110 @@ const appsDir = join(root, "apps")
 if (existsDir(appsDir)) {
   for (const app of readdirSync(appsDir)) {
     const base = join(appsDir, app)
-    if (!statSync(base).isDirectory()) continue
+    try {
+      const baseStat = statSync(base)
+      if (baseStat.isSymbolicLink() || !baseStat.isDirectory()) continue
+    } catch {
+      continue
+    }
     for (const forbidden of ["lib/db", "lib/repositories"]) {
       const p = join(base, ...forbidden.split("/"))
       if (existsDir(p)) {
         errors.push(`Forbidden path (BAD-003): ${relative(root, p)}`)
       }
     }
+
+    const actionsRoot = join(base, "actions")
+    if (existsDir(actionsRoot)) {
+      errors.push(
+        `Forbidden apps/*/actions/ (Server Actions belong in packages only): ${relative(root, actionsRoot)}\n  Move to packages/supabase-data/src/actions/<module>/ and scaffold with pnpm action:new -- <module> <name>. See docs/architecture/CRITICAL-RULES.md.`
+      )
+    }
+
+    for (const file of walkTsFiles(base)) {
+      const rel = relative(root, file)
+      if (isTestFile(rel)) continue
+      const text = readFileSync(file, "utf8")
+      if (/^["']use server["']/m.test(text)) {
+        errors.push(
+          `Forbidden "use server" under apps/ (Server Actions live in packages/supabase-data only): ${rel}\n  Move to packages/supabase-data/src/actions/<module>/ (pnpm action:new). See docs/architecture/CRITICAL-RULES.md and AGENTS.md.`
+        )
+      }
+      const baseName = basename(file)
+      if (
+        /\.hook\.(ts|tsx)$/.test(baseName) ||
+        /\.component\.(ts|tsx)$/.test(baseName) ||
+        /\.provider\.(ts|tsx)$/.test(baseName)
+      ) {
+        errors.push(
+          `Forbidden filename suffix under apps/ (use _hooks/, _providers/, route folders; not .hook/.component/.provider): ${rel}\n  See docs/standards/package-file-suffixes.md and apps/AGENTS.md.`
+        )
+      }
+    }
+  }
+}
+
+/** @see docs/standards/package-file-suffixes.md — keep this Set aligned when adding a composition package. Never includes `ui`. */
+const PACKAGE_SUFFIX_CONVENTION = new Set(["brand", "core", "forms", "seo"])
+
+/** @param {string} rel */
+function packageNameFromRel(rel) {
+  const m = /^packages\/([^/]+)\//.exec(normalizePathPosix(rel))
+  return m ? m[1] : null
+}
+
+/** @param {string} rel @param {string} file */
+function checkPackageLayerSuffixes(rel, file) {
+  const pkg = packageNameFromRel(rel)
+  if (!pkg || !PACKAGE_SUFFIX_CONVENTION.has(pkg) || pkg === "ui") return
+  if (!/\/src\//.test(normalizePathPosix(rel))) return
+  if (isTestFile(rel)) return
+
+  const baseName = basename(file)
+  const posix = normalizePathPosix(rel)
+
+  if (
+    /\/components\//.test(posix) &&
+    baseName.endsWith(".tsx") &&
+    !baseName.endsWith(".component.tsx")
+  ) {
+    errors.push(
+      `Package component must use *.component.tsx: ${rel}\n  Rename or see docs/standards/package-file-suffixes.md.`
+    )
+  }
+
+  if (/\/hooks\//.test(posix)) {
+    if (
+      baseName.endsWith(".ts") &&
+      !baseName.endsWith(".hook.ts") &&
+      !baseName.endsWith(".test.ts")
+    ) {
+      errors.push(
+        `Package hook must use *.hook.ts: ${rel}\n  Rename or see docs/standards/package-file-suffixes.md.`
+      )
+    }
+    if (baseName.endsWith(".tsx") && !baseName.endsWith(".hook.tsx")) {
+      errors.push(
+        `Package hook must use *.hook.tsx: ${rel}\n  Rename or see docs/standards/package-file-suffixes.md.`
+      )
+    }
+  }
+
+  if (/\/_providers\//.test(posix) || /\/providers\//.test(posix)) {
+    if (baseName.endsWith(".tsx") && !baseName.endsWith(".provider.tsx")) {
+      errors.push(
+        `Package provider must use *.provider.tsx: ${rel}\n  Rename or see docs/standards/package-file-suffixes.md.`
+      )
+    }
+  }
+}
+
+const packagesRoot = join(root, "packages")
+if (existsDir(packagesRoot)) {
+  for (const file of walkTsFiles(packagesRoot)) {
+    const rel = relative(root, file)
+    if (isUnderPackagesUi(rel)) continue
+    checkPackageLayerSuffixes(rel, file)
   }
 }
 
@@ -205,7 +317,7 @@ for (const scope of ["apps", "packages"]) {
     const text = readFileSync(file, "utf8")
     if (/\bcreateAdminClient\b/.test(text) && !pathAllowsCreateAdminClient(rel)) {
       errors.push(
-        `Forbidden createAdminClient reference outside @workspace/supabase-data / create-admin-client implementation: ${rel}\n  Use user-scoped Supabase clients in apps; reserve service role for packages/supabase-data and packages/supabase-infra/src/clients/create-admin-client.ts.`,
+        `Forbidden createAdminClient reference outside @workspace/supabase-data / create-admin-client implementation: ${rel}\n  Use user-scoped Supabase clients in apps; reserve service role for packages/supabase-data and packages/supabase-infra/src/clients/create-admin-client.ts.`
       )
     }
     if (/^["']use client["']/m.test(text)) continue
@@ -213,7 +325,9 @@ for (const scope of ["apps", "packages"]) {
       errors.push(`Forbidden getSession() outside client boundary (GR-013): ${rel}`)
     }
     if ((/\/index\.tsx?$/.test(file) || /\\index\.tsx?$/.test(file)) && isBarrelReExport(text)) {
-      errors.push(`Forbidden barrel re-export (GR-001): ${rel}`)
+      if (!ALLOWED_BARREL_INDEX_FILES.has(normalizePathPosix(rel))) {
+        errors.push(`Forbidden barrel re-export (GR-001): ${rel}`)
+      }
     }
   }
 }
@@ -229,7 +343,7 @@ if (existsDir(migrationsDir)) {
       !text.includes("-- created-at-utc:")
     ) {
       errors.push(
-        `Migration is missing the stamped header (GR-015): ${rel}\n  Create files with pnpm supabase:migration:new -- <name> and restore headers with pnpm supabase:migration:stamp when db diff overwrites them.`,
+        `Migration is missing the stamped header (GR-015): ${rel}\n  Create files with pnpm supabase:migration:new -- <name> and restore headers with pnpm supabase:migration:stamp when db diff overwrites them.`
       )
     }
   }

@@ -37,10 +37,7 @@ class UserRoleSupabaseRepository implements UserRoleRepository {
     )
   }
 
-  async replaceUserRoles(
-    userId: string,
-    roles: readonly AuthRole[]
-  ): Promise<UserRoleDTO[]> {
+  async replaceUserRoles(userId: string, roles: readonly AuthRole[]): Promise<UserRoleDTO[]> {
     const { error: deleteError } = await this.supabase
       .from("user_roles")
       .delete()

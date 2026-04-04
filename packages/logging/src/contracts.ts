@@ -1,5 +1,14 @@
+/**
+ * Logging contracts and type definitions
+ *
+ * Defines the canonical observability event schema used throughout
+ * the application for structured logging
+ *
+ * @module @workspace/logging/contracts
+ */
 import { z } from "zod"
 
+// Event families for categorizing logs
 const eventFamilies = [
   "http.request",
   "auth.flow",
@@ -7,20 +16,22 @@ const eventFamilies = [
   "privileged.operation",
   "supabase.integration",
   "ui.error",
+  "ui.event",
+  "ui.performance",
   "edge.request",
   "webhook.lifecycle",
   "security.audit",
+  "realtime.lifecycle",
+  "realtime.message",
 ] as const
 
+// Outcomes for operations
 const outcomes = ["success", "failure", "unknown"] as const
-const actorTypes = [
-  "anonymous",
-  "user",
-  "service",
-  "system",
-  "admin",
-  "unknown",
-] as const
+
+// Actor types
+const actorTypes = ["anonymous", "user", "service", "system", "admin", "unknown"] as const
+
+// Operation types
 const operationTypes = [
   "http",
   "auth",
@@ -32,7 +43,12 @@ const operationTypes = [
   "render",
   "webhook",
   "edge",
+  "subscription",
+  "event",
+  "cleanup",
 ] as const
+
+// Error categories
 const errorCategories = [
   "validation",
   "authentication",
@@ -47,10 +63,17 @@ const errorCategories = [
   "network",
   "unknown",
 ] as const
+
+// Correlation provenance
 const correlationProvenances = ["generated", "inherited"] as const
+
+// Runtime environments
 const runtimes = ["node", "edge", "browser"] as const
+
+// Severity levels
 const severities = ["debug", "info", "warn", "error"] as const
 
+// JSON value schema for metadata
 const JsonValueSchema: z.ZodType<unknown> = z.lazy(
   (): z.ZodType<unknown> =>
     z.union([
@@ -63,6 +86,7 @@ const JsonValueSchema: z.ZodType<unknown> = z.lazy(
     ])
 )
 
+// Main observability event schema
 const ObservabilityEventSchema = z.object({
   actor_id_hash: z.string().nullable(),
   actor_type: z.enum(actorTypes),
@@ -93,6 +117,7 @@ const ObservabilityEventSchema = z.object({
   user_agent: z.string().nullable(),
 })
 
+// Type exports
 type EventFamily = (typeof eventFamilies)[number]
 type Outcome = (typeof outcomes)[number]
 type ActorType = (typeof actorTypes)[number]

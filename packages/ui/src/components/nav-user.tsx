@@ -1,7 +1,5 @@
 "use client"
 
-import * as React from "react"
-
 import {
   BadgeCheck,
   Bell,
@@ -11,12 +9,9 @@ import {
   Settings,
   Sparkles,
 } from "lucide-react"
+import * as React from "react"
 
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@workspace/ui/components/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@workspace/ui/components/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,

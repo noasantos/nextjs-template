@@ -1,8 +1,9 @@
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
-import { createDbProject } from "@workspace/vitest-config/db"
 import { defineConfig, mergeConfig } from "vitest/config"
+
+import { createDbProject } from "@workspace/vitest-config/db"
 
 const testsDir = dirname(fileURLToPath(import.meta.url))
 const repoRoot = resolve(testsDir, "..")

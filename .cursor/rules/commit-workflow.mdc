@@ -1,16 +1,44 @@
+# 🔄 Commit Workflow
+
+**This is a CURSOR-SPECIFIC rule file.**
+
+**Full documentation:** [docs/standards/rules/commit-workflow.md](../../docs/standards/rules/commit-workflow.md)
+
+## Rule for Cursor
+
+Cursor MUST enforce commit workflow:
+
+1. **REMIND** user to run `pnpm workflow`
+2. **REMIND** user to run security checks
+3. **SUGGEST** conventional commit message
+4. **NEVER** commit without workflow check
+
+## Quick Reference
+
+```bash
+# 1. Workflow (mandatory)
+pnpm workflow              # lint → typecheck → build → format
+
+# 2. Security checks
+pnpm check:forbidden
+pnpm check:security-smells
+pnpm check:docs-drift
+
+# 3. Commit
+git add -A
+git commit -m "feat(scope): description"
+```
+
+## Commit Message Format
+
+```
+<type>(<scope>): <description>
+
+Types: feat, fix, docs, test, refactor, chore
+```
+
 ---
-description: Pre-commit verification, full-tree staging, and Conventional Commits
-alwaysApply: true
----
 
-# Commit workflow
-
-When the user asks to **commit**, **stage and commit**, or finish work for merge:
-
-1. **`pnpm workflow`** from the repository root (lint → typecheck → build → format). Proceed only on exit **0**. If Prettier changed files, re-run lint or the full workflow until clean.
-2. **Review** `git status` / diff briefly so the message matches the change set.
-3. **Stage:** default **`git add -A`** (everything). Only stage a **subset** if the user **explicitly** asks for a partial commit.
-4. **Commit message:** English, **Conventional Commits**, describe the **full** staged diff.
-5. **`git commit`**.
-
-Canonical: repository root `AGENTS.md` → **Commit workflow (mandatory)**.
+**Rule ID:** COMMIT-WORKFLOW  
+**Severity:** REQUIRED  
+**Full Docs:** [docs/standards/rules/commit-workflow.md](../../docs/standards/rules/commit-workflow.md)

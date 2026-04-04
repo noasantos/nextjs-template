@@ -1,16 +1,13 @@
+// oxlint-disable-next-line import/no-unassigned-import -- side-effect: marks Node-only module
 import "server-only"
-
 import { execFileSync } from "node:child_process"
-import { fileURLToPath } from "node:url"
 import path from "node:path"
+import { fileURLToPath } from "node:url"
 
 let cachedFromCli: string | null | undefined
 
 function getMonorepoRoot(): string {
-  return path.resolve(
-    path.dirname(fileURLToPath(import.meta.url)),
-    "../../../.."
-  )
+  return path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../..")
 }
 
 function parseServiceRoleFromSupabaseStatusEnv(output: string): string | null {
@@ -19,9 +16,7 @@ function parseServiceRoleFromSupabaseStatusEnv(output: string): string | null {
     if (!trimmed.startsWith("SERVICE_ROLE_KEY=")) {
       continue
     }
-    const value = trimmed
-      .slice("SERVICE_ROLE_KEY=".length)
-      .replace(/^"|"$/g, "")
+    const value = trimmed.slice("SERVICE_ROLE_KEY=".length).replace(/^"|"$/g, "")
     return value || null
   }
   return null
@@ -38,8 +33,7 @@ function resolveServiceRoleKeyWhenUnset(): string {
     return fromEnv
   }
 
-  const isProductionLike =
-    process.env.NODE_ENV === "production" || Boolean(process.env.VERCEL)
+  const isProductionLike = process.env.NODE_ENV === "production" || Boolean(process.env.VERCEL)
 
   if (isProductionLike) {
     throw new Error(
@@ -47,7 +41,7 @@ function resolveServiceRoleKeyWhenUnset(): string {
     )
   }
 
-  if (cachedFromCli !== undefined) {
+  if (typeof cachedFromCli !== "undefined") {
     if (cachedFromCli === null) {
       throw new Error(
         "Could not resolve SUPABASE_SERVICE_ROLE_KEY: set it for this environment, or run `pnpm supabase start` so the CLI can expose SERVICE_ROLE_KEY"
@@ -57,15 +51,11 @@ function resolveServiceRoleKeyWhenUnset(): string {
   }
 
   try {
-    const output = execFileSync(
-      "pnpm",
-      ["exec", "supabase", "status", "-o", "env"],
-      {
-        cwd: getMonorepoRoot(),
-        encoding: "utf8",
-        stdio: ["ignore", "pipe", "pipe"],
-      }
-    )
+    const output = execFileSync("pnpm", ["exec", "supabase", "status", "-o", "env"], {
+      cwd: getMonorepoRoot(),
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    })
     const parsed = parseServiceRoleFromSupabaseStatusEnv(output)
     cachedFromCli = parsed
     if (!parsed) {

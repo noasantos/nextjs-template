@@ -1,0 +1,1 @@
+../../../skills/jsdoc-generator/SKILL.md

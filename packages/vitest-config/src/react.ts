@@ -9,7 +9,7 @@ const setupDomPath = resolve(
   "../../test-utils/src/vitest/setup-dom.ts"
 )
 
-type ReactProjectOptions = {
+export type VitestReactProjectOptions = {
   coverageExclude?: string[]
   coverageInclude?: string[]
   exclude?: string[]
@@ -18,23 +18,21 @@ type ReactProjectOptions = {
   root: string
 }
 
-function createReactProject({
+export function createReactProject({
   coverageExclude = [],
   coverageInclude,
   exclude = [],
   include,
   name,
   root,
-}: ReactProjectOptions) {
+}: VitestReactProjectOptions) {
   return defineConfig({
     // Next.js tsconfig uses `"jsx": "preserve"`; Vitest must still compile JSX for tests.
     esbuild: { jsx: "automatic" },
     plugins: [tsconfigPaths()],
     resolve: {
       alias: {
-        "server-only": fileURLToPath(
-          new URL("./server-only-stub.js", import.meta.url)
-        ),
+        "server-only": fileURLToPath(new URL("./server-only-stub.js", import.meta.url)),
       },
     },
     test: {
@@ -47,7 +45,7 @@ function createReactProject({
           "**/vitest.config.ts",
           ...coverageExclude,
         ],
-        include: coverageInclude,
+        ...(coverageInclude && { include: coverageInclude }),
         provider: "v8",
         reporter: ["text", "html", "lcov"],
         reportsDirectory: "./coverage",
@@ -71,5 +69,3 @@ function createReactProject({
     },
   })
 }
-
-export { createReactProject, type ReactProjectOptions }

@@ -1,8 +1,7 @@
 "use client"
 
-import * as React from "react"
-
 import { ChevronsUpDown, Plus } from "lucide-react"
+import * as React from "react"
 
 import {
   DropdownMenu,
@@ -45,7 +44,7 @@ export function TeamSwitcher({
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+              <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
                 {activeTeam.logo}
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
@@ -61,9 +60,7 @@ export function TeamSwitcher({
             side={isMobile ? "bottom" : "right"}
             sideOffset={4}
           >
-            <DropdownMenuLabel className="text-xs text-muted-foreground">
-              Teams
-            </DropdownMenuLabel>
+            <DropdownMenuLabel className="text-muted-foreground text-xs">Teams</DropdownMenuLabel>
             {teams.map((team, index) => (
               <DropdownMenuItem
                 key={team.name}
@@ -82,7 +79,7 @@ export function TeamSwitcher({
               <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
                 <Plus strokeWidth={2} className="size-4" />
               </div>
-              <div className="font-medium text-muted-foreground">Add team</div>
+              <div className="text-muted-foreground font-medium">Add team</div>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

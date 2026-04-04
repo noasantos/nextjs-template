@@ -2,12 +2,14 @@
 
 ## Core Principles
 
-This document establishes the gold-standard for database development. All new code MUST follow these patterns.
+This document establishes the gold-standard for database development. All new
+code MUST follow these patterns.
 
 ### Golden Rules
 
 - **ALWAYS** enable RLS on all tables (RLS-first design)
-- **NEVER** create migration files manually (always via `pnpm supabase:migration:new` + CLI capture; see [Migrations](#migrations))
+- **NEVER** create migration files manually (always via
+  `pnpm supabase:migration:new` + CLI capture; see [Migrations](#migrations))
 - **ALWAYS** use environment guardrails (local/staging/production)
 - **NEVER** run production migrations locally (pipeline-only)
 - **ALWAYS** use `search_path = ''` in database functions
@@ -15,9 +17,16 @@ This document establishes the gold-standard for database development. All new co
 
 ### Agent and remote safety
 
-- **Development and schema work** target the **local** Supabase instance (`supabase start`). Use `.env.local` values from `pnpm exec supabase status` — see [docs/guides/supabase-setup.md](../guides/supabase-setup.md).
-- **AI agents** must not run CLI commands or MCP tools that **write** to **remote** hosted databases (migration apply, `db push`, arbitrary DDL/DML) unless a human explicitly approves an out-of-band process. Promote schema changes via **migrations in git** and your deployment pipeline, not ad-hoc remote edits from automation.
-- See [AGENTS.md § Remote database and MCP](../../AGENTS.md#remote-database-and-mcp-agents).
+- **Development and schema work** target the **local** Supabase instance
+  (`supabase start`). Use `.env.local` values from `pnpm exec supabase status` —
+  see [docs/guides/supabase-setup.md](../guides/supabase-setup.md).
+- **AI agents** must not run CLI commands or MCP tools that **write** to
+  **remote** hosted databases (migration apply, `db push`, arbitrary DDL/DML)
+  unless a human explicitly approves an out-of-band process. Promote schema
+  changes via **migrations in git** and your deployment pipeline, not ad-hoc
+  remote edits from automation.
+- See
+  [AGENTS.md § Remote database and MCP](../../AGENTS.md#remote-database-and-mcp-agents).
 
 ---
 
@@ -25,7 +34,8 @@ This document establishes the gold-standard for database development. All new co
 
 ### Rule: All Tables MUST Have RLS Enabled
 
-Row Level Security (RLS) is the primary authorization mechanism. **EVERY** table MUST have RLS enabled from creation.
+Row Level Security (RLS) is the primary authorization mechanism. **EVERY** table
+MUST have RLS enabled from creation.
 
 ```sql
 -- ✅ CORRECT — RLS enabled from start
@@ -47,8 +57,10 @@ CREATE TABLE entities (
 ### RLS Policy Design
 
 Policies MUST be:
+
 - **Granular**: Separate policies per operation (SELECT, INSERT, UPDATE, DELETE)
-- **Role-specific**: Separate policies per role (authenticated, anon, specific roles)
+- **Role-specific**: Separate policies per role (authenticated, anon, specific
+  roles)
 - **Explicit**: Clear ownership or permission checks
 
 ```sql
@@ -109,7 +121,8 @@ CREATE POLICY "Owners can manage entities"
 - **ALWAYS** add indexes on columns used in RLS policies
 - **NEVER** use subqueries in RLS when joins are possible
 - **ALWAYS** test policy performance with realistic data volumes
-- **ALWAYS** review `EXPLAIN` / `EXPLAIN ANALYZE` before calling a policy or query change a performance fix
+- **ALWAYS** review `EXPLAIN` / `EXPLAIN ANALYZE` before calling a policy or
+  query change a performance fix
 
 ```sql
 -- ✅ CORRECT — Index for RLS policy
@@ -124,10 +137,23 @@ CREATE POLICY "Users see own entities"
 
 ### Service role boundary (application layer)
 
-- **RLS** remains the default authorization barrier for data accessed with the **publishable** Supabase client.
-- **`createAdminClient()`** ([`packages/supabase-infra/src/clients/create-admin-client.ts`](../../packages/supabase-infra/src/clients/create-admin-client.ts)) uses **`SUPABASE_SERVICE_ROLE_KEY`** and **bypasses RLS**. It is **server-only** and must **never** appear in client bundles or under `NEXT_PUBLIC_*`.
-- **Allowlisted usage:** implementation and tests under `packages/supabase-infra/src/clients/create-admin-client.ts` (+ its unit test) and server actions / internal modules in **`@workspace/supabase-data`**. **`pnpm check:forbidden`** rejects `createAdminClient` references in **`apps/**`** and other packages.
-- When migrations, policies, RPCs, or authz-sensitive queries change, run **`pnpm test:db`** before merge — unit coverage does not prove RLS ([Testing](./testing.md)).
+- **RLS** remains the default authorization barrier for data accessed with the
+  **publishable** Supabase client.
+- **`createAdminClient()`**
+  ([`packages/supabase-infra/src/clients/create-admin-client.ts`](../../packages/supabase-infra/src/clients/create-admin-client.ts))
+  uses **`SUPABASE_SERVICE_ROLE_KEY`** and **bypasses RLS**. It is
+  **server-only** and must **never** appear in client bundles or under
+  `NEXT_PUBLIC_*`.
+- **Allowlisted usage:** implementation and tests under
+  `packages/supabase-infra/src/clients/create-admin-client.ts` (+ its unit test)
+  and server actions / internal modules in **`@workspace/supabase-data`**.
+  **`pnpm check:forbidden`** rejects `createAdminClient` references in
+  **`apps/**`\*\* and other packages.
+- When migrations, policies, RPCs, or authz-sensitive queries change, run
+  **`pnpm test:db`** (pgTAP), **`pnpm test:rls`**, **`pnpm test:sql`** (Vitest
+  integration + RLS), or **`pnpm test:db:all`** (all three in sequence) before
+  merge as appropriate — unit coverage does not prove RLS
+  ([Testing](./testing.md)).
 
 ---
 
@@ -135,13 +161,27 @@ CREATE POLICY "Users see own entities"
 
 ### Supabase CLI (single migration track)
 
-Application schema (RLS, tables, RPCs) lives only in [`supabase/migrations/`](../../supabase/migrations/). **New migration files** MUST be created with the repo script `pnpm supabase:migration:new -- <descriptive_name>` (which wraps `supabase migration new` and stamps metadata). **Do not** create files under `supabase/migrations/` with `touch`, redirects, or an editor without that command. See [Rule: Never create migration files manually](#rule-never-create-migration-files-manually) and [Golden Rules GR-015](../standards/golden-rules.md#gr-015-cli-generated-migrations-only-critical---human-confirmation-required).
+Application schema (RLS, tables, RPCs) lives only in
+[`supabase/migrations/`](../../supabase/migrations/). **New migration files**
+MUST be created with the repo script
+`pnpm supabase:migration:new -- <descriptive_name>` (which wraps
+`supabase migration new` and stamps metadata). **Do not** create files under
+`supabase/migrations/` with `touch`, redirects, or an editor without that
+command. See
+[Rule: Never create migration files manually](#rule-never-create-migration-files-manually)
+and
+[Golden Rules GR-015](../standards/golden-rules.md#gr-015-cli-generated-migrations-only-critical---human-confirmation-required).
 
-**Related:** [`.env.example`](../../.env.example), [AGENTS.md — Critical rules](../../AGENTS.md#critical-rules-non-negotiable), [docs/guides/migration-workflow.md](../guides/migration-workflow.md).
+**Related:** [`.env.example`](../../.env.example),
+[AGENTS.md — Critical rules](../../AGENTS.md#critical-rules-non-negotiable),
+[docs/guides/migration-workflow.md](../guides/migration-workflow.md).
 
 ### Rule: Never create migration files manually
 
-**ALL** new rows in `supabase/migrations/*.sql` MUST start from `pnpm supabase:migration:new -- <name>`. **SQL content** MUST come from the Supabase CLI (typically `pnpm supabase db diff -o <path-to-that-file>` after local DDL), not from ad-hoc copy-paste into a hand-made path.
+**ALL** new rows in `supabase/migrations/*.sql` MUST start from
+`pnpm supabase:migration:new -- <name>`. **SQL content** MUST come from the
+Supabase CLI (typically `pnpm supabase db diff -o <path-to-that-file>` after
+local DDL), not from ad-hoc copy-paste into a hand-made path.
 
 ### Workflow
 
@@ -163,7 +203,8 @@ pnpm supabase:migration:stamp -- supabase/migrations/YYYYMMDDHHMMSS_add_entities
 
 ### Migration Naming
 
-- **ALWAYS** use descriptive, imperative names in `pnpm supabase:migration:new -- <name>`
+- **ALWAYS** use descriptive, imperative names in
+  `pnpm supabase:migration:new -- <name>`
 - **NEVER** use generic names like "update_schema" or "fix_table"
 
 ```bash
@@ -180,28 +221,40 @@ pnpm supabase:migration:new -- changes
 
 ### Migration test delta (required)
 
-**Rule:** Any new or materially changed file under `supabase/migrations/*.sql` must land with a **test delta** in the same change set—unless maintainers explicitly approve a documented exception (e.g. emergency hotfix with a follow-up ticket).
+**Rule:** Any new or materially changed file under `supabase/migrations/*.sql`
+must land with a **test delta** in the same change set—unless maintainers
+explicitly approve a documented exception (e.g. emergency hotfix with a
+follow-up ticket).
 
-| Change touches | Extend |
-|----------------|--------|
-| Schema invariants, policies, RPCs, or SQL behavior you can assert in-database | [`supabase/tests/pgtap/`](../../supabase/tests/pgtap/) (add or update `.sql` tests) |
-| Client-visible RLS, session roles, or infra code paths | RLS-focused tests following patterns in [`packages/supabase-infra/`](../../packages/supabase-infra/) |
+| Change touches                                                                | Extend                                                                                               |
+| ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Schema invariants, policies, RPCs, or SQL behavior you can assert in-database | [`supabase/tests/pgtap/`](../../supabase/tests/pgtap/) (add or update `.sql` tests)                  |
+| Client-visible RLS, session roles, or infra code paths                        | RLS-focused tests following patterns in [`packages/supabase-infra/`](../../packages/supabase-infra/) |
 
-**Verify locally:** [`pnpm test:sql`](./testing.md) runs pgTAP via `supabase test db`; [`pnpm test:rls`](./testing.md) runs the Vitest RLS suites; [`pnpm test:db`](./testing.md) runs integration + RLS + SQL together. Details and prerequisites: [Testing](./testing.md).
+**Verify locally:** [`pnpm test:db`](./testing.md) runs pgTAP via
+`supabase test db`; [`pnpm test:rls`](./testing.md) runs the Vitest RLS suites;
+[`pnpm test:sql`](./testing.md) runs Vitest integration + RLS together;
+[`pnpm test:db:all`](./testing.md) runs integration, RLS, then pgTAP. Details
+and prerequisites: [Testing](./testing.md).
 
 ### Migration Review Checklist
 
 Before committing migrations:
 
-- [ ] **Test delta** satisfied per [Migration test delta (required)](#migration-test-delta-required) (pgTAP and/or RLS tests as applicable)
-- [ ] Migration file was created with `pnpm supabase:migration:new` and SQL captured via CLI (`db diff`), not a hand-made path
+- [ ] **Test delta** satisfied per
+      [Migration test delta (required)](#migration-test-delta-required) (pgTAP
+      and/or RLS tests as applicable)
+- [ ] Migration file was created with `pnpm supabase:migration:new` and SQL
+      captured via CLI (`db diff`), not a hand-made path
 - [ ] RLS is enabled on all new tables
 - [ ] Policies are granular (per operation + role)
 - [ ] Indexes exist for policy-filtered columns
 - [ ] No `select("*`) in database functions
 - [ ] All functions have `search_path = ''`
 
-**TDD order with schema changes:** [TDD](./tdd.md) (contracts and tests coordinate with local DDL + `pnpm supabase:migration:new` + `pnpm supabase db diff -o …`; do not invent migration paths by hand).
+**TDD order with schema changes:** [TDD](./tdd.md) (contracts and tests
+coordinate with local DDL + `pnpm supabase:migration:new` +
+`pnpm supabase db diff -o …`; do not invent migration paths by hand).
 
 ---
 
@@ -209,11 +262,11 @@ Before committing migrations:
 
 ### Environment Separation
 
-| Environment | Project Ref | Access | Migration Method |
-|-------------|-------------|--------|------------------|
-| Local | `local` | Developers only | `supabase db push` |
-| Staging | `staging-*` | Team | CI/CD pipeline |
-| Production | `production-*` | Restricted | CI/CD pipeline only |
+| Environment | Project Ref    | Access          | Migration Method    |
+| ----------- | -------------- | --------------- | ------------------- |
+| Local       | `local`        | Developers only | `supabase db push`  |
+| Staging     | `staging-*`    | Team            | CI/CD pipeline      |
+| Production  | `production-*` | Restricted      | CI/CD pipeline only |
 
 ### Local Development
 
@@ -231,7 +284,8 @@ supabase db pull --linked             # Never pull from production!
 
 ### Production is Pipeline-Only
 
-**NEVER** run migrations directly on production. Production changes MUST go through CI/CD.
+**NEVER** run migrations directly on production. Production changes MUST go
+through CI/CD.
 
 ```bash
 # ✅ CORRECT — Production via pipeline
@@ -264,14 +318,14 @@ SUPABASE_URL=https://...  # Which environment?
 
 ### Naming Conventions
 
-| Object | Convention | Example |
-|--------|-----------|---------|
-| Tables | snake_case, plural | `users`, `entities`, `audit_logs` |
-| Columns | snake_case, singular | `id`, `created_at`, `user_id` |
+| Object    | Convention             | Example                                |
+| --------- | ---------------------- | -------------------------------------- |
+| Tables    | snake_case, plural     | `users`, `entities`, `audit_logs`      |
+| Columns   | snake_case, singular   | `id`, `created_at`, `user_id`          |
 | Functions | snake_case, verb-first | `get_entity_by_id`, `check_permission` |
-| Policies | Descriptive sentence | `"Users can view own entities"` |
-| Indexes | `idx_{table}_{column}` | `idx_entities_user_id` |
-| Triggers | `trg_{table}_{event}` | `trg_entities_updated_at` |
+| Policies  | Descriptive sentence   | `"Users can view own entities"`        |
+| Indexes   | `idx_{table}_{column}` | `idx_entities_user_id`                 |
+| Triggers  | `trg_{table}_{event}`  | `trg_entities_updated_at`              |
 
 ### Formatting Standards
 
@@ -298,6 +352,7 @@ CREATE TABLE entities(id uuid primary key,name text not null);
 ### Comments
 
 **ALWAYS** add comments for:
+
 - Table purpose
 - Non-obvious column meanings
 - Complex business logic in functions
@@ -484,33 +539,33 @@ SELECT * FROM entities WHERE user_id != auth.uid();  -- Empty result
 
 ```typescript
 // ✅ CORRECT — Zod validation at boundary
-import { z } from "zod";
+import { z } from "zod"
 
 const CreateEntitySchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().optional(),
   status: z.enum(["draft", "published", "archived"]),
   metadata: z.record(z.unknown()).optional(),
-});
+})
 
-type CreateEntityInput = z.infer<typeof CreateEntitySchema>;
+type CreateEntityInput = z.infer<typeof CreateEntitySchema>
 
 // In action
 const _createEntityAction = createAction({
-  inputSchema: CreateEntitySchema,  // Automatic validation
+  inputSchema: CreateEntitySchema, // Automatic validation
   handler: async (input, context) => {
     // input is already validated, safe to use
-    return await repository.create(input);
+    return await repository.create(input)
   },
-});
+})
 
 // ❌ WRONG — No validation
 const _createEntityAction = createAction({
   handler: async (input, context) => {
     // input could be anything!
-    return await repository.create(input);
+    return await repository.create(input)
   },
-});
+})
 ```
 
 ### Database Constraints
@@ -524,7 +579,7 @@ CREATE TABLE entities (
   name text NOT NULL CHECK (length(name) > 0 AND length(name) <= 100),
   status text NOT NULL CHECK (status IN ('draft', 'published', 'archived')),
   created_at timestamptz NOT NULL DEFAULT now(),
-  
+
   -- Unique constraint
   CONSTRAINT unique_user_entity_name UNIQUE (user_id, name)
 );
@@ -647,15 +702,20 @@ $$ LANGUAGE sql;
 
 ## Scheduled maintenance (voucher expiry)
 
-`public.expire_due_vouchers()` transitions **ACTIVATED** vouchers to **EXPIRED** when `expires_at < now()`. It is **`SECURITY DEFINER`** and granted to **`service_role` only** (not `authenticated`).
+`public.expire_due_vouchers()` transitions **ACTIVATED** vouchers to **EXPIRED**
+when `expires_at < now()`. It is **`SECURITY DEFINER`** and granted to
+**`service_role` only** (not `authenticated`).
 
-**Operations:** configure a nightly (or periodic) job in the Supabase project that runs:
+**Operations:** configure a nightly (or periodic) job in the Supabase project
+that runs:
 
 ```sql
 SELECT public.expire_due_vouchers();
 ```
 
-Use **Supabase Dashboard → Database → Scheduled triggers** (or **pg_cron** on the project, if enabled) with the **service role** context required for that function. Do not expect logged-in users to call it.
+Use **Supabase Dashboard → Database → Scheduled triggers** (or **pg_cron** on
+the project, if enabled) with the **service role** context required for that
+function. Do not expect logged-in users to call it.
 
 ---
 

@@ -1,0 +1,1 @@
+../../../skills/edge-function-template/SKILL.md

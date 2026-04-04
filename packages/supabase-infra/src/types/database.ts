@@ -1,4 +1,5 @@
-import type { Database as DatabaseGenerated } from "@workspace/supabase-infra/types/database.types"
+import type { Database as DatabaseGenerated } from "./database.types.js"
+import type { TypedSupabaseClient } from "./supabase.js"
 
 type PublicFunctions = DatabaseGenerated["public"]["Functions"]
 
@@ -10,5 +11,5 @@ type Database = Omit<DatabaseGenerated, "public"> & {
   }
 }
 
-export type { Database }
-export type { DatabaseGenerated }
+export type { Json } from "./database.types.js"
+export type { Database, DatabaseGenerated, TypedSupabaseClient }

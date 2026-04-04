@@ -3,10 +3,7 @@ import type { UserRoleDTO } from "@workspace/supabase-data/modules/user-roles/do
 
 interface UserRoleRepository {
   findByUserId(userId: string): Promise<UserRoleDTO[]>
-  replaceUserRoles(
-    userId: string,
-    roles: readonly AuthRole[]
-  ): Promise<UserRoleDTO[]>
+  replaceUserRoles(userId: string, roles: readonly AuthRole[]): Promise<UserRoleDTO[]>
 }
 
 export { type UserRoleRepository }

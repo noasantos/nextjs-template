@@ -11,10 +11,14 @@ Default automation for dependency and secret safety.
 ## Secrets
 
 - Never commit service-role keys, access tokens, or production credentials.
-- Keep browser-safe variables under `NEXT_PUBLIC_*`; everything else is server-only.
-- `.env.example` documents expected variables, but real values belong in `.env.local` or your platform secret store.
-- Local agent workflows should not add `SUPABASE_SERVICE_ROLE_KEY` to committed env files; the local Supabase setup resolves it when appropriate.
+- Keep browser-safe variables under `NEXT_PUBLIC_*`; everything else is
+  server-only.
+- `.env.example` documents expected variables, but real values belong in
+  `.env.local` or your platform secret store.
+- Local agent workflows should not add `SUPABASE_SERVICE_ROLE_KEY` to committed
+  env files; the local Supabase setup resolves it when appropriate.
 
 ## Template expectation
 
-These workflows are generic on purpose. Fork maintainers can tighten schedules, labels, and branch targets without changing the underlying contract.
+These workflows are generic on purpose. Fork maintainers can tighten schedules,
+labels, and branch targets without changing the underlying contract.

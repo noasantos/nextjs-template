@@ -1,13 +1,13 @@
 import { randomUUID } from "node:crypto"
 
-import { NextRequest } from "next/server"
 import createMiddleware from "next-intl/middleware"
+import { NextRequest } from "next/server"
 
+import { routing } from "@/i18n/routing"
 import { extractCorrelationFromHeaders } from "@workspace/logging/correlation"
 import { updateSession } from "@workspace/supabase-auth/proxy/update-session"
 
 import { buildEnforcingContentSecurityPolicy } from "./lib/security-headers.mjs"
-import { routing } from "@/i18n/routing"
 
 const handleI18nRouting = createMiddleware(routing)
 

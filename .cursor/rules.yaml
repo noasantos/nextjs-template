@@ -1,0 +1,63 @@
+# Cursor Rules Configuration
+
+# These rules are ALWAYS applied when working with this codebase
+# They ensure consistency and prevent common mistakes
+
+rules:
+  # ===========================================================================
+  # AUTHENTICATION & SECURITY
+  # ===========================================================================
+  - auth-invariants.mdc
+  - security-invariants.mdc
+  - proxy-not-middleware.mdc
+
+  # ===========================================================================
+  # CODE QUALITY
+  # ===========================================================================
+  - zero-barrel-policy.mdc
+  - no-console-logging.mdc
+  - file-size-limit.mdc
+  - english-only.mdc
+
+  # ===========================================================================
+  # DATABASE & MIGRATIONS
+  # ===========================================================================
+  - cli-migrations-only.mdc
+  - rls-first-design.mdc
+
+  # ===========================================================================
+  # ARCHITECTURE
+  # ===========================================================================
+  - repository-pattern.mdc
+  - server-actions-boundary.mdc
+  - private-directory-convention.mdc
+
+  # ===========================================================================
+  # UI & COMPONENTS
+  # ===========================================================================
+  - ui-cli-only.mdc
+  - shadcn-immutable.mdc
+
+  # ===========================================================================
+  # DOCUMENTATION
+  # ===========================================================================
+  - three-level-docs.mdc
+  - adr-template.mdc
+
+  # ===========================================================================
+  # TESTING
+  # ===========================================================================
+  - tdd-required.mdc
+  - rls-tests-mandatory.mdc
+
+  # ===========================================================================
+  # WORKFLOW
+  # ===========================================================================
+  - commit-workflow.mdc
+  - pre-commit-checklist.mdc
+
+# Always apply these rules
+alwaysApply: true
+
+# Fail on violations
+failOnViolation: true

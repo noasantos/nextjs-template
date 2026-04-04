@@ -1,0 +1,44 @@
+> **Contributors without Cursor:** Same rule as
+> [`.cursor/rules/packages-ui-immutable.mdc`](../../../.cursor/rules/packages-ui-immutable.mdc).
+> Regenerate: `node scripts/ci/sync-cursor-rules-to-docs.mjs`.
+
+---
+
+# `packages/ui` — immutable for agents (GR-001)
+
+## Hard rule
+
+- **Do not** create, edit, move, rename, or delete files under `packages/ui/**`
+  (including `components.json`, `src/**`, configs inside that package).
+- **Do not** use tools to change `packages/ui` for “product” fixes, styling,
+  bugfixes, or refactors.
+
+## Allowed path for humans (not agents)
+
+- New or updated **shadcn primitives** only via the official CLI from the repo
+  root, for example:
+  - `pnpm dlx shadcn@latest add <component> -c packages/ui`
+- Humans run that; **do not** simulate the CLI by pasting generated source into
+  `packages/ui`.
+
+## Where product UI goes instead
+
+- Shared branded compositions: **`packages/brand`** (`@workspace/brand`).
+- App-specific UI: **`apps/<app>/**`** (e.g. `\_components`, routes).
+
+## If the user insists on changing `packages/ui`
+
+- Refuse hand-edits; explain that the repo treats `packages/ui` as vendored
+  shadcn output.
+- Offer: wrapper in `@workspace/brand` or the app, or ask a human to run the
+  shadcn CLI.
+
+## CI / `pnpm check:forbidden`
+
+- Any Git change under `packages/ui/**` (working tree, index, or commits on
+  `HEAD` vs merge-base with the default branch) fails **`pnpm check:forbidden`**
+  unless **`ALLOW_PACKAGES_UI_CHANGES=1`** (use only for intentional shadcn CLI
+  output). Optional: **`FORBIDDEN_DIFF_BASE`** to point at the base ref (e.g.
+  `origin/develop`).
+
+Canonical: `AGENTS.md` → Critical rules → `@workspace/ui` immutable.

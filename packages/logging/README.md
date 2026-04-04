@@ -1,99 +1,150 @@
 # @workspace/logging
 
-Shared observability package for structured logging, correlation, redaction, and runtime-safe event emission.
+Structured logging package for server-side operations.
 
-## Purpose
+## 🚨 CRITICAL: Layer Responsibilities
 
-This package is the only shared observability contract for the monorepo.
+### ✅ Where to Use Logging
 
-Use it for:
+**Data Layer (`packages/supabase-data/`):**
 
-- canonical event types
-- request correlation
-- safe metadata handling
-- safe error serialization
-- server event emission
-- browser error-boundary reporting
-- future Edge Function observability
+- ✅ Server Actions
+- ✅ Repositories
+- ✅ Business logic
 
-Do not create local logger wrappers in apps or packages.
+**Auth Layer (`packages/supabase-auth/`):**
 
-## Exports
+- ✅ Auth guards
+- ✅ Session management
+- ✅ Security checks
 
-| Export                           | Purpose                                                           |
-| -------------------------------- | ----------------------------------------------------------------- |
-| `@workspace/logging/contracts`   | Canonical event schema and enums                                  |
-| `@workspace/logging/correlation` | Correlation header extraction and propagation                     |
-| `@workspace/logging/redaction`   | Metadata sanitization, request-path safety, deterministic hashing |
-| `@workspace/logging/errors`      | Error categorization and serialization                            |
-| `@workspace/logging/server`      | Node and Next.js observability helpers                            |
-| `@workspace/logging/client`      | Browser-side error-boundary reporting                             |
-| `@workspace/logging/edge`        | Future Edge Function helper surface                               |
-| `@workspace/logging/testing`     | Event fixtures for tests                                          |
+**Infra Layer (`packages/supabase-infra/`):**
 
-## Rules
+- ✅ Database clients
+- ✅ Infrastructure operations
 
-- log one rich boundary event instead of multiple thin checkpoint logs
-- keep user-facing errors generic and internal events specific
-- never log raw secrets, tokens, cookies, emails, phone numbers, or full request bodies
-- hash identifiers when correlation is needed
-- seed correlation at ingress, not deep in business logic
+### ❌ Where NOT to Use Logging
 
-## Examples
+**Apps Layer (`apps/web/`):**
 
-Server route or page boundary:
+- ❌ UI Components
+- ❌ Pages
+- ❌ Client Components
 
-```ts
-const context = await createServerObservabilityContext({
-  headers: request.headers,
-  requestPath: request.url,
-})
+**Why:** Apps layer should delegate to Server Actions which handle logging.
 
-return withServerObservabilityContext(context, async () => {
-  await logServerEvent({
-    component: "auth.callback",
-    eventFamily: "auth.flow",
-    eventName: "callback_exchange_succeeded",
-    operation: "exchange_code_for_session",
-    operationType: "auth",
+## Architecture
+
+```
+┌─────────────────────────────────────┐
+│  Apps Layer (apps/web)              │
+│  ❌ NO direct logging               │
+│     Use Server Actions instead      │
+└─────────────────────────────────────┘
+               ↓ calls
+┌─────────────────────────────────────┐
+│  Data Layer (@workspace/supabase-data) │
+│  ✅ Server Actions with logging     │
+│     logServerEvent({...})           │
+└─────────────────────────────────────┘
+```
+
+## Usage
+
+### Server-Side (Primary)
+
+```typescript
+import { logServerEvent } from "@workspace/logging/server"
+
+export async function myServerAction() {
+  const startedAt = Date.now()
+
+  try {
+    // ... operation
+    await logServerEvent({
+      component: "my.component",
+      eventFamily: "action.lifecycle",
+      eventName: "operation_completed",
+      outcome: "success",
+      durationMs: Date.now() - startedAt,
+      service: "supabase-data",
+    })
+  } catch (error) {
+    await logServerEvent({
+      component: "my.component",
+      eventFamily: "action.lifecycle",
+      eventName: "operation_failed",
+      outcome: "failure",
+      error,
+      durationMs: Date.now() - startedAt,
+      service: "supabase-data",
+    })
+    throw error
+  }
+}
+```
+
+### Client-Side (Fallback)
+
+```typescript
+"use client"
+
+import { logClientEvent } from "@workspace/logging/client"
+
+export function MyComponent() {
+  const handleClick = async () => {
+    await logClientEvent({
+      component: "my.component",
+      eventFamily: "ui.event",
+      eventName: "button_clicked",
+      outcome: "success",
+    })
+  }
+
+  return <button onClick={handleClick}>Click</button>
+}
+```
+
+### Edge Functions
+
+```typescript
+import { logEdgeEvent } from "@workspace/logging/edge"
+
+serve(async (req) => {
+  await logEdgeEvent(req, {
+    component: "my-function",
+    eventFamily: "edge.request",
+    eventName: "function_executed",
     outcome: "success",
-    persist: true,
-    service: "auth",
   })
 })
 ```
 
-Browser error boundary:
+## Event Families
 
-```ts
-reportBrowserUiError({
-  component: "adm.utilizadores.error_boundary",
-  error,
-  service: "example",
-})
+| Family                 | Use Case          |
+| ---------------------- | ----------------- |
+| `action.lifecycle`     | Server Actions    |
+| `auth.flow`            | Login, logout     |
+| `security.audit`       | Permission checks |
+| `http.request`         | API requests      |
+| `supabase.integration` | DB operations     |
+| `ui.error`             | Client errors     |
+
+## Scripts
+
+### Generate Server Action Template
+
+```bash
+pnpm action:new -- <module> <action-name>
+
+# Example
+pnpm action:new -- tasks create-task
 ```
 
-Future Edge Function:
+This creates a Server Action with:
 
-```ts
-logEdgeEvent({
-  component: "edge.webhook",
-  eventName: "edge_request_failed",
-  operation: "processWebhook",
-  outcome: "failure",
-  request,
-  service: "edge-runtime",
-})
-```
-
-## Never log
-
-- `Authorization`
-- cookies
-- JWTs
-- service role secrets
-- OTPs or token hashes
-- email addresses
-- phone numbers
-- full names
-- full provider payloads
+- ✅ Logging already configured
+- ✅ Error handling setup
+- ✅ Type safety
+- ✅ TODO comments for customization

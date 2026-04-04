@@ -1,0 +1,16 @@
+{
+  "patterns": [
+    "feature/:name",
+    "bugfix/:ticket-:name",
+    "hotfix/:ticket-:name",
+    "docs/:name",
+    "chore/:name",
+    "test/:name",
+    "refactor/:name"
+  ],
+  "ticketId": {
+    "enabled": false,
+    "pattern": "^[A-Z]+-[0-9]+$"
+  },
+  "exclude": ["main", "master", "develop", "staging", "production"]
+}

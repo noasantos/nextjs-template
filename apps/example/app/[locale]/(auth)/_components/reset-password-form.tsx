@@ -2,7 +2,9 @@
 
 import * as React from "react"
 
-import { Input } from "@workspace/ui/components/input"
+import { AuthSubmitFooter } from "@/app/[locale]/(auth)/_components/auth-submit-footer"
+import { useAuthErrorTranslator } from "@/app/[locale]/(auth)/_lib/auth-error-message"
+import { useAuthFormSchemas } from "@/app/[locale]/(auth)/_lib/auth-form-schemas"
 import {
   FormField,
   FormFieldDescription,
@@ -13,24 +15,20 @@ import { useAppForm } from "@workspace/forms/hooks/use-app-form"
 import { getFormErrorText } from "@workspace/forms/lib/get-form-error-text"
 import { updatePassword } from "@workspace/supabase-auth/browser/update-password"
 import { buildAuthContinueUrl } from "@workspace/supabase-auth/shared/app-destination"
-
-import { AuthSubmitFooter } from "@/app/[locale]/(auth)/_components/auth-submit-footer"
-import { translateAuthErrorMessage } from "@/app/[locale]/(auth)/_lib/auth-error-message"
-import {
-  passwordResetDefaultValues,
-  passwordResetSchema,
-} from "@/app/[locale]/(auth)/_lib/auth-form-schemas"
+import { Input } from "@workspace/ui/components/input"
 
 type ResetPasswordFormProps = {
   redirectTo: string
 }
 
 function ResetPasswordForm({ redirectTo }: ResetPasswordFormProps) {
+  const translateAuthError = useAuthErrorTranslator()
+  const schemas = useAuthFormSchemas()
   const [authError, setAuthError] = React.useState<string | null>(null)
   const [notice, setNotice] = React.useState<string | null>(null)
 
   const form = useAppForm({
-    defaultValues: passwordResetDefaultValues,
+    defaultValues: schemas.passwordResetDefaultValues,
     formId: "auth-reset-password",
     onSubmit: async ({ value }) => {
       setAuthError(null)
@@ -39,7 +37,7 @@ function ResetPasswordForm({ redirectTo }: ResetPasswordFormProps) {
       const { error } = await updatePassword({ password: value.password })
 
       if (error) {
-        setAuthError(translateAuthErrorMessage(error.message))
+        setAuthError(translateAuthError(error.message))
         return
       }
 
@@ -48,7 +46,7 @@ function ResetPasswordForm({ redirectTo }: ResetPasswordFormProps) {
         window.location.assign(buildAuthContinueUrl(redirectTo))
       }, 500)
     },
-    schema: passwordResetSchema,
+    schema: schemas.passwordResetSchema,
   })
 
   return (
@@ -66,7 +64,7 @@ function ResetPasswordForm({ redirectTo }: ResetPasswordFormProps) {
         </div>
       ) : null}
       {authError ? (
-        <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs/relaxed text-destructive">
+        <div className="border-destructive/30 bg-destructive/10 text-destructive rounded-md border px-3 py-2 text-xs/relaxed">
           {authError}
         </div>
       ) : null}
@@ -83,9 +81,7 @@ function ResetPasswordForm({ redirectTo }: ResetPasswordFormProps) {
             {(["password", "confirmPassword"] as const).map((fieldName) => (
               <form.Field key={fieldName} name={fieldName}>
                 {(field) => {
-                  const invalid =
-                    field.state.meta.isTouched &&
-                    field.state.meta.errors.length > 0
+                  const invalid = field.state.meta.isTouched && field.state.meta.errors.length > 0
                   const errorMessage = getFormErrorText(field.state.meta.errors)
                   const descriptionId = `${field.name}-description`
                   const errorId = `${field.name}-error`
@@ -98,23 +94,15 @@ function ResetPasswordForm({ redirectTo }: ResetPasswordFormProps) {
                           : "Confirmar palavra-passe"}
                       </FormFieldLabel>
                       <Input
-                        aria-describedby={
-                          invalid
-                            ? `${descriptionId} ${errorId}`
-                            : descriptionId
-                        }
+                        aria-describedby={invalid ? `${descriptionId} ${errorId}` : descriptionId}
                         aria-invalid={invalid}
-                        autoComplete={
-                          field.name === "password" ? "new-password" : "off"
-                        }
+                        autoComplete={field.name === "password" ? "new-password" : "off"}
                         className="h-11 rounded-lg"
                         disabled={isSubmitting}
                         id={field.name}
                         name={field.name}
                         onBlur={field.handleBlur}
-                        onChange={(event) =>
-                          field.handleChange(event.target.value)
-                        }
+                        onChange={(event) => field.handleChange(event.target.value)}
                         placeholder={
                           field.name === "password"
                             ? "Escolha uma nova palavra-passe"
@@ -124,12 +112,10 @@ function ResetPasswordForm({ redirectTo }: ResetPasswordFormProps) {
                         value={field.state.value}
                       />
                       <FormFieldDescription id={descriptionId}>
-                        A sessão de recuperação mantém-se ativa na aplicação até
-                        concluir a alteração.
+                        A sessão de recuperação mantém-se ativa na aplicação até concluir a
+                        alteração.
                       </FormFieldDescription>
-                      <FormFieldError id={errorId}>
-                        {errorMessage}
-                      </FormFieldError>
+                      <FormFieldError id={errorId}>{errorMessage}</FormFieldError>
                     </FormField>
                   )
                 }}

@@ -120,8 +120,6 @@ describe("requireRoles (role gate template)", () => {
       }),
     })
 
-    await expect(requireRoles({ anyOf: [R] })).rejects.toThrow(
-      /^REDIRECT:continue:/
-    )
+    await expect(requireRoles({ anyOf: [R] })).rejects.toThrow(/^REDIRECT:continue:/)
   })
 })

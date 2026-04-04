@@ -20,8 +20,7 @@ const {
   redirectMock,
 } = vi.hoisted(() => ({
   buildAuthAccessDeniedUrlMock: vi.fn(
-    (redirectTo, required) =>
-      `access-denied:${redirectTo}:${required?.join(",")}`
+    (redirectTo, required) => `access-denied:${redirectTo}:${required?.join(",")}`
   ),
   buildAuthSignInUrlMock: vi.fn((redirectTo) => `sign-in:${redirectTo}`),
   createServerAuthClientMock: vi.fn(),
@@ -85,9 +84,9 @@ describe("requirePermission (single-code gate)", () => {
       sub: "user-1",
     })
 
-    await expect(
-      requirePermission({ permission: PERMISSIONS.exampleAccess })
-    ).rejects.toThrow(/^REDIRECT:/)
+    await expect(requirePermission({ permission: PERMISSIONS.exampleAccess })).rejects.toThrow(
+      /^REDIRECT:/
+    )
 
     expect(buildAuthAccessDeniedUrlMock).toHaveBeenCalled()
   })

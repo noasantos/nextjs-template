@@ -1,29 +1,30 @@
 {
   "name": "@workspace/brand",
   "version": "0.0.0",
-  "type": "module",
   "private": true,
+  "type": "module",
+  "exports": {
+    "./components/theme-provider": "./src/_providers/theme-provider.provider.tsx"
+  },
   "scripts": {
-    "lint": "eslint",
-    "format": "prettier --write \"**/*.{ts,tsx}\"",
-    "typecheck": "tsc --noEmit"
+    "lint": "oxlint",
+    "format": "oxfmt --write",
+    "typecheck": "tsc --noEmit",
+    "check:exports": "publint"
   },
   "dependencies": {
-    "@workspace/ui": "workspace:*",
-    "next-themes": "^0.4.6",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "@workspace/core": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^25.1.0",
+    "@types/node": "^25.5.2",
     "@types/react": "^19.2.10",
     "@types/react-dom": "^19.2.3",
-    "@workspace/eslint-config": "workspace:*",
     "@workspace/typescript-config": "workspace:*",
-    "eslint": "^9.39.2",
+    "publint": "^0.3.18",
     "typescript": "^5.9.3"
   },
-  "exports": {
-    "./components/theme-provider": "./src/_providers/theme-provider.tsx"
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   }
 }

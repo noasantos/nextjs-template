@@ -31,7 +31,7 @@ function AuthSubmitFooter({
       {showStatusRow ? (
         <div
           className={cn(
-            "text-xs/relaxed text-muted-foreground",
+            "text-muted-foreground text-xs/relaxed",
             isDirty ? "text-foreground" : undefined
           )}
         >

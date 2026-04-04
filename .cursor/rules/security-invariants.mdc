@@ -1,33 +1,40 @@
+# 🔐 Security Invariants
+
+**This is a CURSOR-SPECIFIC rule file.**
+
+**Full documentation:** [docs/standards/rules/security-invariants.md](../../docs/standards/rules/security-invariants.md)
+
+## Rule for Cursor
+
+Cursor MUST enforce these security invariants:
+
+1. **ALWAYS** use `getClaims()` for auth (NOT `getUser()`)
+2. **ALWAYS** sanitize headers in proxy.ts
+3. **ALWAYS** use dynamic CSP with nonce
+4. **NEVER** use `console.log` (use `logServerEvent`)
+
+## Quick Reference
+
+```typescript
+// ✅ getClaims() - JWKS cached (fast)
+const claims = await getClaims()
+
+// ❌ getUser() - DB call (slow)
+const user = await getUser()
+
+// ✅ Header sanitization
+const sanitizedHeaders = new Headers(request.headers)
+sanitizedHeaders.delete("x-middleware-subrequest")
+```
+
+## Enforcement
+
+- `pnpm check:security-smells` - Automated scan
+- Pre-commit hook - Blocks violations
+- Cursor should auto-fix security issues
+
 ---
-description: Compact security invariants; enforced checks live in scripts/ci and CI workflows.
-alwaysApply: true
----
 
-# Security invariants (template)
-
-Canonical detail: root `AGENTS.md`, `docs/guides/auth-invariants.md`, `docs/guides/web-security-baseline.md`, `docs/architecture/database.md`.
-
-## Machine-checkable (run before merge)
-
-- `pnpm check:forbidden` — no server `getSession()` for authz, no `createAdminClient` outside `@workspace/supabase-data` + infra client file, no app-local `lib/db`, no hand-edited `database.types.ts`, stamped migrations only, no `packages/ui` edits without allowlist.
-- `pnpm check:security-smells` — no unsafe `NEXT_PUBLIC_*SECRET*` / `*SERVICE_ROLE*` / `*PRIVATE_KEY*` names; no `SUPABASE_SERVICE_ROLE_KEY` in `use client` modules; `.env.example` must not assign a value to `SUPABASE_SERVICE_ROLE_KEY`.
-
-## Auth and abuse
-
-- Server authorization: `getClaims()` (not `getSession()`). Session refresh: root `apps/<app>/proxy.ts` + `@workspace/supabase-auth/proxy/update-session`.
-- Sensitive auth routes: call `protectSensitiveAuthRoute` before GoTrue / token work. In **`NODE_ENV=production`**, set `AUTH_RATE_LIMIT_MODE=memory` (single-instance / previews) or wire a durable limiter — default is **fail closed (503)** until configured.
-
-## Data and secrets
-
-- Data access lives in `@workspace/supabase-infra` (clients/env/types) and `@workspace/supabase-data` (actions/repos). No `apps/*/lib/db` or app-local repositories.
-- Regenerate `database.types.ts` only via `pnpm supabase:types:local` or `pnpm supabase:types:linked`; merge fixes in `database.ts`.
-- Migrations: `pnpm supabase:migration:new -- <name>` only; never hand-create SQL under `supabase/migrations/`.
-
-## Browser and transport
-
-- Security headers for Next apps: copy `apps/example/lib/security-headers.mjs` + `next.config.mjs` pattern. Opt-in enforcing CSP: root `CSP_ENFORCE=1` (see `docs/guides/web-security-baseline.md`).
-- HSTS at the **CDN / edge**, not blindly in Next config.
-
-## DB changes
-
-- Any RLS / migration / RPC / authz-sensitive SQL change: run **`pnpm test:db`** locally before claiming merge-ready.
+**Rule ID:** SECURITY-INVARIANTS  
+**Severity:** CRITICAL  
+**Full Docs:** [docs/standards/rules/security-invariants.md](../../docs/standards/rules/security-invariants.md)

@@ -1,13 +1,12 @@
+import { createServerClient } from "@supabase/ssr"
 import { describe, expect, it, vi } from "vitest"
 
-import { createServerClient } from "@supabase/ssr"
-import { getSupabasePublicEnv } from "@workspace/supabase-infra/env/public"
-import type { Database } from "@workspace/supabase-infra/types/database"
 import { createServerAuthClient } from "@workspace/supabase-auth/server/create-server-auth-client"
 import { getSession } from "@workspace/supabase-auth/session/get-session"
-import { createTestUser } from "@workspace/test-utils/supabase/users"
-
 import { getSupabaseCookieOptions } from "@workspace/supabase-auth/shared/get-supabase-cookie-options"
+import { getSupabasePublicEnv } from "@workspace/supabase-infra/env/public"
+import type { Database } from "@workspace/supabase-infra/types/database"
+import { createTestUser } from "@workspace/test-utils/supabase/users"
 
 const { cookiesMock } = vi.hoisted(() => ({
   cookiesMock: vi.fn(),
@@ -34,25 +33,21 @@ describe("server auth + Next cookie adapter (integration)", () => {
     cookiesMock.mockResolvedValue(cookieStore)
 
     const { supabaseUrl, supabasePublishableKey } = getSupabasePublicEnv()
-    const bootstrap = createServerClient<Database>(
-      supabaseUrl,
-      supabasePublishableKey,
-      {
-        cookieOptions: getSupabaseCookieOptions(),
-        cookies: {
-          getAll: () => cookieStore.getAll(),
-          setAll: (cookiesToSet) => {
-            try {
-              cookiesToSet.forEach(({ name, options, value }) => {
-                cookieStore.set(name, value, options)
-              })
-            } catch {
-              // Mirrors create-server-auth-client: RSC may not allow writes.
-            }
-          },
+    const bootstrap = createServerClient<Database>(supabaseUrl, supabasePublishableKey, {
+      cookieOptions: getSupabaseCookieOptions(),
+      cookies: {
+        getAll: () => cookieStore.getAll(),
+        setAll: (cookiesToSet) => {
+          try {
+            cookiesToSet.forEach(({ name, options, value }) => {
+              cookieStore.set(name, value, options)
+            })
+          } catch {
+            // Mirrors create-server-auth-client: RSC may not allow writes.
+          }
         },
-      }
-    )
+      },
+    })
 
     const user = await createTestUser()
     const { error } = await bootstrap.auth.signInWithPassword({

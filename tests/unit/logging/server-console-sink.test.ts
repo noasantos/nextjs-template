@@ -40,9 +40,7 @@ function baseEvent() {
 
 describe("resolveServerConsoleMode", () => {
   it("defaults to full when not production", () => {
-    expect(
-      resolveServerConsoleMode({}, "development")
-    ).toBe("full")
+    expect(resolveServerConsoleMode({}, "development")).toBe("full")
   })
 
   it("defaults to minimal in production when unset", () => {
@@ -50,26 +48,18 @@ describe("resolveServerConsoleMode", () => {
   })
 
   it("respects OBSERVABILITY_SERVER_CONSOLE", () => {
-    expect(
-      resolveServerConsoleMode(
-        { OBSERVABILITY_SERVER_CONSOLE: "off" },
-        "production"
-      )
-    ).toBe("off")
-    expect(
-      resolveServerConsoleMode(
-        { OBSERVABILITY_SERVER_CONSOLE: "full" },
-        "production"
-      )
-    ).toBe("full")
+    expect(resolveServerConsoleMode({ OBSERVABILITY_SERVER_CONSOLE: "off" }, "production")).toBe(
+      "off"
+    )
+    expect(resolveServerConsoleMode({ OBSERVABILITY_SERVER_CONSOLE: "full" }, "production")).toBe(
+      "full"
+    )
   })
 })
 
 describe("formatServerConsolePayload", () => {
   it("returns null for off", () => {
-    expect(
-      formatServerConsolePayload(baseEvent(), "off", false)
-    ).toBeNull()
+    expect(formatServerConsolePayload(baseEvent(), "off", false)).toBeNull()
   })
 
   it("minimal mode is a single line without full JSON", () => {

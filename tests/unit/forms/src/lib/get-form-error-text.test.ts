@@ -13,14 +13,12 @@ describe("getFormErrorText", () => {
   })
 
   it("returns the first nested message from arrays", () => {
-    expect(
-      getFormErrorText([null, { message: "" }, { message: "Nested failure" }])
-    ).toBe("Nested failure")
+    expect(getFormErrorText([null, { message: "" }, { message: "Nested failure" }])).toBe(
+      "Nested failure"
+    )
   })
 
   it("returns object message values when present", () => {
-    expect(getFormErrorText({ message: "Validation failed" })).toBe(
-      "Validation failed"
-    )
+    expect(getFormErrorText({ message: "Validation failed" })).toBe("Validation failed")
   })
 })

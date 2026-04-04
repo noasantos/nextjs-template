@@ -1,0 +1,104 @@
+> **Contributors without Cursor:** Same rule as
+> [`.cursor/rules/respect-architectural-boundaries.mdc`](../../../.cursor/rules/respect-architectural-boundaries.mdc).
+> Regenerate: `node scripts/ci/sync-cursor-rules-to-docs.mjs`.
+
+---
+
+Architectural boundaries enforced by dependency-cruiser:
+
+- Apps cannot import other apps (`apps/<name>/app` → another `apps/<name>/app`
+  forbidden)
+- Server code cannot be imported into client code
+- No barrel imports (index.ts)
+- No circular dependencies
+
+Always check imports against these rules.
+
+## Examples
+
+### Correct Usage
+
+```typescript
+// ✅ Correct - Move shared code to packages/
+import { utils } from "@workspace/utils"
+import { Button } from "@workspace/ui"
+
+// ✅ Correct - Explicit imports (no barrels)
+import { formatDate } from "@/utils/date"
+import { validateEmail } from "@/utils/validation"
+
+// ✅ Correct - Server-only code in server components
+import { db } from "@/lib/database" // Only in server components/actions
+```
+
+### Incorrect Usage
+
+```typescript
+// ❌ Wrong - Cross-app import
+import { something } from "apps/example/app/utils"
+
+// ❌ Wrong - Barrel import
+import { foo, bar } from "@/utils" // Don't import from index.ts
+
+// ❌ Wrong - Server code in client component
+;("use client")
+import { db } from "@/lib/database" // Database cannot run in browser
+
+// ❌ Wrong - Circular dependency
+// file-a.ts imports file-b.ts AND file-b.ts imports file-a.ts
+```
+
+## How to Fix Violations
+
+### Cross-App Imports
+
+Move shared code to a package in `packages/`:
+
+```typescript
+// Instead of importing from another app:
+// ❌ import { utils } from 'apps/example/app/utils'
+
+// Move to packages/ and import:
+// ✅ import { utils } from '@workspace/utils'
+```
+
+### Server-to-Client Leaks
+
+Keep server code in server components or actions:
+
+```typescript
+// Client component needs data from database
+// ❌ Wrong - import db in client
+"use client"
+import { db } from "@/lib/database"
+
+// ✅ Correct - use server action
+;("use client")
+import { fetchData } from "./actions"
+```
+
+### Barrel Imports
+
+Import directly from the specific file:
+
+```typescript
+// ❌ Wrong
+import { foo, bar } from "@/utils"
+
+// ✅ Correct
+import { foo } from "@/utils/foo"
+import { bar } from "@/utils/bar"
+```
+
+## Related Rules
+
+- [zero-barrel-policy](./zero-barrel-policy.mdc) - No barrel imports allowed
+- [proxy-not-middleware](./proxy-not-middleware.mdc) - Architecture patterns
+
+## Tooling
+
+Run dependency-cruiser to check violations:
+
+```bash
+pnpm depcruise apps/*/app packages/*/src --config .dependency-cruiser.cjs
+```

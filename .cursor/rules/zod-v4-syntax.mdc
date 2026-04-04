@@ -1,0 +1,126 @@
+---
+description: Always use Zod v4 syntax and next-safe-action v8 patterns
+globs: **/*.{ts,tsx}
+---
+
+# Zod v4 Syntax Requirement
+
+## Mandatory Patterns
+
+### 1. Use `.inputSchema()` for next-safe-action v8
+
+**CORRECT:**
+```typescript
+import { authActionClient } from '@/lib/safe-action'
+import { z } from 'zod'
+
+export const updateProfile = authActionClient
+  .inputSchema(z.object({
+    name: z.string().min(1),
+    email: z.string().email()
+  }))
+  .action(async ({ parsedInput, ctx }) => {
+    // ...
+  })
+```
+
+**WRONG (deprecated):**
+```typescript
+export const updateProfile = authActionClient
+  .schema(z.object({ ... })) // ❌ Deprecated in v8
+  .action(async ({ parsedInput, ctx }) => {
+    // ...
+  })
+```
+
+### 2. Use Correct Zod v4 Validators
+
+| Validator | Correct | Wrong |
+|-----------|---------|-------|
+| UUID | `z.string().uuid()` | `z.string().uuid` (missing `()`) |
+| Email | `z.string().email()` | `z.string().email` (missing `()`) |
+| URL | `z.string().url()` | `z.string().url` (missing `()`) |
+| Min length | `z.string().min(1)` | `z.string().minlength(1)` |
+| Max length | `z.string().max(100)` | `z.string().maxlength(100)` |
+| Positive | `z.number().positive()` | `z.number().min(0)` |
+
+### 3. Optional vs Nullable
+
+```typescript
+// Use optional when field can be undefined
+const profile = z.object({
+  bio: z.string().optional() // string | undefined
+})
+
+// Use nullable when field can be null
+const user = z.object({
+  deletedAt: z.string().nullable() // string | null
+})
+```
+
+### 4. Common String Validators
+
+```typescript
+// Required string
+const title = z.string().min(1)
+
+// Email
+const email = z.string().email()
+
+// UUID
+const id = z.string().uuid()
+
+// URL
+const website = z.string().url()
+
+// Regex pattern
+const slug = z.string().regex(/^[a-z0-9-]+$/)
+
+// Optional
+const description = z.string().optional()
+```
+
+### 5. Common Number Validators
+
+```typescript
+// Positive only
+const age = z.number().positive()
+
+// Integer only
+const count = z.number().int()
+
+// Range
+const rating = z.number().min(1).max(5)
+
+// Non-negative (0 or positive)
+const score = z.number().nonnegative()
+```
+
+### 6. Enums and Unions
+
+```typescript
+// Enum (preferred)
+const role = z.enum(['admin', 'user', 'guest'])
+
+// Union
+const id = z.union([z.string().uuid(), z.number()])
+
+// Native enum
+enum Status { Draft, Published }
+const status = z.nativeEnum(Status)
+```
+
+## Why This Matters
+
+1. **Zod v4** has breaking changes from v3
+2. **next-safe-action v8** uses `.inputSchema()` not `.schema()`
+3. **Type inference** depends on correct syntax
+4. **AI agents** learn from these patterns and replicate them
+
+## Documentation
+
+See [`docs/tools/zod-v4-patterns.md`](/docs/tools/zod-v4-patterns.md) for complete reference.
+
+## Examples
+
+See [`apps/example/actions/example.ts`](/apps/example/actions/example.ts) for working example.

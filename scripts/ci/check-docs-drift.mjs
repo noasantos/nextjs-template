@@ -4,9 +4,7 @@ import { fileURLToPath } from "node:url"
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..")
 
-const rootPackageJson = JSON.parse(
-  readFileSync(join(root, "package.json"), "utf8")
-)
+const rootPackageJson = JSON.parse(readFileSync(join(root, "package.json"), "utf8"))
 
 const docsToCheck = [
   "AGENTS.md",
@@ -35,7 +33,14 @@ function extractCodeBlocks(text) {
 }
 
 for (const relativePath of docsToCheck) {
-  const text = readFileSync(join(root, relativePath), "utf8")
+  const filePath = join(root, relativePath)
+  try {
+    statSync(filePath)
+  } catch {
+    errors.push(`Missing required documentation: ${relativePath}`)
+    continue
+  }
+  const text = readFileSync(filePath, "utf8")
 
   for (const match of text.matchAll(/\[[^\]]+\]\((?!https?:|mailto:|#)([^)]+)\)/g)) {
     const target = normalizeLocalLinkTarget(match[1] ?? "")
@@ -57,25 +62,25 @@ for (const relativePath of docsToCheck) {
         const command = match[1]
         if (!command) continue
         if (
-        command === "exec" ||
-        command === "dlx" ||
-        command === "install" ||
-        command === "list" ||
-        command === "add" ||
-        command === "update" ||
-        command === "remove" ||
-        command === "version" ||
-        command === "completion" ||
-        command === "turbo"
-      ) {
-        continue
-      }
-      if (command === "--filter" || command.startsWith("-")) continue
-      if (!rootPackageJson.scripts?.[command]) {
-        errors.push(
-          `Documented root pnpm command is missing from package.json scripts: ${command} (seen in ${relativePath})`
-        )
-      }
+          command === "exec" ||
+          command === "dlx" ||
+          command === "install" ||
+          command === "list" ||
+          command === "add" ||
+          command === "update" ||
+          command === "remove" ||
+          command === "version" ||
+          command === "completion" ||
+          command === "turbo"
+        ) {
+          continue
+        }
+        if (command === "--filter" || command.startsWith("-")) continue
+        if (!rootPackageJson.scripts?.[command]) {
+          errors.push(
+            `Documented root pnpm command is missing from package.json scripts: ${command} (seen in ${relativePath})`
+          )
+        }
       }
     }
   }

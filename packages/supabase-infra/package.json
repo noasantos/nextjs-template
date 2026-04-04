@@ -1,34 +1,37 @@
 {
   "name": "@workspace/supabase-infra",
-  "version": "0.0.0",
-  "type": "module",
+  "version": "0.0.1",
   "private": true,
-  "scripts": {
-    "lint": "eslint",
-    "format": "prettier --write \"**/*.{ts,tsx}\"",
-    "test": "mkdir -p coverage/.tmp && vitest run --config vitest.config.ts",
-    "test:watch": "vitest --config vitest.config.ts",
-    "typecheck": "tsc --noEmit"
-  },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.100.0",
-    "server-only": "^0.0.1"
-  },
-  "devDependencies": {
-    "@types/node": "^25.1.0",
-    "@workspace/eslint-config": "workspace:*",
-    "@workspace/typescript-config": "workspace:*",
-    "@workspace/vitest-config": "workspace:*",
-    "eslint": "^9.39.2",
-    "typescript": "^5.9.3",
-    "vitest": "^3.2.4"
-  },
+  "files": [
+    "src"
+  ],
+  "type": "module",
   "exports": {
-    "./clients/create-admin-client": "./src/clients/create-admin-client.ts",
+    "./clients/admin": "./src/clients/create-admin-client.ts",
+    "./clients/realtime": "./src/clients/create-realtime-client.ts",
     "./env/public": "./src/env/public.ts",
     "./env/server": "./src/env/server.ts",
+    "./env/site": "./src/env/site.ts",
+    "./types": "./src/types/database.ts",
     "./types/database": "./src/types/database.ts",
-    "./types/database.types": "./src/types/database.types.ts",
-    "./types/supabase": "./src/types/supabase.ts"
+    "./types/supabase": "./src/types/supabase.ts",
+    "./types/database.types": "./src/types/database.types.ts"
+  },
+  "scripts": {
+    "lint": "oxlint --deny-warnings .",
+    "typecheck": "tsc --noEmit",
+    "check:exports": "publint"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.101.1",
+    "server-only": "^0.0.1",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@workspace/typescript-config": "workspace:*",
+    "@workspace/vitest-config": "workspace:*",
+    "oxlint": "^1.58.0",
+    "publint": "^0.3.18",
+    "typescript": "^5.9.3"
   }
 }

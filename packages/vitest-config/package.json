@@ -1,36 +1,28 @@
 {
   "name": "@workspace/vitest-config",
-  "version": "0.0.0",
-  "type": "module",
+  "version": "0.0.1",
   "private": true,
+  "license": "MIT",
+  "files": [
+    "src",
+    "setup"
+  ],
+  "type": "module",
+  "exports": {
+    "./node": "./src/node.ts",
+    "./react": "./src/react.ts",
+    "./db": "./src/db.ts"
+  },
   "scripts": {
-    "lint": "eslint",
-    "format": "prettier --write \"**/*.{ts,tsx}\"",
-    "typecheck": "tsc --noEmit"
+    "check:exports": "publint"
   },
   "dependencies": {
-    "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^3.2.4"
+    "@testing-library/jest-dom": "^6.9.1",
+    "postcss-load-config": "^6.0.1",
+    "vite-tsconfig-paths": "^6.1.1",
+    "vitest": "^4.1.2"
   },
   "devDependencies": {
-    "@types/node": "^25.1.0",
-    "@workspace/eslint-config": "workspace:*",
-    "@workspace/typescript-config": "workspace:*",
-    "eslint": "^9.39.2",
-    "typescript": "^5.9.3"
-  },
-  "exports": {
-    "./db": {
-      "types": "./src/db.ts",
-      "default": "./src/db.ts"
-    },
-    "./node": {
-      "types": "./src/node.ts",
-      "default": "./src/node.ts"
-    },
-    "./react": {
-      "types": "./src/react.ts",
-      "default": "./src/react.ts"
-    }
+    "publint": "^0.3.18"
   }
 }

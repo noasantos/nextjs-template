@@ -1,0 +1,93 @@
+# Git Hooks Configuration (Lefthook)
+
+# Pre-commit: Fast checks on staged files
+pre-commit:
+  parallel: true
+  commands:
+    # Format FIRST (before lint)
+    format:
+      glob: "*.{ts,tsx,js,jsx,md,json,yml}"
+      run: pnpm exec oxfmt --write {staged_files}
+      priority: 1
+
+    # Lint staged files only (after format); do not run oxlint on the whole repo
+    lint:
+      glob: "*.{ts,tsx,js,jsx}"
+      run: pnpm exec oxlint --fix {staged_files}
+      priority: 2
+
+    # Changelog check (must block commits)
+    changelog:
+      run: node scripts/ci/check-changelog.mjs
+      priority: 3
+
+    # Security scan
+    security:
+      run: node scripts/ci/check-security-smells.mjs
+      priority: 4
+
+    # Forbidden patterns
+    forbidden:
+      run: pnpm check:forbidden
+      priority: 5
+
+    forbidden-patterns:
+      run: pnpm check-forbidden-patterns
+      priority: 5
+
+    check-type-escapes:
+      run: node scripts/ci/check-type-escapes.mjs
+      priority: 5
+
+    # No ../ imports under apps/ and packages/ (use @workspace/ or @/)
+    workspace-imports:
+      run: pnpm check:workspace-imports
+      priority: 5
+
+    cursor-rules-parity:
+      run: pnpm check:cursor-rules-parity
+      priority: 5
+
+    # Docs drift check
+    docs-drift:
+      run: pnpm check:docs-drift
+      priority: 6
+
+# Commit-msg: Validate conventional commits
+commit-msg:
+  commands:
+    commitlint:
+      run: npx commitlint --edit {1}
+
+# Pre-push: Slower checks before push
+pre-push:
+  commands:
+    # Type check
+    typecheck:
+      run: pnpm typecheck
+
+    # Unit tests
+    test:
+      run: pnpm test
+
+    # Package exports validation
+    publint:
+      run: pnpm -r --filter './packages/*' exec publint
+
+    # Dead code detection
+    knip:
+      run: pnpm knip --production --no-exit-code
+
+    # Dependency audit
+    audit:
+      run: pnpm audit --audit-level=high
+
+    # Architectural boundary checks
+    depcruise:
+      run: pnpm depcruise apps/*/app packages/*/src --config .dependency-cruiser.cjs
+
+# Post-merge: Keep dependencies fresh
+post-merge:
+  commands:
+    install:
+      run: pnpm install

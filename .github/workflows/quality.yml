@@ -8,7 +8,7 @@ on:
       - master
 
 jobs:
-  quality:
+  install:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,9 +24,148 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - run: pnpm workflow
+      - name: Cache Turborepo
+        uses: dtinth/setup-github-actions-caching-for-turbo@v1
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+
+  lint:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Restore node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Cache Turborepo
+        uses: dtinth/setup-github-actions-caching-for-turbo@v1
+
+      - run: pnpm lint
+
+      - name: Type escape annotations (@type-escape)
+        run: pnpm check-type-escapes
+
+      - name: Workspace import paths (@workspace / @)
+        run: pnpm check:workspace-imports
+
+      - name: Cursor rules ↔ docs parity
+        run: pnpm check:cursor-rules-parity
+
+  typecheck:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Restore node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Cache Turborepo
+        uses: dtinth/setup-github-actions-caching-for-turbo@v1
+
+      - run: pnpm typecheck
+
+  build:
+    needs: [lint, typecheck]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Restore node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Cache Turborepo
+        uses: dtinth/setup-github-actions-caching-for-turbo@v1
+
+      - run: pnpm build
+
+      - name: Analyze bundle
+        run: pnpm --filter=./apps/example analyze:bundle >> $GITHUB_STEP_SUMMARY
+
+  checks:
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Restore node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Cache Turborepo
+        uses: dtinth/setup-github-actions-caching-for-turbo@v1
 
       - run: pnpm check:forbidden
+
+      - name: Forbidden patterns (shell)
+        run: pnpm check-forbidden-patterns
 
       - run: pnpm check:security-smells
 
@@ -35,5 +174,34 @@ jobs:
         continue-on-error: true
 
       - run: pnpm check:docs-drift
+
+      - run: pnpm format:check
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Restore node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Cache Turborepo
+        uses: dtinth/setup-github-actions-caching-for-turbo@v1
 
       - run: pnpm test:coverage

@@ -5,18 +5,15 @@ const {
   getSafeRedirectToMock,
   protectSensitiveAuthRouteMock,
   verifyOtpMock,
-} =
-  vi.hoisted(() => ({
-    buildAuthContinueUrlMock: vi.fn(
-      (redirectTo: string) =>
-        `http://localhost:3000/continue?redirect_to=${encodeURIComponent(redirectTo)}`
-    ),
-    getSafeRedirectToMock: vi.fn(
-      (value: string | null) => value ?? "http://localhost:3000/sign-in"
-    ),
-    protectSensitiveAuthRouteMock: vi.fn(async () => ({ ok: true })),
-    verifyOtpMock: vi.fn(),
-  }))
+} = vi.hoisted(() => ({
+  buildAuthContinueUrlMock: vi.fn(
+    (redirectTo: string) =>
+      `http://localhost:3000/continue?redirect_to=${encodeURIComponent(redirectTo)}`
+  ),
+  getSafeRedirectToMock: vi.fn((value: string | null) => value ?? "http://localhost:3000/sign-in"),
+  protectSensitiveAuthRouteMock: vi.fn(async () => ({ ok: true })),
+  verifyOtpMock: vi.fn(),
+}))
 
 vi.mock("@workspace/supabase-auth/server/verify-otp", () => ({
   verifyOtp: verifyOtpMock,
@@ -73,17 +70,14 @@ describe("auth confirm route (email OTP)", () => {
         name: "invalid type (unknown string)",
         search: "?token_hash=abc&type=not_a_real_type",
       },
-    ])(
-      "redirects with confirm_missing_token when $name",
-      async ({ search }) => {
-        const response = await GET(confirmRequest(search))
+    ])("redirects with confirm_missing_token when $name", async ({ search }) => {
+      const response = await GET(confirmRequest(search))
 
-        expect(response.headers.get("location")).toBe(
-          "http://localhost:3000/?auth=confirm_missing_token"
-        )
-        expect(verifyOtpMock).not.toHaveBeenCalled()
-      }
-    )
+      expect(response.headers.get("location")).toBe(
+        "http://localhost:3000/?auth=confirm_missing_token"
+      )
+      expect(verifyOtpMock).not.toHaveBeenCalled()
+    })
   })
 
   describe("deny: verifyOtp returns an error", () => {
@@ -92,13 +86,9 @@ describe("auth confirm route (email OTP)", () => {
         error: { message: "invalid or expired token" },
       })
 
-      const response = await GET(
-        confirmRequest("?token_hash=hash&type=magiclink")
-      )
+      const response = await GET(confirmRequest("?token_hash=hash&type=magiclink"))
 
-      expect(response.headers.get("location")).toBe(
-        "http://localhost:3000/?auth=confirm_error"
-      )
+      expect(response.headers.get("location")).toBe("http://localhost:3000/?auth=confirm_error")
       expect(verifyOtpMock).toHaveBeenCalledTimes(1)
       expect(verifyOtpMock).toHaveBeenCalledWith({
         tokenHash: "hash",
@@ -121,9 +111,7 @@ describe("auth confirm route (email OTP)", () => {
       getSafeRedirectToMock.mockReturnValue("http://localhost:3000/account")
 
       const response = await GET(
-        confirmRequest(
-          `?token_hash=th&type=${type}&redirect_to=http://localhost:3000/account`
-        )
+        confirmRequest(`?token_hash=th&type=${type}&redirect_to=http://localhost:3000/account`)
       )
 
       expect(response.headers.get("location")).toBe(
@@ -133,12 +121,8 @@ describe("auth confirm route (email OTP)", () => {
         tokenHash: "th",
         type,
       })
-      expect(getSafeRedirectToMock).toHaveBeenCalledWith(
-        "http://localhost:3000/account"
-      )
-      expect(buildAuthContinueUrlMock).toHaveBeenCalledWith(
-        "http://localhost:3000/account"
-      )
+      expect(getSafeRedirectToMock).toHaveBeenCalledWith("http://localhost:3000/account")
+      expect(buildAuthContinueUrlMock).toHaveBeenCalledWith("http://localhost:3000/account")
     })
   })
 
@@ -150,9 +134,7 @@ describe("auth confirm route (email OTP)", () => {
       retryAfterSeconds: 45,
     })
 
-    const response = await GET(
-      confirmRequest("?token_hash=hash&type=magiclink")
-    )
+    const response = await GET(confirmRequest("?token_hash=hash&type=magiclink"))
 
     expect(response.status).toBe(429)
     expect(response.headers.get("retry-after")).toBe("45")

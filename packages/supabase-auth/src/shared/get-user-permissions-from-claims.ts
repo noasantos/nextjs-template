@@ -1,8 +1,5 @@
 import type { ClaimsLike } from "@workspace/supabase-auth/shared/get-user-roles-from-claims"
-import {
-  isPermission,
-  type Permission,
-} from "@workspace/supabase-auth/shared/permission"
+import { isPermission, type Permission } from "@workspace/supabase-auth/shared/permission"
 
 function toPermissions(value: unknown): Permission[] {
   if (typeof value === "string") {
@@ -27,9 +24,7 @@ function getUserPermissionsFromClaims(claims: ClaimsLike): Permission[] {
     ...toPermissions(claims?.user_metadata?.permissions),
   ]
 
-  return permissions.filter(
-    (permission, index) => permissions.indexOf(permission) === index
-  )
+  return permissions.filter((permission, index) => permissions.indexOf(permission) === index)
 }
 
 export { getUserPermissionsFromClaims }

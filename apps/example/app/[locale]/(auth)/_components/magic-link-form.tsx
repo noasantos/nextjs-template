@@ -2,7 +2,9 @@
 
 import * as React from "react"
 
-import { Input } from "@workspace/ui/components/input"
+import { AuthSubmitFooter } from "@/app/[locale]/(auth)/_components/auth-submit-footer"
+import { useAuthErrorTranslator } from "@/app/[locale]/(auth)/_lib/auth-error-message"
+import { useAuthFormSchemas } from "@/app/[locale]/(auth)/_lib/auth-form-schemas"
 import {
   FormField,
   FormFieldDescription,
@@ -12,24 +14,20 @@ import {
 import { useAppForm } from "@workspace/forms/hooks/use-app-form"
 import { getFormErrorText } from "@workspace/forms/lib/get-form-error-text"
 import { signInWithMagicLink } from "@workspace/supabase-auth/browser/sign-in-with-magic-link"
-
-import { AuthSubmitFooter } from "@/app/[locale]/(auth)/_components/auth-submit-footer"
-import { translateAuthErrorMessage } from "@/app/[locale]/(auth)/_lib/auth-error-message"
-import {
-  emailDefaultValues,
-  emailSchema,
-} from "@/app/[locale]/(auth)/_lib/auth-form-schemas"
+import { Input } from "@workspace/ui/components/input"
 
 type MagicLinkFormProps = {
   redirectTo: string
 }
 
 function MagicLinkForm({ redirectTo }: MagicLinkFormProps) {
+  const translateAuthError = useAuthErrorTranslator()
+  const schemas = useAuthFormSchemas()
   const [authError, setAuthError] = React.useState<string | null>(null)
   const [notice, setNotice] = React.useState<string | null>(null)
 
   const form = useAppForm({
-    defaultValues: emailDefaultValues,
+    defaultValues: schemas.emailDefaultValues,
     formId: "auth-magic-link",
     onSubmit: async ({ value }) => {
       setAuthError(null)
@@ -41,7 +39,7 @@ function MagicLinkForm({ redirectTo }: MagicLinkFormProps) {
       })
 
       if (error) {
-        setAuthError(translateAuthErrorMessage(error.message))
+        setAuthError(translateAuthError(error.message))
         return
       }
 
@@ -49,7 +47,7 @@ function MagicLinkForm({ redirectTo }: MagicLinkFormProps) {
         "Ligação enviada. Conclua o início de sessão a partir do e-mail, neste browser e dispositivo."
       )
     },
-    schema: emailSchema,
+    schema: schemas.emailSchema,
   })
 
   return (
@@ -67,7 +65,7 @@ function MagicLinkForm({ redirectTo }: MagicLinkFormProps) {
         </div>
       ) : null}
       {authError ? (
-        <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs/relaxed text-destructive">
+        <div className="border-destructive/30 bg-destructive/10 text-destructive rounded-md border px-3 py-2 text-xs/relaxed">
           {authError}
         </div>
       ) : null}
@@ -83,9 +81,7 @@ function MagicLinkForm({ redirectTo }: MagicLinkFormProps) {
           <>
             <form.Field name="email">
               {(field) => {
-                const invalid =
-                  field.state.meta.isTouched &&
-                  field.state.meta.errors.length > 0
+                const invalid = field.state.meta.isTouched && field.state.meta.errors.length > 0
                 const errorMessage = getFormErrorText(field.state.meta.errors)
                 const descriptionId = `${field.name}-description`
                 const errorId = `${field.name}-error`
@@ -96,9 +92,7 @@ function MagicLinkForm({ redirectTo }: MagicLinkFormProps) {
                       E-mail
                     </FormFieldLabel>
                     <Input
-                      aria-describedby={
-                        invalid ? `${descriptionId} ${errorId}` : descriptionId
-                      }
+                      aria-describedby={invalid ? `${descriptionId} ${errorId}` : descriptionId}
                       aria-invalid={invalid}
                       autoComplete="email"
                       className="h-11 rounded-lg"
@@ -106,16 +100,13 @@ function MagicLinkForm({ redirectTo }: MagicLinkFormProps) {
                       id={field.name}
                       name={field.name}
                       onBlur={field.handleBlur}
-                      onChange={(event) =>
-                        field.handleChange(event.target.value)
-                      }
+                      onChange={(event) => field.handleChange(event.target.value)}
                       placeholder="nome@organizacao.org"
                       type="email"
                       value={field.state.value}
                     />
                     <FormFieldDescription id={descriptionId}>
-                      Apenas início de sessão: não são criadas contas novas por
-                      este fluxo.
+                      Apenas início de sessão: não são criadas contas novas por este fluxo.
                     </FormFieldDescription>
                     <FormFieldError id={errorId}>{errorMessage}</FormFieldError>
                   </FormField>

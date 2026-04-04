@@ -14,9 +14,7 @@ function expectVisibleIds(
   rows: ReadonlyArray<{ id: string }> | null,
   expectedIds: ReadonlyArray<string>
 ) {
-  expect((rows ?? []).map((row) => row.id).sort()).toEqual(
-    [...expectedIds].sort()
-  )
+  expect((rows ?? []).map((row) => row.id).toSorted()).toEqual([...expectedIds].toSorted())
 }
 
 export { expectForbidden, expectNoRowsVisible, expectVisibleIds }

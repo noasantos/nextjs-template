@@ -6,9 +6,7 @@ type UpdatePasswordInput = {
   password: string
 }
 
-async function updatePassword({
-  password,
-}: UpdatePasswordInput): Promise<UserResponse> {
+async function updatePassword({ password }: UpdatePasswordInput): Promise<UserResponse> {
   const supabase = createBrowserAuthClient()
 
   return supabase.auth.updateUser({ password })

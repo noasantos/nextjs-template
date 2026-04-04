@@ -20,8 +20,7 @@ const {
   redirectMock,
 } = vi.hoisted(() => ({
   buildAuthAccessDeniedUrlMock: vi.fn(
-    (redirectTo, required) =>
-      `access-denied:${redirectTo}:${required?.join(",")}`
+    (redirectTo, required) => `access-denied:${redirectTo}:${required?.join(",")}`
   ),
   buildAuthSignInUrlMock: vi.fn((redirectTo) => `sign-in:${redirectTo}`),
   createServerAuthClientMock: vi.fn(),

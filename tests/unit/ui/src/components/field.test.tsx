@@ -33,14 +33,8 @@ describe("Field primitives (admin forms)", () => {
 
     expect(screen.getByTestId("fs")).toHaveAttribute("data-slot", "field-set")
     expect(screen.getByText("Secção")).toHaveAttribute("data-variant", "legend")
-    expect(screen.getByTestId("f")).toHaveAttribute(
-      "data-orientation",
-      "horizontal"
-    )
-    expect(screen.getByText("Ajuda")).toHaveAttribute(
-      "data-slot",
-      "field-description"
-    )
+    expect(screen.getByTestId("f")).toHaveAttribute("data-orientation", "horizontal")
+    expect(screen.getByText("Ajuda")).toHaveAttribute("data-slot", "field-description")
   })
 
   it("FieldError renders children when provided", () => {
@@ -54,11 +48,7 @@ describe("Field primitives (admin forms)", () => {
   })
 
   it("FieldError renders a list for multiple distinct errors", () => {
-    render(
-      <FieldError
-        errors={[{ message: "A" }, { message: "B" }, { message: "A" }]}
-      />
-    )
+    render(<FieldError errors={[{ message: "A" }, { message: "B" }, { message: "A" }]} />)
     const alert = screen.getByRole("alert")
     expect(alert.querySelectorAll("li")).toHaveLength(2)
     expect(alert).toHaveTextContent("A")
@@ -72,9 +62,6 @@ describe("Field primitives (admin forms)", () => {
 
   it("FieldSeparator renders optional label over the separator", () => {
     render(<FieldSeparator>ou</FieldSeparator>)
-    expect(screen.getByText("ou")).toHaveAttribute(
-      "data-slot",
-      "field-separator-content"
-    )
+    expect(screen.getByText("ou")).toHaveAttribute("data-slot", "field-separator-content")
   })
 })

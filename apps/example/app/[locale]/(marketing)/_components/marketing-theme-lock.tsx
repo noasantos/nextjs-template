@@ -1,17 +1,14 @@
 "use client"
 
 import * as React from "react"
-import { useTheme } from "@workspace/brand/components/theme-provider"
+
+import { useTheme } from "@workspace/core/components/theme-provider"
 
 /**
  * Páginas institucionais: sempre modo claro no documento; restaura a preferência ao sair.
  * Se o utilizador tentar alternar (ex.: atalho global), volta a forçar claro enquanto esta árvore estiver montada.
  */
-export function MarketingThemeLock({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export function MarketingThemeLock({ children }: { children: React.ReactNode }) {
   const { setTheme, resolvedTheme } = useTheme()
   const savedRef = React.useRef<string | null>(null)
 

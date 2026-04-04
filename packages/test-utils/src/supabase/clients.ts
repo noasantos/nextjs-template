@@ -1,10 +1,7 @@
 import { createClient } from "@supabase/supabase-js"
 
 import type { Database } from "@workspace/supabase-infra/types/database"
-import {
-  ensureSupabaseTestEnv,
-  getSupabaseTestEnv,
-} from "@workspace/test-utils/supabase/env"
+import { ensureSupabaseTestEnv, getSupabaseTestEnv } from "@workspace/test-utils/supabase/env"
 
 async function createAnonTestClient() {
   await ensureSupabaseTestEnv()

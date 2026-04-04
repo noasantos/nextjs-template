@@ -68,12 +68,9 @@ describe("getClaims", () => {
   })
 
   it("rethrows Next.js dynamic rendering bailout without logging", async () => {
-    const dynamicUsage = Object.assign(
-      new Error("Dynamic server usage: cookies"),
-      {
-        digest: "DYNAMIC_SERVER_USAGE" as const,
-      }
-    )
+    const dynamicUsage = Object.assign(new Error("Dynamic server usage: cookies"), {
+      digest: "DYNAMIC_SERVER_USAGE" as const,
+    })
     createServerAuthClientMock.mockRejectedValue(dynamicUsage)
 
     await expect(getClaims()).rejects.toBe(dynamicUsage)

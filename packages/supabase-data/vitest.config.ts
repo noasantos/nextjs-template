@@ -1,8 +1,9 @@
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
-import { createNodeProject } from "@workspace/vitest-config/node"
 import { mergeConfig } from "vitest/config"
+
+import { createNodeProject } from "@workspace/vitest-config/node"
 
 const dir = dirname(fileURLToPath(import.meta.url))
 const srcRoot = resolve(dir, "src")

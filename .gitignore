@@ -14,9 +14,17 @@ node_modules
 
 # Testing
 coverage
+playwright-report
+test-results
 
 # Turbo
 .turbo
+
+# TypeScript incremental
+*.tsbuildinfo
+
+# pnpm local store (should not live in repo root)
+.pnpm-store
 
 # Vercel
 .vercel

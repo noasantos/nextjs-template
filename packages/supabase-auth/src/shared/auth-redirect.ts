@@ -12,13 +12,19 @@ const RESET_PASSWORD_PATH = "/reset-password" as const
 const LOGOUT_PATH = "/logout" as const
 
 function getAuthAppOrigin() {
-  return new URL(getSupabasePublicEnv().authAppUrl).origin
+  return new URL(
+    getSupabasePublicEnv().NEXT_PUBLIC_AUTH_APP_URL ??
+      getSupabasePublicEnv().NEXT_PUBLIC_SITE_URL ??
+      getSupabasePublicEnv().NEXT_PUBLIC_SUPABASE_URL
+  ).origin
 }
 
 function getDefaultRedirectTo() {
   return new URL(
     DEFAULT_AUTH_APP_PATH,
-    getSupabasePublicEnv().authAppUrl
+    getSupabasePublicEnv().NEXT_PUBLIC_AUTH_APP_URL ??
+      getSupabasePublicEnv().NEXT_PUBLIC_SITE_URL ??
+      getSupabasePublicEnv().NEXT_PUBLIC_SUPABASE_URL
   ).toString()
 }
 
@@ -35,15 +41,13 @@ function isSafeRedirectTo(value: string | null | undefined) {
     return false
   }
 
-  const { authAllowedRedirectOrigins } = getSupabasePublicEnv()
+  const env = getSupabasePublicEnv()
+  const allowedOrigins = env.NEXT_PUBLIC_AUTH_ALLOWED_REDIRECT_ORIGINS
 
-  return authAllowedRedirectOrigins.includes(redirectUrl.origin)
+  return allowedOrigins.includes(redirectUrl.origin)
 }
 
-function getSafeRedirectTo(
-  value: string | null | undefined,
-  fallback = getDefaultRedirectTo()
-) {
+function getSafeRedirectTo(value: string | null | undefined, fallback = getDefaultRedirectTo()) {
   if (!value) {
     return fallback
   }
@@ -55,7 +59,10 @@ function buildAuthUrl(
   pathname: string,
   searchParams?: Record<string, string | null | undefined | readonly string[]>
 ) {
-  const url = new URL(pathname, getSupabasePublicEnv().authAppUrl)
+  const env = getSupabasePublicEnv()
+  const appUrl =
+    env.NEXT_PUBLIC_AUTH_APP_URL ?? env.NEXT_PUBLIC_SITE_URL ?? env.NEXT_PUBLIC_SUPABASE_URL
+  const url = new URL(pathname, appUrl)
 
   Object.entries(searchParams ?? {}).forEach(([key, rawValue]) => {
     if (!rawValue) {
@@ -109,10 +116,7 @@ function buildAuthSignInUrl(redirectTo?: string | null) {
   })
 }
 
-function buildAuthAccessDeniedUrl(
-  redirectTo?: string | null,
-  requiredRoles?: readonly string[]
-) {
+function buildAuthAccessDeniedUrl(redirectTo?: string | null, requiredRoles?: readonly string[]) {
   return buildAuthUrl(ACCESS_DENIED_PATH, {
     redirect_to: getSafeRedirectTo(redirectTo),
     required: requiredRoles?.join(","),

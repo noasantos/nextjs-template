@@ -5,8 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Example App",
     short_name: "Example",
-    description:
-      "Replace at fork — PWA manifest stub for Add to Home Screen and share targets.",
+    description: "Replace at fork — PWA manifest stub for Add to Home Screen and share targets.",
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",

@@ -1,7 +1,5 @@
 "use client"
 
-import * as React from "react"
-
 import {
   AudioWaveform,
   BookOpen,
@@ -14,11 +12,11 @@ import {
   Settings2,
   Terminal,
 } from "lucide-react"
+import * as React from "react"
 
 import { NavMain } from "@workspace/ui/components/nav-main"
 import { NavProjects } from "@workspace/ui/components/nav-projects"
 import { NavUser } from "@workspace/ui/components/nav-user"
-import { TeamSwitcher } from "@workspace/ui/components/team-switcher"
 import {
   Sidebar,
   SidebarContent,
@@ -26,6 +24,7 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@workspace/ui/components/sidebar"
+import { TeamSwitcher } from "@workspace/ui/components/team-switcher"
 
 // This is sample data.
 const data = {

@@ -29,10 +29,7 @@ for (const line of raw.split("\n")) {
   if (eq <= 0) continue
   const key = trimmed.slice(0, eq).trim()
   let val = trimmed.slice(eq + 1).trim()
-  if (
-    (val.startsWith('"') && val.endsWith('"')) ||
-    (val.startsWith("'") && val.endsWith("'"))
-  ) {
+  if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
     val = val.slice(1, -1)
   }
   valueByKey.set(key, val)
@@ -49,9 +46,7 @@ const required = [
 
 const missing = required.filter((k) => !valueByKey.get(k)?.trim())
 if (missing.length > 0) {
-  console.error(
-    `env-check-local: set non-empty values in .env.local for: ${missing.join(", ")}`
-  )
+  console.error(`env-check-local: set non-empty values in .env.local for: ${missing.join(", ")}`)
   process.exit(1)
 }
 

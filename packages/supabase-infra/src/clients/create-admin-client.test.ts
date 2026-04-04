@@ -13,6 +13,7 @@ vi.mock("@workspace/supabase-infra/env/server", () => ({
   getSupabaseServerEnv: getSupabaseServerEnvMock,
 }))
 
+// oxlint-disable-next-line import/first -- import after vi.mock (Vitest hoisting)
 import { createAdminClient } from "@workspace/supabase-infra/clients/create-admin-client"
 
 afterEach(() => {
@@ -34,16 +35,12 @@ describe("createAdminClient", () => {
     const client = createAdminClient()
 
     expect(client).toEqual({ client: "admin" })
-    expect(createClientMock).toHaveBeenCalledWith(
-      "http://127.0.0.1:54321",
-      "service-role-key",
-      {
-        auth: {
-          autoRefreshToken: false,
-          detectSessionInUrl: false,
-          persistSession: false,
-        },
-      }
-    )
+    expect(createClientMock).toHaveBeenCalledWith("http://127.0.0.1:54321", "service-role-key", {
+      auth: {
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+        persistSession: false,
+      },
+    })
   })
 })

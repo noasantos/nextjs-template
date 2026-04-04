@@ -1,10 +1,11 @@
 import type { Metadata } from "next"
-import { getTranslations } from "next-intl/server"
-
-import { Button } from "@workspace/ui/components/button"
+import { getLocale, getTranslations } from "next-intl/server"
 
 import { Link } from "@/i18n/navigation"
+import { routing } from "@/i18n/routing"
 import { getSiteUrl } from "@/lib/site-url"
+import { buildCanonicalUrl, buildJsonLd } from "@workspace/seo"
+import { Button } from "@workspace/ui/components/button"
 
 export async function generateMetadata({
   params,
@@ -13,19 +14,36 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: "Metadata" })
+  const siteUrl = getSiteUrl()
+
   return {
     title: t("title"),
+    alternates: {
+      canonical: buildCanonicalUrl({
+        siteUrl,
+        locale,
+        defaultLocale: routing.defaultLocale,
+        path: "/",
+      }),
+    },
+    // FORK: Add page-specific description here when your home page has unique copy.
   }
 }
 
 export default async function MarketingHomePage() {
   const t = await getTranslations("Marketing")
   const siteOrigin = getSiteUrl()
+  const locale = await getLocale()
   const organizationJsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: t("jsonLdOrganizationName"),
-    url: new URL("/", `${siteOrigin}/`).href,
+    url: buildCanonicalUrl({
+      siteUrl: siteOrigin,
+      locale,
+      defaultLocale: routing.defaultLocale,
+      path: "/",
+    }),
   }
 
   return (
@@ -33,26 +51,20 @@ export default async function MarketingHomePage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(organizationJsonLd),
+          __html: buildJsonLd(organizationJsonLd),
         }}
       />
       <div className="flex flex-1 flex-col">
         <section className="flex flex-1 flex-col justify-center px-4 py-24 sm:px-6">
           <div className="mx-auto max-w-2xl text-center">
-            <p className="text-sm font-medium text-muted-foreground">
-              {t("templateLabel")}
-            </p>
+            <p className="text-muted-foreground text-sm font-medium">{t("templateLabel")}</p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
               {t("hero.heading")}
             </h1>
-            <p className="mt-4 text-lg text-pretty text-muted-foreground">
-              {t("hero.subheading")}
-            </p>
-            <p className="mt-4 text-sm text-pretty text-muted-foreground">
+            <p className="text-muted-foreground mt-4 text-lg text-pretty">{t("hero.subheading")}</p>
+            <p className="text-muted-foreground mt-4 text-sm text-pretty">
               {t("bodyLine1")}{" "}
-              <code className="rounded bg-muted px-1.5 py-0.5 text-sm">
-                {t("bodyAuthSegment")}
-              </code>
+              <code className="bg-muted rounded px-1.5 py-0.5 text-sm">{t("bodyAuthSegment")}</code>
               {t("bodySuffix")}
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">

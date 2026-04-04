@@ -1,0 +1,41 @@
+name: Security Scanners
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  osv-scanner:
+    name: OSV Vulnerability Scanner
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: google/osv-scanner-action@v1
+        with:
+          scan-args: |-
+            -r
+            pnpm-lock.yaml
+
+  actionlint:
+    name: GitHub Actions Linter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: rhysd/actionlint-action@v1
+        with:
+          files: .github/workflows/*.yml
+
+  zizmor:
+    name: GitHub Actions Security Auditor
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: zizmorcore/zizmor-action@v1
+        with:
+          args: --persona auditor .github/workflows

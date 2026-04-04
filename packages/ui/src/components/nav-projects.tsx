@@ -44,10 +44,7 @@ export function NavProjects({
             </SidebarMenuButton>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuAction
-                  showOnHover
-                  className="aria-expanded:bg-muted"
-                >
+                <SidebarMenuAction showOnHover className="aria-expanded:bg-muted">
                   <MoreHorizontal strokeWidth={2} />
                   <span className="sr-only">More</span>
                 </SidebarMenuAction>
@@ -76,10 +73,7 @@ export function NavProjects({
         ))}
         <SidebarMenuItem>
           <SidebarMenuButton className="text-sidebar-foreground/70">
-            <MoreHorizontal
-              strokeWidth={2}
-              className="text-sidebar-foreground/70"
-            />
+            <MoreHorizontal strokeWidth={2} className="text-sidebar-foreground/70" />
             <span>More</span>
           </SidebarMenuButton>
         </SidebarMenuItem>

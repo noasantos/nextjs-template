@@ -1,9 +1,9 @@
 import type { MetadataRoute } from "next"
 
 import { routing } from "@/i18n/routing"
+import { PUBLIC_ROUTES } from "@/lib/public-routes"
 import { getSiteUrl, isRobotsAllowIndexing } from "@/lib/site-url"
-
-const publicRoutes = ["/"]
+import { buildAlternateLanguages } from "@workspace/seo"
 
 /**
  * Public marketing URLs only, per locale (`localePrefix: as-needed` — default locale has no prefix).
@@ -19,23 +19,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date()
   const entries: MetadataRoute.Sitemap = []
 
-  for (const route of publicRoutes) {
+  for (const route of PUBLIC_ROUTES) {
     for (const locale of routing.locales) {
       const isDefault = locale === routing.defaultLocale
-      const localePath = isDefault
-        ? route
-        : `/${locale}${route === "/" ? "" : route}`
+      const localePath = isDefault ? route : `/${locale}${route === "/" ? "" : route}`
       const url = new URL(localePath || "/", origin).toString()
 
-      const languageAlternates = Object.fromEntries(
-        routing.locales.map((l) => {
-          const path =
-            l === routing.defaultLocale
-              ? route
-              : `/${l}${route === "/" ? "" : route}`
-          return [l, new URL(path || "/", origin).toString()]
-        })
-      )
+      const languageAlternates = buildAlternateLanguages({
+        siteUrl: base,
+        locales: routing.locales,
+        defaultLocale: routing.defaultLocale,
+        path: route,
+      })
 
       entries.push({
         url,

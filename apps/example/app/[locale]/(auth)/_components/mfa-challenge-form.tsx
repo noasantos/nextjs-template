@@ -1,12 +1,12 @@
 "use client"
 
-import * as React from "react"
 import { useRouter } from "next/navigation"
+import * as React from "react"
 
+import { AuthSubmitFooter } from "@/app/[locale]/(auth)/_components/auth-submit-footer"
+import { useAuthErrorTranslator } from "@/app/[locale]/(auth)/_lib/auth-error-message"
+import { useAuthFormSchemas } from "@/app/[locale]/(auth)/_lib/auth-form-schemas"
 import { Link } from "@/i18n/navigation"
-
-import { Button } from "@workspace/ui/components/button"
-import { Input } from "@workspace/ui/components/input"
 import {
   FormField,
   FormFieldDescription,
@@ -17,13 +17,8 @@ import { useAppForm } from "@workspace/forms/hooks/use-app-form"
 import { getFormErrorText } from "@workspace/forms/lib/get-form-error-text"
 import { getMfaFactors } from "@workspace/supabase-auth/browser/get-mfa-factors"
 import { verifyTotpChallenge } from "@workspace/supabase-auth/browser/verify-totp-challenge"
-
-import { AuthSubmitFooter } from "@/app/[locale]/(auth)/_components/auth-submit-footer"
-import { translateAuthErrorMessage } from "@/app/[locale]/(auth)/_lib/auth-error-message"
-import {
-  mfaCodeDefaultValues,
-  mfaCodeSchema,
-} from "@/app/[locale]/(auth)/_lib/auth-form-schemas"
+import { Button } from "@workspace/ui/components/button"
+import { Input } from "@workspace/ui/components/input"
 
 type MfaChallengeFormProps = {
   redirectTo: string
@@ -31,6 +26,8 @@ type MfaChallengeFormProps = {
 
 function MfaChallengeForm({ redirectTo }: MfaChallengeFormProps) {
   const router = useRouter()
+  const translateAuthError = useAuthErrorTranslator()
+  const schemas = useAuthFormSchemas()
   const [authError, setAuthError] = React.useState<string | null>(null)
   const [factorId, setFactorId] = React.useState<string>("")
   const [loadingFactors, setLoadingFactors] = React.useState(true)
@@ -40,7 +37,7 @@ function MfaChallengeForm({ redirectTo }: MfaChallengeFormProps) {
       const { data, error } = await getMfaFactors()
 
       if (error) {
-        setAuthError(translateAuthErrorMessage(error.message))
+        setAuthError(translateAuthError(error.message))
         setLoadingFactors(false)
         return
       }
@@ -55,10 +52,10 @@ function MfaChallengeForm({ redirectTo }: MfaChallengeFormProps) {
     }
 
     void loadFactors()
-  }, [])
+  }, [translateAuthError])
 
   const form = useAppForm({
-    defaultValues: mfaCodeDefaultValues,
+    defaultValues: schemas.mfaCodeDefaultValues,
     formId: "auth-mfa-challenge",
     onSubmit: async ({ value }) => {
       setAuthError(null)
@@ -74,14 +71,14 @@ function MfaChallengeForm({ redirectTo }: MfaChallengeFormProps) {
       })
 
       if (error) {
-        setAuthError(translateAuthErrorMessage(error.message))
+        setAuthError(translateAuthError(error.message))
         return
       }
 
       router.refresh()
       window.location.assign(redirectTo)
     },
-    schema: mfaCodeSchema,
+    schema: schemas.mfaCodeSchema,
   })
 
   return (
@@ -94,7 +91,7 @@ function MfaChallengeForm({ redirectTo }: MfaChallengeFormProps) {
       }}
     >
       {authError ? (
-        <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs/relaxed text-destructive">
+        <div className="border-destructive/30 bg-destructive/10 text-destructive rounded-md border px-3 py-2 text-xs/relaxed">
           {authError}
         </div>
       ) : null}
@@ -113,8 +110,8 @@ function MfaChallengeForm({ redirectTo }: MfaChallengeFormProps) {
             value={factorId}
           />
           <FormFieldDescription id="factor-id-description">
-            O primeiro fator registado é carregado automaticamente. Substitua o
-            valor se precisar de outro fator.
+            O primeiro fator registado é carregado automaticamente. Substitua o valor se precisar de
+            outro fator.
           </FormFieldDescription>
         </FormField>
       </div>
@@ -130,9 +127,7 @@ function MfaChallengeForm({ redirectTo }: MfaChallengeFormProps) {
           <>
             <form.Field name="code">
               {(field) => {
-                const invalid =
-                  field.state.meta.isTouched &&
-                  field.state.meta.errors.length > 0
+                const invalid = field.state.meta.isTouched && field.state.meta.errors.length > 0
                 const errorMessage = getFormErrorText(field.state.meta.errors)
                 const descriptionId = `${field.name}-description`
                 const errorId = `${field.name}-error`
@@ -143,9 +138,7 @@ function MfaChallengeForm({ redirectTo }: MfaChallengeFormProps) {
                       Código de 6 dígitos
                     </FormFieldLabel>
                     <Input
-                      aria-describedby={
-                        invalid ? `${descriptionId} ${errorId}` : descriptionId
-                      }
+                      aria-describedby={invalid ? `${descriptionId} ${errorId}` : descriptionId}
                       aria-invalid={invalid}
                       autoComplete="one-time-code"
                       className="h-11 rounded-lg"
@@ -154,15 +147,12 @@ function MfaChallengeForm({ redirectTo }: MfaChallengeFormProps) {
                       inputMode="numeric"
                       name={field.name}
                       onBlur={field.handleBlur}
-                      onChange={(event) =>
-                        field.handleChange(event.target.value)
-                      }
+                      onChange={(event) => field.handleChange(event.target.value)}
                       placeholder="123456"
                       value={field.state.value}
                     />
                     <FormFieldDescription id={descriptionId}>
-                      Introduza o código temporário da aplicação de autenticação
-                      que registou.
+                      Introduza o código temporário da aplicação de autenticação que registou.
                     </FormFieldDescription>
                     <FormFieldError id={errorId}>{errorMessage}</FormFieldError>
                   </FormField>

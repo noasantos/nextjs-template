@@ -1,0 +1,1 @@
+../../../skills/server-action-template/SKILL.md

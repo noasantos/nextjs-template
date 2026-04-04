@@ -1,0 +1,48 @@
+> **Contributors without Cursor:** Same rule as
+> [`.cursor/rules/no-console-logging.mdc`](../../../.cursor/rules/no-console-logging.mdc).
+> Regenerate: `node scripts/ci/sync-cursor-rules-to-docs.mjs`.
+
+---
+
+# 🔒 No Console Logging
+
+**This is a CURSOR-SPECIFIC rule file.**
+
+**Full documentation:**
+[docs/standards/rules/no-console-logging.md](../../docs/standards/rules/no-console-logging.md)
+
+## Rule for Cursor
+
+Cursor MUST enforce no-console rule:
+
+- **NEVER** suggest `console.log` in product code
+- **ALWAYS** use `logServerEvent` from `@workspace/logging`
+- **AUTO-FIX** console to logging package
+
+## Quick Reference
+
+```typescript
+// ✅ CORRECT - Structured logging
+import { logServerEvent } from "@workspace/logging/server"
+
+await logServerEvent({
+  component: "my.component",
+  eventFamily: "action.lifecycle",
+  eventName: "operation_completed",
+  outcome: "success",
+})
+
+// ❌ FORBIDDEN - Raw console
+console.log("Operation completed")
+```
+
+## Exception
+
+CLI scripts (`scripts/**/*.ts`) and tests (`tests/**/*.ts`) can use console.
+
+---
+
+**Rule ID:** NO-CONSOLE-LOGGING  
+**Severity:** ERROR  
+**Full Docs:**
+[docs/standards/rules/no-console-logging.md](../../docs/standards/rules/no-console-logging.md)

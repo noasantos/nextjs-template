@@ -1,0 +1,37 @@
+> **Contributors without Cursor:** Same rule as
+> [`.cursor/rules/database-types-immutable.mdc`](../../../.cursor/rules/database-types-immutable.mdc).
+> Regenerate: `node scripts/ci/sync-cursor-rules-to-docs.mjs`.
+
+---
+
+# `database.types.ts` — immutable for agents (CLI-generated)
+
+## Hard rule
+
+- **Do not** create, edit, move, rename, or delete
+  **`packages/supabase-infra/src/types/database.types.ts`** with editor or agent
+  tools.
+- **Do not** paste generated TypeScript from `supabase gen types` into that path
+  manually to “fix” types.
+
+## Correct workflow
+
+- After schema or migration changes, regenerate from the repo root:
+  - **`pnpm supabase:types:local`** (local Supabase), or
+  - **`pnpm supabase:types:linked`** (linked remote project; human workflow).
+- **Merge** or **override** types that the generator gets wrong in
+  **`packages/supabase-infra/src/types/database.ts`** (the hand-maintained
+  layer). Apps and packages import
+  **`@workspace/supabase-infra/types/database`**, not `database.types` directly.
+
+## If the user asks to “fix” a type error in `database.types.ts`
+
+- Refuse edits to `database.types.ts`; regenerate with the commands above when
+  the DB is the source of truth.
+- If the issue is a known generator quirk, extend **`database.ts`** (existing
+  `MergedPublicFunctions` pattern or equivalent).
+
+## Canonical doc
+
+- Root **`AGENTS.md`** → Critical rules → Supabase generated types (with
+  `@workspace/ui`).

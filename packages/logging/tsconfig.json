@@ -1,12 +1,11 @@
 {
-  "extends": "@workspace/typescript-config/base.json",
+  "extends": "../../packages/typescript-config/base.json",
   "compilerOptions": {
     "baseUrl": ".",
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "paths": {
-      "@workspace/logging/*": ["./src/*"],
-      "@workspace/supabase-infra/*": ["../supabase-infra/src/*"]
+      "@workspace/logging/*": ["./src/*"]
     }
   },
   "include": ["."],

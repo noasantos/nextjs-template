@@ -2,8 +2,9 @@ import { createRequire } from "node:module"
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
-import { createReactProject } from "@workspace/vitest-config/react"
 import { mergeConfig } from "vitest/config"
+
+import { createReactProject } from "@workspace/vitest-config/react"
 
 const require = createRequire(import.meta.url)
 const dir = dirname(fileURLToPath(import.meta.url))
@@ -13,18 +14,16 @@ const supabaseAuthSrc = resolve(dir, "../../packages/supabase-auth/src")
 export default mergeConfig(
   createReactProject({
     coverageInclude: [
-      "app/(auth)/_lib/auth-form-schemas.ts",
+      "app/[locale]/(auth)/_lib/auth-form-schemas.ts",
+      "../../packages/supabase-auth/src/shared/auth-form-schemas.ts",
       "app/(auth-handlers)/auth/confirm/route.ts",
       "app/(auth-handlers)/callback/route.ts",
       "app/(auth-handlers)/logout/route.ts",
-      "app/(auth-handlers)/_lib/handlers/auth-confirm-get.ts",
-      "app/(auth-handlers)/_lib/handlers/callback-get.ts",
-      "app/(auth-handlers)/_lib/handlers/logout-get.ts",
+      "../../packages/supabase-auth/src/server/route-handlers/auth-confirm-get.ts",
+      "../../packages/supabase-auth/src/server/route-handlers/callback-get.ts",
+      "../../packages/supabase-auth/src/server/route-handlers/logout-get.ts",
     ],
-    include: [
-      "../../tests/unit/example/**/*.test.ts",
-      "../../tests/unit/example/**/*.test.tsx",
-    ],
+    include: ["../../tests/unit/example/**/*.test.ts", "../../tests/unit/example/**/*.test.tsx"],
     name: "example-unit",
     root: ".",
   }),

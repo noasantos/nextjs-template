@@ -3,11 +3,11 @@
 import * as React from "react"
 
 import { createBrowserAuthClient } from "@workspace/supabase-auth/browser/create-browser-auth-client"
+import type { AuthRole } from "@workspace/supabase-auth/shared/auth-role"
 import {
   getAccessFromClaims,
   type AccessFromClaims,
 } from "@workspace/supabase-auth/shared/get-access-from-claims"
-import type { AuthRole } from "@workspace/supabase-auth/shared/auth-role"
 import type { Permission } from "@workspace/supabase-auth/shared/permission"
 
 type AuthAccessState = AccessFromClaims & {
@@ -45,9 +45,7 @@ async function loadAccessState() {
 }
 
 function useAuthAccess() {
-  const [state, setState] = React.useState<AuthAccessState>(() =>
-    emptyAccessState()
-  )
+  const [state, setState] = React.useState<AuthAccessState>(() => emptyAccessState())
 
   const refresh = React.useCallback(async () => {
     const supabase = createBrowserAuthClient()

@@ -1,5 +1,4 @@
 import "server-only"
-
 import type { SupabaseClient } from "@supabase/supabase-js"
 
 import { UserRoleSupabaseRepository } from "@workspace/supabase-data/modules/user-roles/infrastructure/repositories/user-role-supabase.repository"

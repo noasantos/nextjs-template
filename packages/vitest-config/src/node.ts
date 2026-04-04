@@ -31,9 +31,7 @@ function createNodeProject({
     plugins: [tsconfigPaths()],
     resolve: {
       alias: {
-        "server-only": fileURLToPath(
-          new URL("./server-only-stub.js", import.meta.url)
-        ),
+        "server-only": fileURLToPath(new URL("./server-only-stub.js", import.meta.url)),
       },
     },
     test: {
@@ -46,7 +44,7 @@ function createNodeProject({
           "**/vitest.config.ts",
           ...coverageExclude,
         ],
-        include: coverageInclude,
+        ...(coverageInclude && { include: coverageInclude }),
         provider: "v8",
         reporter: ["text", "html", "lcov"],
         reportsDirectory: "./coverage",

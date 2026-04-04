@@ -1,0 +1,37 @@
+# 📚 Three-Level Documentation
+
+**This is a CURSOR-SPECIFIC rule file.**
+
+**Full documentation:** [docs/standards/rules/three-level-docs.md](../../docs/standards/rules/three-level-docs.md)
+
+## Rule for Cursor
+
+Cursor MUST enforce three-level documentation:
+
+- **ALWAYS** create docs in correct level
+- **NEVER** mix documentation levels
+- **VALIDATE** doc placement
+
+## Levels
+
+**Level 1 — Template Standards** (`docs/`)
+- Golden Rules, ADRs, architecture
+
+**Level 2 — Cross-App Business** (`apps/docs/`)
+- Product overview, domain models
+
+**Level 3 — Single-App Domain** (`apps/<app>/docs/`)
+- App-specific features, SEO
+
+## AI Agent Instructions
+
+When creating documentation:
+1. IDENTIFY scope (template/product/app)
+2. CREATE in correct level
+3. NEVER duplicate across levels
+
+---
+
+**Rule ID:** THREE-LEVEL-DOCS  
+**Severity:** REQUIRED  
+**Full Docs:** [docs/standards/rules/three-level-docs.md](../../docs/standards/rules/three-level-docs.md)

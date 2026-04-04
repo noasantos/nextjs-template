@@ -7,13 +7,10 @@ const {
   protectSensitiveAuthRouteMock,
 } = vi.hoisted(() => ({
   buildAuthContinueUrlMock: vi.fn(
-    (redirectTo) =>
-      `http://localhost:3000/continue?redirect_to=${encodeURIComponent(redirectTo)}`
+    (redirectTo) => `http://localhost:3000/continue?redirect_to=${encodeURIComponent(redirectTo)}`
   ),
   exchangeCodeForSessionMock: vi.fn(),
-  getSafeRedirectToMock: vi.fn(
-    (value) => value ?? "http://localhost:3000/sign-in"
-  ),
+  getSafeRedirectToMock: vi.fn((value) => value ?? "http://localhost:3000/sign-in"),
   protectSensitiveAuthRouteMock: vi.fn(async () => ({ ok: true })),
 }))
 
@@ -78,9 +75,7 @@ describe("auth callback route", () => {
       retryAfterSeconds: 30,
     })
 
-    const response = await GET(
-      new Request("http://localhost:3000/callback?code=abc") as never
-    )
+    const response = await GET(new Request("http://localhost:3000/callback?code=abc") as never)
 
     expect(response.status).toBe(429)
     expect(response.headers.get("retry-after")).toBe("30")

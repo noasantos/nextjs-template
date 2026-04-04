@@ -1,11 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-const { createBrowserClientMock, getSupabasePublicEnvMock } = vi.hoisted(
-  () => ({
-    createBrowserClientMock: vi.fn(),
-    getSupabasePublicEnvMock: vi.fn(),
-  })
-)
+const { createBrowserClientMock, getSupabasePublicEnvMock } = vi.hoisted(() => ({
+  createBrowserClientMock: vi.fn(),
+  getSupabasePublicEnvMock: vi.fn(),
+}))
 
 vi.mock("@supabase/ssr", () => ({
   createBrowserClient: createBrowserClientMock,

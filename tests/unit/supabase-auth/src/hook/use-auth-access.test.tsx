@@ -23,11 +23,7 @@ afterEach(() => {
   createBrowserAuthClientMock.mockReset()
 })
 
-function createMockClient({
-  claims,
-}: {
-  claims: Record<string, unknown> | null
-}) {
+function createMockClient({ claims }: { claims: Record<string, unknown> | null }) {
   return {
     auth: {
       getClaims: vi.fn().mockResolvedValue({

@@ -1,5 +1,4 @@
 import "server-only"
-
 import { getAccess } from "@workspace/supabase-auth/session/get-access"
 import type { AuthRole } from "@workspace/supabase-auth/shared/auth-role"
 

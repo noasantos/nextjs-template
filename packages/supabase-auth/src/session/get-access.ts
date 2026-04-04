@@ -1,21 +1,14 @@
 import "server-only"
-
 import type { JwtPayload } from "@supabase/supabase-js"
 
 import { createServerAuthClient } from "@workspace/supabase-auth/server/create-server-auth-client"
-import { getClaims } from "@workspace/supabase-auth/session/get-claims"
-import {
-  isAuthRole,
-  type AuthRole,
-} from "@workspace/supabase-auth/shared/auth-role"
+import { getClaims, type JWTClaims } from "@workspace/supabase-auth/session/get-claims"
+import { isAuthRole, type AuthRole } from "@workspace/supabase-auth/shared/auth-role"
 import {
   getAccessFromClaims,
   type AccessFromClaims,
 } from "@workspace/supabase-auth/shared/get-access-from-claims"
-import {
-  isPermission,
-  type Permission,
-} from "@workspace/supabase-auth/shared/permission"
+import { isPermission, type Permission } from "@workspace/supabase-auth/shared/permission"
 
 function parseRolesFromRpc(value: unknown): AuthRole[] {
   if (!Array.isArray(value)) {
@@ -24,9 +17,7 @@ function parseRolesFromRpc(value: unknown): AuthRole[] {
 
   return value.filter(
     (role, index): role is AuthRole =>
-      typeof role === "string" &&
-      isAuthRole(role) &&
-      value.indexOf(role) === index
+      typeof role === "string" && isAuthRole(role) && value.indexOf(role) === index
   )
 }
 
@@ -51,25 +42,32 @@ function parseSubscriptionFromRpc(value: unknown): Record<string, unknown> {
   return {}
 }
 
-async function loadAccessFromDb(
-  claims: JwtPayload | null
-): Promise<AccessFromClaims | null> {
+async function loadAccessFromDb(claims: JwtPayload | null): Promise<AccessFromClaims | null> {
   if (!claims?.sub) {
     return null
   }
 
   try {
     const supabase = await createServerAuthClient()
-    const { data, error } = await supabase.rpc("get_my_access_payload")
+    const rpcArgs = {
+      p_user_id: claims.sub,
+    }
+    // @type-escape: BOUNDARY — rpc get_my_access_payload args vs generated Database types; tracked: https://github.com/supabase/supabase-js
+    const { data, error } = await supabase.rpc("get_my_access_payload", rpcArgs as never)
 
-    if (error || !data?.[0]) {
+    if (error || !data || !Array.isArray(data) || !data[0]) {
       return null
     }
 
-    const row = data[0]
+    const row = data[0] as {
+      access_version: number | null
+      permissions: unknown
+      roles: unknown
+      subscription: unknown
+    }
+
     return {
-      accessVersion:
-        typeof row.access_version === "number" ? row.access_version : null,
+      accessVersion: typeof row.access_version === "number" ? row.access_version : null,
       permissions: parsePermissionsFromRpc(row.permissions),
       roles: parseRolesFromRpc(row.roles),
       subscription: parseSubscriptionFromRpc(row.subscription),
@@ -85,10 +83,8 @@ async function loadAccessFromDb(
  * When the JWT already lists roles, DB permissions are unioned with JWT claims;
  * subscription and access_version prefer the DB snapshot when available.
  */
-async function getAccess(
-  claims?: JwtPayload | null
-): Promise<AccessFromClaims> {
-  const resolvedClaims = claims ?? (await getClaims())
+async function getAccess(claims?: JwtPayload | JWTClaims | null): Promise<AccessFromClaims> {
+  const resolvedClaims = (claims ?? (await getClaims())) as JwtPayload | null
   const fromClaims = getAccessFromClaims(resolvedClaims)
 
   if (fromClaims.roles.length === 0) {
@@ -101,9 +97,7 @@ async function getAccess(
     return fromClaims
   }
 
-  const permissions = Array.from(
-    new Set([...fromClaims.permissions, ...fromDb.permissions])
-  )
+  const permissions = Array.from(new Set([...fromClaims.permissions, ...fromDb.permissions]))
 
   return {
     accessVersion: fromDb.accessVersion ?? fromClaims.accessVersion,

@@ -1,85 +1,55 @@
-/**
- * Mensagens de erro do Supabase Auth / GoTrue frequentemente em inglês.
- * Mapeamento para pt-PT; mensagens desconhecidas mantêm-se (fallback).
- */
-const AUTH_ERROR_MESSAGE_PT: Record<string, string> = {
-  "Invalid login credentials":
-    "Credenciais inválidas. Verifique o e-mail e a palavra-passe.",
-  "Email not confirmed":
-    "O e-mail ainda não foi confirmado. Consulte a sua caixa de entrada.",
-  "User already registered": "Já existe uma conta associada a este e-mail.",
-  "Signups not allowed for this instance":
-    "Novos registos não estão permitidos neste momento.",
-  "Signup is disabled": "O registo de novas contas está desativado.",
-  "Invalid email": "Indique um endereço de e-mail válido.",
-  "Unable to validate email address: invalid format":
-    "O formato do endereço de e-mail não é válido.",
-  "Password should be at least 6 characters":
-    "A palavra-passe deve ter pelo menos 6 caracteres.",
-  "Password should be at least 8 characters":
-    "A palavra-passe deve ter pelo menos 8 caracteres.",
-  "Token has expired or is invalid":
-    "A ligação expirou ou é inválida. Solicite um novo envio.",
-  "Email link is invalid or has expired":
-    "A ligação por e-mail é inválida ou expirou.",
-  "New password should be different from the old password":
-    "A nova palavra-passe tem de ser diferente da anterior.",
-  "For security purposes, you can only request this once every 60 seconds":
-    "Por segurança, só pode pedir isto novamente em 60 segundos.",
-  "Email rate limit exceeded":
-    "Foram enviados demasiados e-mails. Tente novamente mais tarde.",
-  "Too many requests":
-    "Demasiados pedidos. Tente novamente dentro de alguns instantes.",
-  "User not found": "Não foi encontrada uma conta com este e-mail.",
-  "Invalid Refresh Token: Refresh Token Not Found":
-    "Sessão inválida ou expirada. Inicie sessão novamente.",
-  "Invalid Refresh Token: Already Used":
-    "Sessão inválida ou expirada. Inicie sessão novamente.",
-  "Invalid JWT": "Sessão inválida ou expirada. Inicie sessão novamente.",
-  "Invalid credentials": "Credenciais inválidas.",
-  "Email address not authorized":
-    "Este endereço de e-mail não está autorizado.",
-  "Email logins are disabled":
-    "Início de sessão por e-mail desativado no Auth. No projeto (hosted): Authentication → Providers → Email. Em local: `supabase/config.toml` com `[auth.email].enable_signup = true` e reiniciar o stack; o registo público segue bloqueado por `[auth].enable_signup`.",
-  "Provider not enabled":
-    "Este método de início de sessão não está disponível.",
-  "OAuth provider not supported":
-    "Este fornecedor de início de sessão não está disponível.",
-  "Request rate limit reached": "Limite de pedidos atingido. Tente mais tarde.",
-  "Database error saving new user":
-    "Erro ao guardar a conta. Tente novamente ou contacte o suporte.",
-  "A user with this email address has already been registered":
-    "Já existe uma conta com este e-mail.",
-  "Only an email address or phone number should be provided on verify":
-    "Pedido de verificação inválido.",
-  "MFA factor not found": "Fator de autenticação não encontrado.",
-  "MFA challenge failed": "A verificação MFA falhou. Tente novamente.",
-  "MFA challenge expired": "A verificação MFA expirou. Tente novamente.",
-  "Invalid TOTP code entered": "Código de autenticação inválido.",
-  "Factor not found": "Fator de autenticação não encontrado.",
-  "Enroll a TOTP factor before attempting the MFA challenge.":
-    "Registe um fator TOTP antes de tentar a verificação MFA.",
+"use client"
+
+import { useMessages, useTranslations } from "next-intl"
+import { useCallback } from "react"
+
+export type AuthErrorBundle = {
+  unexpected: string
+  supabaseErrors: Record<string, string>
 }
 
-function translateAuthErrorMessage(message: string): string {
+/**
+ * Pure helper for tests and non-React callers. Prefer `useAuthErrorTranslator` in components.
+ */
+export function translateAuthErrorFromBundle(message: string, bundle: AuthErrorBundle): string {
   const trimmed = message.trim()
   if (trimmed.length === 0) {
-    return "Ocorreu um erro inesperado. Tente novamente."
+    return bundle.unexpected
   }
 
-  const direct = AUTH_ERROR_MESSAGE_PT[trimmed]
+  const direct = bundle.supabaseErrors[trimmed]
   if (direct) {
     return direct
   }
 
   const lower = trimmed.toLowerCase()
-  for (const [en, pt] of Object.entries(AUTH_ERROR_MESSAGE_PT)) {
-    if (lower === en.toLowerCase()) {
-      return pt
+  for (const [en, translated] of Object.entries(bundle.supabaseErrors)) {
+    if (en.toLowerCase() === lower) {
+      return translated
     }
   }
 
   return trimmed
 }
 
-export { translateAuthErrorMessage }
+export function useAuthErrorTranslator(): (message: string) => string {
+  const t = useTranslations("Auth")
+  const messages = useMessages()
+  return useCallback(
+    (message: string) => {
+      const auth = messages.Auth as
+        | {
+            errors?: {
+              supabaseErrors?: Record<string, string>
+            }
+          }
+        | undefined
+      const bundle: AuthErrorBundle = {
+        unexpected: t("errors.unexpected"),
+        supabaseErrors: auth?.errors?.supabaseErrors ?? {},
+      }
+      return translateAuthErrorFromBundle(message, bundle)
+    },
+    [messages, t]
+  )
+}

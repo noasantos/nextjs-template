@@ -1,20 +1,17 @@
-import { requireUser } from "@workspace/supabase-auth/session/require-user"
-
-import { ResetPasswordForm } from "@/app/[locale]/(auth)/_components/reset-password-form"
 import { AuthSplitShell } from "@/app/[locale]/(auth)/_components/auth-split-shell"
+import { ResetPasswordForm } from "@/app/[locale]/(auth)/_components/reset-password-form"
 import { authPageMainClass } from "@/app/[locale]/(auth)/_lib/auth-page-classes"
+import { requireUser } from "@workspace/supabase-auth/session/require-user"
 import {
   resolveAuthSearchParams,
   type AuthSearchParams,
-} from "@/app/[locale]/(auth)/_lib/auth-search-params"
+} from "@workspace/supabase-auth/shared/resolve-auth-search-params"
 
 type ResetPasswordPageProps = {
   searchParams: AuthSearchParams
 }
 
-export default async function ResetPasswordPage({
-  searchParams,
-}: ResetPasswordPageProps) {
+export default async function ResetPasswordPage({ searchParams }: ResetPasswordPageProps) {
   await requireUser()
   const { redirectTo } = await resolveAuthSearchParams(searchParams)
 
@@ -23,12 +20,11 @@ export default async function ResetPasswordPage({
       <AuthSplitShell>
         <div className="w-full max-w-md space-y-6">
           <div className="space-y-2">
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            <h1 className="text-foreground text-2xl font-semibold tracking-tight">
               Definir nova palavra-passe
             </h1>
-            <p className="text-sm text-muted-foreground">
-              A sessão de recuperação é validada no servidor antes de esta
-              página ser mostrada.
+            <p className="text-muted-foreground text-sm">
+              A sessão de recuperação é validada no servidor antes de esta página ser mostrada.
             </p>
           </div>
           <ResetPasswordForm redirectTo={redirectTo} />

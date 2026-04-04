@@ -1,0 +1,110 @@
+---
+description: Delete unused exports/files, Knip will catch them
+---
+
+Knip detects:
+- Unused dependencies
+- Unused exports
+- Unused files
+- Missing dependencies
+
+When Knip flags something:
+- Delete unused exports/files
+- Remove unused dependencies
+- Do not ignore unless there's a valid reason
+
+## Examples
+
+### Correct Usage
+
+```typescript
+// ✅ Remove unused exports
+export const usedFunction = () => {} // Keep
+// export const unusedFunction = () => {} // Delete if not used
+
+// ✅ Remove unused files
+// If a file has no exports used anywhere, delete it
+```
+
+### Incorrect Usage
+
+```typescript
+// ❌ Wrong - Keep unused exports "just in case"
+export const deprecatedFunction = () => {
+  // This is no longer used anywhere
+}
+
+// ❌ Wrong - Keep unused dependencies in package.json
+{
+  "dependencies": {
+    "lodash": "^4.17.21" // Not imported anywhere
+  }
+}
+```
+
+## How to Fix Knip Issues
+
+### 1. Run Knip
+
+```bash
+pnpm knip --production
+```
+
+### 2. Review Output
+
+Knip will report:
+- **Unused dependencies**: Remove from package.json
+- **Unused devDependencies**: Remove from package.json  
+- **Unused exports**: Remove from files
+- **Unused files**: Delete the file
+- **Missing dependencies**: Add to package.json
+
+### 3. Fix Issues
+
+```bash
+# Example: Knip reports lodash is unused
+# Remove from package.json:
+npm uninstall lodash
+
+# Example: Knip reports unusedFunction export
+// Remove from file:
+// - export const unusedFunction = () => {}
+```
+
+## When to Ignore Knip
+
+Only ignore Knip warnings when:
+
+1. **Runtime dependencies**: Package is used at runtime but not statically analyzable
+2. **Type-only dependencies**: Package provides types only
+3. **Peer dependencies**: Package is provided by consumer
+4. **Conditional imports**: Package used in specific environments
+
+Document ignores in `knip.json`:
+
+```json
+{
+  "ignoreDependencies": [
+    "package-name" // Reason: used conditionally at runtime
+  ]
+}
+```
+
+## Related Rules
+
+- [file-size-limit](./file-size-limit.mdc) - Keep files small
+- [single-responsibility](./single-responsibility.mdc) - One responsibility per module
+
+## Tooling
+
+Knip runs automatically on pre-push:
+
+```bash
+pnpm knip --production --no-exit-code
+```
+
+Manual run:
+
+```bash
+pnpm knip --production
+```

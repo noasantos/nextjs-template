@@ -1,6 +1,5 @@
 "use client"
 
-import * as React from "react"
 import {
   flexRender,
   getCoreRowModel,
@@ -12,6 +11,7 @@ import {
   type ColumnFiltersState,
   type SortingState,
 } from "@tanstack/react-table"
+import * as React from "react"
 
 import { Button } from "@workspace/ui/components/button"
 import { Input } from "@workspace/ui/components/input"
@@ -41,9 +41,7 @@ export function DataTable<TData, TValue>({
   emptyMessage = "Sem resultados.",
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  )
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 
   // TanStack Table: stable API; React Compiler skips memoization by design.
   // eslint-disable-next-line react-hooks/incompatible-library -- useReactTable is the supported API
@@ -68,14 +66,9 @@ export function DataTable<TData, TValue>({
         <div className="flex flex-wrap items-center gap-2">
           <Input
             placeholder={filterPlaceholder}
-            value={
-              (table.getColumn(filterColumnId)?.getFilterValue() as string) ??
-              ""
-            }
+            value={(table.getColumn(filterColumnId)?.getFilterValue() as string) ?? ""}
             onChange={(event) =>
-              table
-                .getColumn(filterColumnId)
-                ?.setFilterValue(event.target.value)
+              table.getColumn(filterColumnId)?.setFilterValue(event.target.value)
             }
             className="max-w-sm"
           />
@@ -90,10 +83,7 @@ export function DataTable<TData, TValue>({
                   <TableHead key={header.id}>
                     {header.isPlaceholder
                       ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                      : flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 ))}
               </TableRow>
@@ -105,10 +95,7 @@ export function DataTable<TData, TValue>({
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
                 </TableRow>
@@ -117,7 +104,7 @@ export function DataTable<TData, TValue>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center text-muted-foreground"
+                  className="text-muted-foreground h-24 text-center"
                 >
                   {emptyMessage}
                 </TableCell>
