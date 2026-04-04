@@ -47,7 +47,7 @@
     "@workspace/vitest-config": "workspace:*",
     "publint": "^0.3.18",
     "tailwindcss": "^4.2.2",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.2",
     "vitest": "^4.1.2"
   }
 }
