@@ -1,114 +1,158 @@
 # Git Hooks & Automation
 
-## Tools
+## TL;DR
 
-**Lefthook** - Git hooks manager (fast, parallel, zero dependencies)  
-**Lint-staged** - Run linters on staged files only  
-**Commitlint** - Validate conventional commits  
-**Git-branch-lint** - Validate branch naming
+- **`git commit`** runs **Lefthook `pre-commit`**: format + lint + policy checks
+  on the **whole repo** (not only staged files). If a step **fails**, the commit
+  is **aborted**; some steps **rewrite files** and, when successful,
+  **`stage_fixed`** re-stages those fixes into your commit.
+- **`git push`** runs **Lefthook `pre-push`**: slower checks (typecheck, tests,
+  audit, etc.). Failures **block the push**.
+- **Editor extensions** (format on save, Ox in the IDE, etc.) help your
+  **local** workflow; they are **not** a substitute for hooks. The
+  **authoritative** alignment with this repo is what runs when Git invokes
+  Lefthook.
 
-## Installation
+## IDE / extensions vs Git hooks
 
-```bash
-pnpm hooks:install
-```
+|            | Editor (save, format document, etc.)  | `git commit` / `git push`                    |
+| ---------- | ------------------------------------- | -------------------------------------------- |
+| **When**   | On each save or manual command        | Only when you commit or push                 |
+| **Config** | May differ (user settings, workspace) | **`lefthook.yml`** + root **`pnpm`** scripts |
+| **Scope**  | Often current file                    | Pre-commit: **entire tree** (Ox is fast)     |
 
-## Pre-commit Hooks
+So: you can have extensions that format with Oxfmt/Ox on save, but **you still
+need a successful hook run** before a commit lands. If the hook fails, fix or
+stage what it changed and commit again—do not assume “save fixed everything.”
 
-**Runs automatically before each commit:**
+## Pre-commit (`lefthook` → `pre-commit`)
+
+**Trigger:** every `git commit` (after you resolve merge conflicts in the index,
+if any).
+
+**Manual run (same as Git):**
 
 ```bash
 pnpm exec lefthook run pre-commit
 ```
 
-**Checks:**
+**Order** (`parallel: false`): each step waits for the previous one.
 
-- ✅ **Full repo:** `pnpm format` (`oxfmt .`) then `pnpm exec oxlint --fix`
-  (root `.oxlintrc.json`; `packages/ui/**` ignored in Oxlint per GR-001). Ox is
-  fast enough for a consistent tree on every commit; `stage_fixed: true` re-adds
-  touched files to the index when possible.
-- ✅ Security scan (check-security-smells)
-- ✅ Forbidden patterns (check-forbidden)
-- ✅ Docs drift (check-docs-drift)
+1. **`pnpm format`** — `oxfmt .` at repo root (respects `.oxfmtrc.json`
+   ignores).
+2. **`pnpm exec oxlint --fix`** — single pass, root `.oxlintrc.json` (e.g.
+   `packages/ui/**` ignored for Oxlint per GR-001).
+3. **Changelog** — `scripts/ci/check-changelog.mjs` (must pass for template
+   policy).
+4. **Security** — `check-security-smells`
+5. **Forbidden / patterns** — `check:forbidden`, `check-forbidden-patterns`
+6. **Type escapes** — `check-type-escapes`
+7. **Workspace imports** — `check:workspace-imports`
+8. **Cursor rules parity** — `check:cursor-rules-parity`
+9. **Docs drift** — `check:docs-drift`
 
-**Partial staging (Lefthook):** Mixing staged + unstaged edits on the **same**
-file (`MM`) can still break unstaged restore in edge cases (see
+**Auto-fix vs block:**
+
+- **Oxfmt** and **`oxlint --fix`** may **change files** (style and many safe
+  lint fixes). With `stage_fixed: true`, Lefthook **re-adds** those files to the
+  index when the step **succeeds**.
+- **Anything that exits non-zero** (changelog missing, forbidden pattern,
+  security script, **Oxlint error**, etc.) **stops** the hook and **cancels**
+  the commit. There is no universal “fix all errors automatically”—only what
+  each tool’s fixer covers.
+- **Warnings** from Oxlint do not necessarily fail the run; **errors** do.
+
+**Partial staging:** If the **same file** is both staged and unstaged (`MM`),
+auto-fix + re-stage can interact badly with unstaged hunks (see
 [lefthook#1369](https://github.com/evilmartians/lefthook/issues/1369)). Prefer
-staging everything you mean to commit (`git add -A` on that set) before
-`git commit`.
+staging **all** hunks you intend to commit for that file (`git add -A` on that
+set) before committing.
 
-**Execution order:** `parallel: false` — `oxfmt` → `oxlint` → changelog and the
-rest.
+## Commit-msg
 
-## Commit-msg Hooks
+Validates [Conventional Commits](https://www.conventionalcommits.org/) via
+Commitlint (`commitlint.config.js`).
 
-**Validates commit message format:**
-
-```bash
-git commit -m "feat: add new feature"  # ✅ Valid
-git commit -m "added stuff"            # ❌ Invalid
-```
-
-**Format:** `type(scope?): subject`
-
-**Types:** feat, fix, docs, style, refactor, perf, test, build, ci, chore,
-revert
-
-## Pre-push Hooks
-
-**Runs before push:**
+**Example:**
 
 ```bash
-git push  # Automatically runs pre-push checks
+git commit -m "feat: add new feature"   # OK
+git commit -m "added stuff"              # rejected
 ```
 
-**Checks:**
+**Format:** `type(scope?): subject` — types include `feat`, `fix`, `docs`,
+`style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`.
 
-- ✅ Type check (pnpm typecheck)
-- ✅ Unit tests (pnpm test)
-- ✅ Dependency audit (pnpm audit)
+## Pre-push (`lefthook` → `pre-push`)
 
-## Branch Naming
+**Trigger:** `git push` (to any remote ref that runs the hook).
 
-**Validated patterns:**
+**Manual run:**
 
-- `feature/:name`
-- `bugfix/:ticket-:name`
-- `hotfix/:ticket-:name`
-- `docs/:name`
-- `chore/:name`
-- `test/:name`
-- `refactor/:name`
+```bash
+pnpm exec lefthook run pre-push
+```
 
-**Excluded branches:** main, master, develop, staging, production
+**Checks** (see `lefthook.yml` for the exact list):
+
+- Typecheck — `pnpm typecheck`
+- Unit tests — `pnpm test`
+- Package exports — `publint` on `packages/*`
+- Dead code — `knip` (non-blocking exit code where configured)
+- Audit — `pnpm audit --audit-level=high`
+- Boundaries — `depcruise` on `apps/*/app` and `packages/*/src`
+
+Failures **block the push**. Fix locally, commit, push again.
+
+## Other automation
+
+**Lint-staged** (`.lintstagedrc`) is available for **`pnpm lint:staged`** (e.g.
+CI or ad-hoc staged-only lint). **Pre-commit does not use lint-staged**; it uses
+full-repo format + Oxlint as above.
+
+**Post-merge** runs `pnpm install` after `git pull` merge (see `lefthook.yml`).
+
+## Branch naming
+
+Validated by Git-branch-lint (`.branchlintrc.json`):
+
+- `feature/:name`, `bugfix/:ticket-:name`, `hotfix/:ticket-:name`, `docs/:name`,
+  `chore/:name`, `test/:name`, `refactor/:name`
+
+**Excluded:** `main`, `master`, `develop`, `staging`, `production`
 
 ## Commands
 
 ```bash
-# Install hooks
+# Install Git hooks (after clone or when lefthook.yml changes)
 pnpm hooks:install
 
-# Uninstall hooks
 pnpm hooks:uninstall
 
-# Run pre-commit manually
-pnpm lint
+# Same checks Git runs before commit
+pnpm exec lefthook run pre-commit
 
-# Run lint-staged manually
+# Same checks Git runs before push
+pnpm exec lefthook run pre-push
+
+# Staged-only lint (optional; not the pre-commit pipeline)
 pnpm lint:staged
 
-# Run commitlint manually
-npx commitlint --edit
+# Validate last commit message
+echo "feat: example" | npx commitlint
 ```
 
-## Configuration Files
+## Configuration files
 
-- `lefthook.yml` - Git hooks configuration
-- `commitlint.config.js` - Commit message rules
-- `.lintstagedrc` - Lint-staged file patterns
-- `.branchlintrc.json` - Branch naming patterns
+| File                   | Role                            |
+| ---------------------- | ------------------------------- |
+| `lefthook.yml`         | Hook commands and order         |
+| `commitlint.config.js` | Commit message rules            |
+| `.lintstagedrc`        | Patterns for `pnpm lint:staged` |
+| `.branchlintrc.json`   | Branch name rules               |
 
 ---
 
-**For AI Agents:** All hooks run automatically. NEVER bypass with `--no-verify`
-unless absolutely necessary.
+**For AI agents:** Hooks run automatically with Git. Do **not** use
+`git commit --no-verify` or `git push --no-verify` unless a maintainer
+explicitly allows an exception; document why if you must.

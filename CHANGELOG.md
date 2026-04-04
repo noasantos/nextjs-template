@@ -29,6 +29,9 @@
 
 ### Changed
 
+- [docs] Expand `docs/git-hooks.md`: IDE vs Git hooks, pre-commit vs pre-push,
+  auto-fix vs blocking failures, correct manual commands (`lefthook run`), and
+  lint-staged vs full-repo pre-commit.
 - [fix] Pre-commit `lefthook.yml`: full-repo `pnpm format` +
   `pnpm exec oxlint --fix` (not `{staged_files}`); `parallel: false`;
   `stage_fixed: true`; update `docs/git-hooks.md` (Lefthook #1369 note
@@ -68,7 +71,8 @@
 
 - [fix] Add `publint` and `check:exports` to `@workspace/seo` so `pre-push`
   `pnpm -r exec publint` matches other packages.
-- [fix] Replace `Array#toSorted()` with `[...arr].sort()` where `lib` is below
-  ES2023 (`test-utils`, `supabase-auth` `app-destination`, integration test).
+- [fix] `packages/typescript-config/base.json`: add `es2023` to
+  `compilerOptions.lib` so `Array#toSorted()` typechecks (Oxlint `--fix` emits
+  `toSorted`); aligns TS with immutable-array APIs.
 - [fix] `.gitignore`: ignore `.idea/` and `*.log`; restore `export {}` on Vitest
   `server-only` stub (Oxlint `unicorn/no-empty-file`).
