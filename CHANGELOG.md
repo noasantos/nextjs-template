@@ -29,9 +29,10 @@
 
 ### Changed
 
-- [fix] Pre-commit `lefthook.yml`: pass `{staged_files}` to `oxfmt` and `oxlint`
-  so hooks do not lint/format the entire repo (was failing commits with hundreds
-  of Oxlint issues outside the staged set); clarify in `docs/git-hooks.md`.
+- [fix] Pre-commit `lefthook.yml`: `{staged_files}` for `oxfmt` / `oxlint` (no
+  full-repo lint); `parallel: false` so `priority` runs `oxfmt` before `oxlint`;
+  `stage_fixed: true` on format/lint; partial-staging + formatter caveat in
+  `docs/git-hooks.md` (Lefthook #1369).
 - [docs] Align `docs/reference/stack.md` bundler notes with `apps/example`
   (`next dev` / `next build` use **Turbopack**, not Webpack).
 - [chore] Bump workspace dependencies (Next 16.2.2, next-intl 4.9, Tailwind 4.2,
@@ -65,5 +66,5 @@
   `pnpm -r exec publint` matches other packages.
 - [fix] Replace `Array#toSorted()` with `[...arr].sort()` where `lib` is below
   ES2023 (`test-utils`, `supabase-auth` `app-destination`, integration test).
-- [fix] `.gitignore`: ignore `.idea/` and `*.log`; restore `export {}` on
-  Vitest `server-only` stub (Oxlint `unicorn/no-empty-file`).
+- [fix] `.gitignore`: ignore `.idea/` and `*.log`; restore `export {}` on Vitest
+  `server-only` stub (Oxlint `unicorn/no-empty-file`).

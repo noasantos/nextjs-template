@@ -29,6 +29,17 @@ pnpm exec lefthook run pre-commit
 - ✅ Forbidden patterns (check-forbidden)
 - ✅ Docs drift (check-docs-drift)
 
+**Partial staging (important):** If the same file is **staged and also edited
+unstaged** (git shows `MM`), Lefthook backs up unstaged lines, runs the
+formatter, then tries to re-apply that backup. If the formatter rewrites nearby
+lines, `git apply` can fail and the working tree can end up wrong (see
+[evilmartians/lefthook#1369](https://github.com/evilmartians/lefthook/issues/1369)).
+**Prefer `git add` / `git add -A` on everything you intend to commit** before
+`git commit`, so you are not mixing staged + unstaged edits on the same file.
+
+**Execution order:** Pre-commit uses `parallel: false` so `priority` is honored:
+`oxfmt` → `oxlint` → changelog and other checks (not parallel format+lint).
+
 ## Commit-msg Hooks
 
 **Validates commit message format:**

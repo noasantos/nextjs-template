@@ -2,19 +2,23 @@
 
 # Pre-commit: Fast checks on staged files
 pre-commit:
-  parallel: true
+  # `priority` is ignored when parallel: true; keep sequential so oxfmt runs
+  # before oxlint on the same paths.
+  parallel: false
   commands:
     # Format FIRST (before lint)
     format:
       glob: "*.{ts,tsx,js,jsx,md,json,yml}"
       run: pnpm exec oxfmt --write {staged_files}
       priority: 1
+      stage_fixed: true
 
     # Lint staged files only (after format); do not run oxlint on the whole repo
     lint:
       glob: "*.{ts,tsx,js,jsx}"
       run: pnpm exec oxlint --fix {staged_files}
       priority: 2
+      stage_fixed: true
 
     # Changelog check (must block commits)
     changelog:
