@@ -22,6 +22,9 @@
 
 ### Security
 
+- [security] `pnpm.overrides`: require `brace-expansion` >=5.0.5
+  (GHSA-f886-m6hf-6m8v via `@sentry/nextjs` → `minimatch`); `pnpm audit` clean
+  at default severity.
 - [security] Add root `pnpm.overrides` for transitive advisories (handlebars,
   basic-ftp, lodash, minimatch, path-to-regexp, picomatch); bump `packages/ui`
   `@turbo/gen` to match workspace `turbo` so `pnpm audit --audit-level=high`
