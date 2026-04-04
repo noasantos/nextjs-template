@@ -42,3 +42,9 @@ npm-debug.log*
 # Misc
 .DS_Store
 *.pem
+
+# IDE / local tooling
+.idea/
+
+# Log files (root or packages)
+*.log

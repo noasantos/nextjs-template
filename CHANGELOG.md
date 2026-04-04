@@ -58,3 +58,12 @@
   `llm-to-llm-prompt` skill; update skills index, AGENTS.md, and root README.
 - [docs] Align depcruise examples with `apps/<app>/app/` (replace `apps/*/src`
   where the template has no `src/`).
+
+### Fixed
+
+- [fix] Add `publint` and `check:exports` to `@workspace/seo` so `pre-push`
+  `pnpm -r exec publint` matches other packages.
+- [fix] Replace `Array#toSorted()` with `[...arr].sort()` where `lib` is below
+  ES2023 (`test-utils`, `supabase-auth` `app-destination`, integration test).
+- [fix] `.gitignore`: ignore `.idea/` and `*.log`; restore `export {}` on
+  Vitest `server-only` stub (Oxlint `unicorn/no-empty-file`).

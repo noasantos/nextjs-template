@@ -10,10 +10,12 @@
     "lint": "oxlint",
     "format": "oxfmt --write",
     "typecheck": "tsc --noEmit",
-    "build": "tsc --noEmit"
+    "build": "tsc --noEmit",
+    "check:exports": "publint"
   },
   "devDependencies": {
     "@workspace/typescript-config": "workspace:*",
+    "publint": "^0.3.18",
     "typescript": "^5.9.3"
   }
 }

@@ -333,6 +333,9 @@ importers:
       '@workspace/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
+      publint:
+        specifier: ^0.3.18
+        version: 0.3.18
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
