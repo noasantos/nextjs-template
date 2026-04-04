@@ -20,7 +20,9 @@
     "**/.next/**",
     "**/.turbo/**",
     "**/coverage/**",
-    "packages/supabase-infra/src/types/database.types.ts"
+    "packages/supabase-infra/src/types/database.types.ts",
+    "packages/vitest-config/src/server-only-stub.ts",
+    "packages/brand/src/index.ts"
   ],
   "sortImports": {
     "internalPattern": ["@/", "~/", "@workspace/"],

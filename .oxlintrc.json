@@ -17,7 +17,12 @@
     "restriction": "warn",
     "nursery": "off"
   },
-  "ignorePatterns": ["**/database.types.ts", "packages/ui/**"],
+  "ignorePatterns": [
+    "**/database.types.ts",
+    "packages/ui/**",
+    "packages/vitest-config/src/server-only-stub.ts",
+    "packages/brand/src/index.ts"
+  ],
   "settings": {
     "next": {
       "rootDir": ["apps/*/", "packages/*/"]

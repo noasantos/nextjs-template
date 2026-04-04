@@ -99,6 +99,11 @@ The repo’s committed `.oxfmtrc.json` includes line width, `semi: false`, impor
 sorting (`@workspace/` via `internalPattern`), Tailwind class sorting for
 `cn`/`cva`, and ignores for generated DB types.
 
+**Minimal stub files:** `packages/vitest-config/src/server-only-stub.ts` and
+`packages/brand/src/index.ts` are in oxfmt `ignorePatterns` (keeps `export {}`)
+and in `.oxlintrc.json` `ignorePatterns`, because `oxlint --fix` can otherwise
+strip `export {}` from these comment-only modules.
+
 ---
 
 ## Commands

@@ -29,10 +29,14 @@
 
 ### Changed
 
-- [fix] Pre-commit `lefthook.yml`: `{staged_files}` for `oxfmt` / `oxlint` (no
-  full-repo lint); `parallel: false` so `priority` runs `oxfmt` before `oxlint`;
-  `stage_fixed: true` on format/lint; partial-staging + formatter caveat in
-  `docs/git-hooks.md` (Lefthook #1369).
+- [fix] Pre-commit `lefthook.yml`: full-repo `pnpm format` +
+  `pnpm exec oxlint --fix` (not `{staged_files}`); `parallel: false`;
+  `stage_fixed: true`; update `docs/git-hooks.md` (Lefthook #1369 note
+  retained).
+- [fix] Stub modules: `.oxfmtrc.json` and `.oxlintrc.json` ignore
+  `server-only-stub.ts` and `packages/brand` `index.ts` (oxfmt keeps
+  `export {}`; `oxlint --fix` no longer strips it); note in
+  `docs/tools/oxlint-oxfmt.md`.
 - [docs] Align `docs/reference/stack.md` bundler notes with `apps/example`
   (`next dev` / `next build` use **Turbopack**, not Webpack).
 - [chore] Bump workspace dependencies (Next 16.2.2, next-intl 4.9, Tailwind 4.2,

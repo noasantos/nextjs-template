@@ -23,22 +23,22 @@ pnpm exec lefthook run pre-commit
 
 **Checks:**
 
-- ✅ Format + lint **staged files only** (`oxfmt` / `oxlint` use Lefthook
-  `{staged_files}` — not a full-repo `pnpm lint`)
+- ✅ **Full repo:** `pnpm format` (`oxfmt .`) then `pnpm exec oxlint --fix`
+  (root `.oxlintrc.json`; `packages/ui/**` ignored in Oxlint per GR-001). Ox is
+  fast enough for a consistent tree on every commit; `stage_fixed: true` re-adds
+  touched files to the index when possible.
 - ✅ Security scan (check-security-smells)
 - ✅ Forbidden patterns (check-forbidden)
 - ✅ Docs drift (check-docs-drift)
 
-**Partial staging (important):** If the same file is **staged and also edited
-unstaged** (git shows `MM`), Lefthook backs up unstaged lines, runs the
-formatter, then tries to re-apply that backup. If the formatter rewrites nearby
-lines, `git apply` can fail and the working tree can end up wrong (see
-[evilmartians/lefthook#1369](https://github.com/evilmartians/lefthook/issues/1369)).
-**Prefer `git add` / `git add -A` on everything you intend to commit** before
-`git commit`, so you are not mixing staged + unstaged edits on the same file.
+**Partial staging (Lefthook):** Mixing staged + unstaged edits on the **same**
+file (`MM`) can still break unstaged restore in edge cases (see
+[lefthook#1369](https://github.com/evilmartians/lefthook/issues/1369)). Prefer
+staging everything you mean to commit (`git add -A` on that set) before
+`git commit`.
 
-**Execution order:** Pre-commit uses `parallel: false` so `priority` is honored:
-`oxfmt` → `oxlint` → changelog and other checks (not parallel format+lint).
+**Execution order:** `parallel: false` — `oxfmt` → `oxlint` → changelog and the
+rest.
 
 ## Commit-msg Hooks
 

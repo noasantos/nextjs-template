@@ -98,7 +98,7 @@ function getAppKeyForUrl(value: string): AppSurfaceKey | null {
       return "auth"
     }
 
-    const sorted = [...APP_SEGMENT_KEYS].sort(
+    const sorted = [...APP_SEGMENT_KEYS].toSorted(
       (a, b) => APP_SEGMENT_PATHS[b].length - APP_SEGMENT_PATHS[a].length
     )
     for (const key of sorted) {

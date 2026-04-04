@@ -49,8 +49,8 @@ describe("syncUserAccess GoTrue failure after DB sync (template)", () => {
       .select("role")
       .eq("user_id", user.userId)
 
-    expect([...(rolesAfter?.map((row) => row.role) ?? [])].sort()).toEqual(
-      [...expandRolesForAdmin([privilegedRole])].sort()
+    expect([...(rolesAfter?.map((row) => row.role) ?? [])].toSorted()).toEqual(
+      [...expandRolesForAdmin([privilegedRole])].toSorted()
     )
 
     const authUser = await admin.auth.admin.getUserById(user.userId)

@@ -1,22 +1,18 @@
 # Git Hooks Configuration (Lefthook)
 
-# Pre-commit: Fast checks on staged files
+# Pre-commit: Full-repo format + lint (Ox is fast; guarantees tree matches config)
 pre-commit:
-  # `priority` is ignored when parallel: true; keep sequential so oxfmt runs
-  # before oxlint on the same paths.
   parallel: false
   commands:
-    # Format FIRST (before lint)
+    # Root `pnpm format` → `oxfmt .` (respects oxfmt ignore config)
     format:
-      glob: "*.{ts,tsx,js,jsx,md,json,yml}"
-      run: pnpm exec oxfmt --write {staged_files}
+      run: pnpm format
       priority: 1
       stage_fixed: true
 
-    # Lint staged files only (after format); do not run oxlint on the whole repo
+    # Single root pass: `.oxlintrc.json`, `packages/ui` ignored there (GR-001)
     lint:
-      glob: "*.{ts,tsx,js,jsx}"
-      run: pnpm exec oxlint --fix {staged_files}
+      run: pnpm exec oxlint --fix
       priority: 2
       stage_fixed: true
 
