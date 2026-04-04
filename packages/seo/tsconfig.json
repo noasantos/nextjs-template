@@ -1,8 +1,10 @@
 {
   "extends": "../../packages/typescript-config/base.json",
   "compilerOptions": {
-    "baseUrl": ".",
-    "noEmit": true
+    "noEmit": true,
+    "paths": {
+      "*": ["./*"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules"]

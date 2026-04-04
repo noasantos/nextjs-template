@@ -1,7 +1,9 @@
 {
   "extends": "../apps/example/tsconfig.json",
   "compilerOptions": {
-    "baseUrl": "../apps/example",
+    "paths": {
+      "*": ["../apps/example/*"]
+    },
     "plugins": []
   },
   "include": [

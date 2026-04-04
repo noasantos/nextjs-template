@@ -1,7 +1,6 @@
 {
   "extends": "../../packages/typescript-config/base.json",
   "compilerOptions": {
-    "baseUrl": ".",
     "jsx": "react-jsx",
     "paths": {
       "@workspace/core/*": ["./src/*"],

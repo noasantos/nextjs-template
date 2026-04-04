@@ -32,6 +32,11 @@
 
 ### Changed
 
+- [fix] TypeScript `tsconfig`: remove deprecated `compilerOptions.baseUrl`; use
+  `paths` only (resolved relative to each config file); fix `@workspace/*` in
+  `packages/typescript-config/base.json` to `../../packages/*`; add `paths`
+  wildcards for `seo` and `tests` where `baseUrl` was the only anchor; update
+  `docs/tools/typescript-strict.md` example.
 - [docs] Expand `docs/git-hooks.md`: IDE vs Git hooks, pre-commit vs pre-push,
   auto-fix vs blocking failures, correct manual commands (`lefthook run`), and
   lint-staged vs full-repo pre-commit.
