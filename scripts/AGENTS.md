@@ -26,6 +26,16 @@ Automation scripts for development, CI/CD, maintenance.
 - `edge:new` - Edge Functions
 - `supabase:migration:new` - Migrations
 
+**Backend codegen:**
+
+- `codegen:domain-map:validate` - Validate `config/domain-map.json` vs
+  `database.types.ts`
+- `codegen:domain-map:sync` - Report tables missing from map / stale map rows
+- `codegen:snapshot-types` - Copy canonical types into
+  `packages/codegen-tools/workspace/` (gitignored) for optional `--types`
+- `codegen:backend` - Stub repositories (`--check` default, `--write` to emit)
+- See [Backend codegen](../docs/guides/backend-codegen.md)
+
 **QA:**
 
 - `seed:local-users` - Test users

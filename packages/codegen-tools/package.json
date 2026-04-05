@@ -1,0 +1,29 @@
+{
+  "name": "@workspace/codegen-tools",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./domain-map-schema": "./src/domain-map-schema.ts",
+    "./extract-public-table-names": "./src/extract-public-table-names.ts",
+    "./validate-domain-map": "./src/validate-domain-map.ts",
+    "./sync-domain-map-report": "./src/sync-domain-map-report.ts"
+  },
+  "scripts": {
+    "lint": "oxlint .",
+    "typecheck": "tsc --noEmit",
+    "test": "mkdir -p coverage/.tmp && vitest run --config vitest.config.ts"
+  },
+  "dependencies": {
+    "typescript": "^5.9.3",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.2",
+    "@workspace/typescript-config": "workspace:*",
+    "@workspace/vitest-config": "workspace:*",
+    "oxlint": "^1.58.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.2"
+  }
+}

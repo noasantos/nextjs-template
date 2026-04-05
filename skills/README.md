@@ -12,62 +12,66 @@ Custom skills for all AI agents working with this codebase.
    pattern correctly
 3. **[edge-function-template](./edge-function-template/)** - Create Edge
    Functions with SRP
+4. **[backend-domain-codegen-init](./backend-domain-codegen-init/)** -
+   Orchestrate domain-map + validate + `pnpm codegen:backend`
+5. **[backend-domain-map](./backend-domain-map/)** - Infer and review
+   `config/domain-map.json` (use as subagent from codegen-init)
 
 ### **Security & Auth**
 
-4. **[logging-required](./logging-required/)** - Enforce structured logging
+6. **[logging-required](./logging-required/)** - Enforce structured logging
    (GR-005)
-5. **[auth-invariants](./auth-invariants/)** - Enforce auth patterns (getClaims
+7. **[auth-invariants](./auth-invariants/)** - Enforce auth patterns (getClaims
    vs getUser)
-6. **[security-check](./security-check/)** - Scan for security issues
+8. **[security-check](./security-check/)** - Scan for security issues
 
 ### **Code Quality**
 
-7. **[jsdoc-generator](./jsdoc-generator/)** - Generate JSDoc for exports
-8. **[file-size-check](./file-size-check/)** - Check file size limits
-9. **[single-responsibility](./single-responsibility/)** - Enforce SRP
+9. **[jsdoc-generator](./jsdoc-generator/)** - Generate JSDoc for exports
+10. **[file-size-check](./file-size-check/)** - Check file size limits
+11. **[single-responsibility](./single-responsibility/)** - Enforce SRP
 
 ### **Database**
 
-10. **[migration-workflow](./migration-workflow/)** - Guide through migration
+12. **[migration-workflow](./migration-workflow/)** - Guide through migration
     creation
-11. **[rls-test-generator](./rls-test-generator/)** - Generate RLS tests per
+13. **[rls-test-generator](./rls-test-generator/)** - Generate RLS tests per
     table
 
 ### **Testing**
 
-12. **[test-location-guide](./test-location-guide/)** - Guide to correct test
+14. **[test-location-guide](./test-location-guide/)** - Guide to correct test
     location (GR-010)
-13. **[test-generator](./test-generator/)** - Generate tests in correct location
-14. **[tdd-workflow](./tdd-workflow/)** - Enforce TDD workflow
+15. **[test-generator](./test-generator/)** - Generate tests in correct location
+16. **[tdd-workflow](./tdd-workflow/)** - Enforce TDD workflow
 
 ### **Documentation**
 
-15. **[three-level-docs](./three-level-docs/)** - Guide to correct doc level
+17. **[three-level-docs](./three-level-docs/)** - Guide to correct doc level
     (GR-019)
-16. **[doc-template](./doc-template/)** - Generate documentation templates
+18. **[doc-template](./doc-template/)** - Generate documentation templates
 
 ### **Prompting**
 
-17. **[llm-to-llm-prompt](./llm-to-llm-prompt/)** - Machine prompts for
+19. **[llm-to-llm-prompt](./llm-to-llm-prompt/)** - Machine prompts for
     downstream LLMs (English, execution-focused)
 
 ### **Template Hardening Tools**
 
-18. **[Package file suffixes](../docs/standards/package-file-suffixes.md)** —
+20. **[Package file suffixes](../docs/standards/package-file-suffixes.md)** —
     `*.component.tsx` / `*.hook.*` / `*.provider.tsx` in `brand` / `core` /
     `forms` / `seo` (not `apps/`, not `packages/ui`); `pnpm check:forbidden`
-19. **[dependency-cruiser](../docs/tools/dependency-cruiser.md)** - Enforce
+21. **[dependency-cruiser](../docs/tools/dependency-cruiser.md)** - Enforce
     architectural boundaries
-20. **[Knip](../docs/tools/knip.md)** - Detect unused dependencies, exports, and
+22. **[Knip](../docs/tools/knip.md)** - Detect unused dependencies, exports, and
     files
-21. **[next-safe-action](../docs/tools/next-safe-action.md)** - Type-safe Server
+23. **[next-safe-action](../docs/tools/next-safe-action.md)** - Type-safe Server
     Actions with auth middleware
-22. **[TypeScript Strict Flags](../docs/tools/typescript-strict.md)** - Enforce
+24. **[TypeScript Strict Flags](../docs/tools/typescript-strict.md)** - Enforce
     strict type checking
-23. **[Security Scanners](../docs/tools/security-scanners.md)** - Automated
+25. **[Security Scanners](../docs/tools/security-scanners.md)** - Automated
     security scanning (OSV, actionlint, zizmor)
-24. **[publint](../docs/tools/publint.md)** - Package linting for published
+26. **[publint](../docs/tools/publint.md)** - Package linting for published
     packages
 
 ## 🤖 How to Use
@@ -118,15 +122,15 @@ This ensures skills stay synchronized with:
 
 | Category           | Skills | Coverage           |
 | ------------------ | ------ | ------------------ |
-| Architecture       | 3      | 100% of patterns   |
+| Architecture       | 5      | 100% of patterns   |
 | Security & Auth    | 3      | 100% of invariants |
 | Code Quality       | 3      | 100% of rules      |
 | Database           | 2      | 100% of workflows  |
 | Testing            | 3      | 100% of strategies |
 | Documentation      | 2      | 100% of levels     |
 | Prompting          | 1      | LLM-to-LLM prompts |
-| Template Hardening | 6      | 100% of tooling    |
-| **Total**          | **23** | **100% coverage**  |
+| Template Hardening | 7      | 100% of tooling    |
+| **Total**          | **25** | **100% coverage**  |
 
 ## 🎯 For Different AI Agents
 

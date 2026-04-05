@@ -20,11 +20,15 @@ handler boundary) apply to **server-side data work in
 growing the `supabase-infra` package with product logic.
 
 **Implementation note:** The patterns below (including `createAction` /
-`serializeResult`) describe the **target** server-action API. Today,
-`packages/supabase-data` actions are implemented as explicit async functions
-with Zod parsing and serializable unions; shared `createAction` helpers are
-**not** in the tree yet. New code must still follow repository boundaries and
-validation rules—see
+`serializeResult`) describe the **target** server-action API. **Canonical
+choices today:** (1) Existing modules may expose thin `import "server-only"`
+helpers that accept `SupabaseClient` for internal composition (see
+`get-profile-by-user-id`). (2) **New** app-facing Server Actions should be
+scaffolded with `pnpm action:new` (`"use server"`, `getClaims()`, structured
+logging, Zod inputs, serializable results) and then wired to repositories—do not
+add new ad-hoc patterns without aligning to that template. Shared `createAction`
+helpers are **not** in the tree yet. All code must follow repository boundaries
+and validation rules—see
 [docs/standards/repository-standards.md](../standards/repository-standards.md#6-data-and-validation-rules).
 
 ## Core Principles

@@ -94,7 +94,8 @@ decisions.
 - **[Auth invariants](./guides/auth-invariants.md)** — Server auth rules,
   boundary validation, abuse protection
 - **[Migration workflow](./guides/migration-workflow.md)** — CLI migrations
-  order
+- **[Backend codegen](./guides/backend-codegen.md)** — `domain-map.json`,
+  validate, stub repositories order
 - **[Client UI data sync](./guides/client-ui-data-sync.md)** — Cache
   invalidation, optimistic UI
 - **[Observability](./guides/observability-architecture.md)** — Logging

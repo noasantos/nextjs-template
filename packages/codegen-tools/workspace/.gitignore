@@ -1,0 +1,4 @@
+# Ephemeral copies for codegen sessions (agents / local). Not committed.
+*
+!.gitignore
+!README.md

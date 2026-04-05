@@ -2,8 +2,30 @@
 
 ## [Unreleased]
 
+### Changed
+
+- [refactor] Codegen fixtures: drop versioned `domain-map.fixture.json`; unit
+  tests build `domain-map` inline from `database.types.mock.ts` tables; add
+  `packages/codegen-tools/fixtures/README.md`.
+
 ### Added
 
+- [feat] `pnpm codegen:snapshot-types` and `packages/codegen-tools/workspace/`
+  (gitignored) for optional frozen `database.types` copies; docs and skills
+  state that `config/domain-map.json` remains the canonical map path.
+- [feat] Backend codegen toolkit: `config/domain-map.json`,
+  `packages/codegen-tools` (Zod schema, TS parser for `public.Tables`, validate
+  - sync CLIs), `pnpm codegen:domain-map:validate`,
+    `pnpm codegen:domain-map:sync`, `pnpm codegen:backend`,
+    `pnpm supabase:types:linked`; fixtures under
+    `packages/codegen-tools/fixtures/`; skills `backend-domain-map` and
+    `backend-domain-codegen-init` with Cursor symlinks; guide
+    `docs/guides/backend-codegen.md`.
+- [docs] Clarify canonical Server Action patterns in
+  `docs/architecture/backend.md` (thin `server-only` helpers vs
+  `pnpm action:new` for new app-facing actions).
+- [docs] Link backend codegen guide from `docs/README.md`; add optional codegen
+  steps to `docs/guides/migration-workflow.md`.
 - [feat] Root script `pnpm test:db:all` → `test:integration` + `test:rls` +
   `test:db` (Vitest + pgTAP); documented in testing, command-reference,
   database, tdd, and `supabase/tests/AGENTS.md`.

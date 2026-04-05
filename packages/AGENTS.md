@@ -28,8 +28,9 @@ non-JSX `*.ts` in `providers/`).
 - **`packages/ui`** — shadcn only; **never** hand-edit for suffix conventions
   ([`packages/ui/AGENTS.md`](./ui/AGENTS.md)).
 - **`packages/supabase-data`**, **`supabase-infra`**, **`supabase-auth`**,
-  **`logging`**, **`test-utils`**, **`vitest-config`**, **`typescript-config`**,
-  etc. — domain/infra; no `*.component.tsx` requirement.
+  **`codegen-tools`**, **`logging`**, **`test-utils`**, **`vitest-config`**,
+  **`typescript-config`**, etc. — domain/infra; no `*.component.tsx`
+  requirement.
 
 ## Apps vs packages
 

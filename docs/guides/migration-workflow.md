@@ -154,6 +154,22 @@ place — add a new migration.
 
 ---
 
+## Optional: domain map and codegen
+
+When `public` tables change, regenerate types (`pnpm supabase:types:local` or
+`pnpm supabase:types:linked`), refresh
+[`config/domain-map.json`](./backend-codegen.md) (or use skills
+`backend-domain-map` / `backend-domain-codegen-init`), then:
+
+```bash
+pnpm codegen:domain-map:validate
+pnpm codegen:backend --check
+```
+
+See [Backend codegen](./backend-codegen.md).
+
+---
+
 ## Quick reference
 
 ```bash
