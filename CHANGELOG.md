@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- [fix] Add `publint` / `check:exports` to `@workspace/codegen-tools` so
+  pre-push `pnpm -r --filter './packages/*' exec publint` succeeds (same pattern
+  as other workspace packages).
+
 ### Changed
 
 - [refactor] Codegen fixtures: drop versioned `domain-map.fixture.json`; unit
