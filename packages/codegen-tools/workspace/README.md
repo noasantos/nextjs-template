@@ -14,6 +14,16 @@ Optional **snapshots** of generated types for a stable input when inferring
 CLI defaults (`pnpm codegen:domain-map:*`, `pnpm codegen:backend`) use those
 two.
 
+## Generated domain map (optional, experiments)
+
+Agents may write **`domain-map.generated.json`** here when testing against
+[`../fixtures/database.types.mock.ts`](../fixtures/database.types.mock.ts) so
+`config/domain-map.json` stays untouched. Validate with `--map` pointing at this
+file (see skill `backend-domain-codegen-init` §7).
+
+**`pnpm codegen:sandbox`** writes **`domain-map.sandbox-runtime.json`** here
+(merged map for validation); remove with **`pnpm codegen:sandbox:clean`**.
+
 ## Snapshot (optional)
 
 Copy the current generated types into this folder (ignored by git):

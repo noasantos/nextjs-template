@@ -35,6 +35,8 @@
     "codegen:domain-map:sync": "tsx scripts/codegen/sync-domain-map-cli.ts",
     "codegen:snapshot-types": "tsx scripts/codegen/snapshot-types-for-codegen-cli.ts",
     "codegen:backend": "tsx scripts/codegen/backend-codegen-cli.ts",
+    "codegen:sandbox": "tsx scripts/codegen/sandbox-run.ts",
+    "codegen:sandbox:clean": "tsx scripts/codegen/sandbox-clean.ts",
     "supabase:migration:new": "bash scripts/supabase/migration-new.sh",
     "planning:new:task": "tsx scripts/planning/new-item.ts new-task",
     "action:new": "tsx scripts/actions/new-action.ts",

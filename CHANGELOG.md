@@ -2,8 +2,24 @@
 
 ## [Unreleased]
 
+### Added
+
+- [feat] `pnpm codegen:sandbox` / `pnpm codegen:sandbox:clean` — generate
+  throwaway stubs under `modules/codegen-sandbox/` from real types
+  (`observability_events`) without editing `config/domain-map.json`; doc in
+  `docs/guides/backend-codegen.md`.
+
+### Changed
+
+- [docs] Skill `backend-domain-codegen-init`: document mock + workspace map
+  experiment flow (validate / `codegen:backend --check` with fixture types).
+- [docs] `backend-codegen.md`: explain `codegen: false` default and `--check` vs
+  `--write`.
+
 ### Fixed
 
+- [fix] `codegen:backend --check` now prints a clear message when all domains
+  have `codegen: false` (previously looked like a silent success).
 - [fix] Add `publint` / `check:exports` to `@workspace/codegen-tools` so
   pre-push `pnpm -r --filter './packages/*' exec publint` succeeds (same pattern
   as other workspace packages).

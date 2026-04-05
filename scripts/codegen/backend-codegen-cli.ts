@@ -70,6 +70,16 @@ if (write && gen.filesWritten.length > 0) {
   process.stdout.write(
     "\nAdd explicit package.json exports in @workspace/supabase-data for new modules.\n"
   )
+} else if (checkOnly) {
+  if (gen.codegenEnabledDomainCount === 0) {
+    process.stdout.write(
+      "codegen:backend --check OK (no work): every domain has codegen: false — " +
+        "enable codegen: true on a domain to emit stubs, or use a workspace map for experiments " +
+        "(see docs/guides/backend-codegen.md).\n"
+    )
+  } else {
+    process.stdout.write("codegen:backend --check OK (all expected repository files exist).\n")
+  }
 } else {
-  process.stdout.write(checkOnly ? "codegen:backend --check OK\n" : "Nothing to generate.\n")
+  process.stdout.write("Nothing to generate.\n")
 }

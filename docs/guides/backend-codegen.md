@@ -55,8 +55,32 @@ pnpm codegen:backend --check    # default when --write omitted
 pnpm codegen:backend --write    # writes missing *-supabase.repository.ts + port stubs
 ```
 
-After `--write`, add explicit `exports` in
+If `--check` says **every domain has `codegen: false`**, the tool does **no**
+work: enable **`codegen: true`** on a domain (or use a workspace map for
+experiments). The template ships with `codegen: false` on `profiles` /
+`user-roles` because those modules already have hand-written repositories.
+**`--check` never writes files** — only **`--write`** does.
+
+### Try codegen end-to-end (throwaway)
+
+`pnpm codegen:sandbox` merges `config/domain-map.json` in memory, assigns
+`observability_events` to domain **`codegen-sandbox`** with **`codegen: true`**,
+and writes stubs under `packages/supabase-data/src/modules/codegen-sandbox/`.
+Your committed `config/domain-map.json` is **not** modified
+(`observability_events` stays in `ignoreTables` there).
+
+```bash
+pnpm codegen:sandbox
+pnpm codegen:sandbox:clean   # removes that module + runtime map under workspace/
+```
+
+Run **`clean` before commits** if you only wanted to smoke-test the generator.
+
+After **`pnpm codegen:backend --write`** on domains you keep, add explicit
+`exports` in
 [`packages/supabase-data/package.json`](../../packages/supabase-data/package.json).
+Sandbox output is meant to be deleted with **`codegen:sandbox:clean`** (no
+exports needed).
 
 ## Agent skills
 

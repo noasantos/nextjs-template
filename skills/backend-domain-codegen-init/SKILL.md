@@ -85,6 +85,43 @@ for new modules.
 If you add or change skills/docs, update [CHANGELOG.md](../../CHANGELOG.md) per
 repo rules.
 
+### 7. Experiment: mock types + map in `workspace/` (safe)
+
+To **try the pipeline** without changing committed
+[`config/domain-map.json`](../../config/domain-map.json):
+
+1. **Types input:**
+   [`packages/codegen-tools/fixtures/database.types.mock.ts`](../../packages/codegen-tools/fixtures/database.types.mock.ts)
+   (`demo_widgets`, `demo_widget_events`).
+2. **Subagent** (`backend-domain-map`): infer a `version: 1` map covering those
+   tables (or `ignoreTables` if appropriate).
+3. **Save map** to
+   **`packages/codegen-tools/workspace/domain-map.generated.json`** (folder is
+   gitignored — ephemeral).
+4. **Validate:**
+
+   ```bash
+   pnpm codegen:domain-map:validate -- \
+     --types packages/codegen-tools/fixtures/database.types.mock.ts \
+     --map packages/codegen-tools/workspace/domain-map.generated.json
+   ```
+
+5. **Codegen dry-run** (recommended first):
+
+   ```bash
+   pnpm codegen:backend -- --check \
+     --types packages/codegen-tools/fixtures/database.types.mock.ts \
+     --map packages/codegen-tools/workspace/domain-map.generated.json
+   ```
+
+6. **`--write`** creates real files under
+   `packages/supabase-data/src/modules/<domain-id>/...` — use only if the human
+   wants throwaway modules or will delete them after.
+
+**Human shortcut (Cursor):** ask the assistant to follow this skill and say
+explicitly: _use the fixture mock + workspace map + validate + backend
+`--check`_.
+
 ## Out of scope (this phase)
 
 - Frontend hooks, React Query, or app routes.

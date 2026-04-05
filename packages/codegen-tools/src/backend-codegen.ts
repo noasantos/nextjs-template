@@ -10,7 +10,15 @@ type BackendCodegenOptions = {
   repoRoot: string
 }
 
-type BackendCodegenResult = { errors: string[]; filesWritten: string[]; ok: boolean }
+type BackendCodegenResult = {
+  errors: string[]
+  filesWritten: string[]
+  ok: boolean
+  /** Domains with codegen enabled (not `codegen: false`). */
+  codegenEnabledDomainCount: number
+  /** Tables belonging to those domains. */
+  codegenEnabledTableCount: number
+}
 
 function pascalFromSnakeTable(table: string): string {
   return table
@@ -37,6 +45,8 @@ function repositoryPath(repoRoot: string, domainId: string, table: string): stri
 function runBackendCodegen(opts: BackendCodegenOptions): BackendCodegenResult {
   const errors: string[] = []
   const filesWritten: string[] = []
+  let codegenEnabledDomainCount = 0
+  let codegenEnabledTableCount = 0
 
   let domainMap: DomainMapFile
   try {
@@ -47,6 +57,8 @@ function runBackendCodegen(opts: BackendCodegenOptions): BackendCodegenResult {
       errors: [`Failed to read or parse domain map: ${String(e)}`],
       filesWritten,
       ok: false,
+      codegenEnabledDomainCount: 0,
+      codegenEnabledTableCount: 0,
     }
   }
 
@@ -54,6 +66,8 @@ function runBackendCodegen(opts: BackendCodegenOptions): BackendCodegenResult {
     if (domain.codegen === false) {
       continue
     }
+    codegenEnabledDomainCount += 1
+    codegenEnabledTableCount += domain.tables.length
     for (const table of domain.tables) {
       const path = repositoryPath(opts.repoRoot, domain.id, table)
       if (existsSync(path)) {
@@ -130,7 +144,13 @@ export { type ${pascal}Repository }
     }
   }
 
-  return { errors, filesWritten, ok: errors.length === 0 }
+  return {
+    errors,
+    filesWritten,
+    ok: errors.length === 0,
+    codegenEnabledDomainCount,
+    codegenEnabledTableCount,
+  }
 }
 
 function resolveRepoRoot(cwd: string): string {
