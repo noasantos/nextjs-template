@@ -86,7 +86,8 @@
   `docs/standards/rules/commit-workflow.md`: LLM guidance — commit **only
   staged** changes; **Lefthook** runs format/lint/changelog/security on
   `git commit` (do not run `pnpm workflow` manually before every commit);
-  **pre-push** runs typecheck/tests on `git push`.
+  **pre-push** runs typecheck/tests on `git push`; **commitlint** body lines
+  ≤100 characters.
 - [break] `codegen:backend` is **plan-only**: if any domain has `codegen: true`,
   a repository plan file is **required**; strict merge must list every such
   table. Removed legacy stub emission (`legacy-stub.ts`), dropped `--mode` from
