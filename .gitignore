@@ -46,8 +46,10 @@ npm-debug.log*
 # IDE / local tooling
 .idea/
 
-# Product-specific backend codegen (template ships only `*.example.json` in git)
-# Forks: delete these two lines if you want to commit your real maps/plan.
+# Backend codegen maps — template mode: do NOT commit (CI: check:forbidden on tracked copies).
+# Ship only config/domain-map.example.json + config/repository-plan.example.json.
+# If either file was ever committed, run: git rm --cached -- config/domain-map.json
+# Forks: remove these two ignore lines if you intentionally version real maps.
 config/domain-map.json
 config/repository-plan.json
 

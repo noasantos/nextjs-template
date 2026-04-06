@@ -14,11 +14,15 @@ Supabase configuration: migrations, Edge Functions, database tests.
 ```
 supabase/
 ├── migrations/            # CLI-generated only
+├── template-baseline/     # Reference SQL — first identity + observability (not auto-applied)
 ├── functions/             # Use template (`pnpm edge:new`)
 ├── seed.sql               # Post-migration seed data (see [db.seed] in config.toml)
 ├── tests/                 # pgTAP tests
 └── config.toml
 ```
+
+Greenfield baseline:
+[template-baseline-schema.md](../docs/guides/template-baseline-schema.md).
 
 ## 🔒 Golden Rules
 

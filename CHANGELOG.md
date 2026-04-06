@@ -4,6 +4,22 @@
 
 ### Added
 
+- [docs] `supabase/template-baseline/` +
+  `docs/guides/template-baseline-schema.md` — reference first migrations
+  (identity, `observability_events`, JWT hook), `auth.users` vs `profiles`, hook
+  registration, optional permissions (commented DDL + hook); multi-role
+  extension pattern; linked from `docs/architecture/database.md`,
+  `docs/guides/migration-workflow.md`, and `supabase/AGENTS.md`.
+- [docs] Template baseline: subscription snapshot → JWT
+  `app_metadata.subscription` via `custom_access_token_hook`;
+  `sync_profile_subscription` (service_role) to merge JSON and bump
+  `access_version`; doc section “Subscription in the JWT” in
+  `docs/guides/template-baseline-schema.md`.
+- [docs] Template baseline: “Fluri-style” section — `auth.users` + thin
+  `profiles`
+  - `user_roles` + per-role extension tables; optional rename of `profiles`;
+    subscription strategies when only some roles are billable; assistant as
+    profile vs membership; `0002_role_extension_pattern.sql` comments aligned.
 - [feat] `config/domain-map.example.json` +
   `config/repository-plan.example.json` (generic `demo_*` tables vs
   `database.types.mock.ts`), `config/README.md`, `pnpm codegen:*:example`
@@ -39,6 +55,38 @@
 
 ### Changed
 
+- [refactor] Remove `config/domain-map.json` from git tracking (keep local copy
+  gitignored; template ships `domain-map.example.json` only). `.gitignore`
+  comments reference template mode and `git rm --cached` if the file was
+  previously committed.
+- [refactor] Template baseline (`supabase/template-baseline/0001`): add
+  `subscription_claims_for_jwt` so JWT `app_metadata.subscription` carries a
+  **whitelist** (entitlement fields only); full `profiles.subscription` remains
+  for DB/webhooks and `get_user_access_payload*`. Hook comments: read-only path,
+  performance (PK/indexed reads), merge-without-dropping Auth claims; `0002`
+  fork note for org-level Stripe Customer; docs: JWT vs DB, hook performance,
+  org billing, dual-role caveats.
+- [docs] `docs/guides/template-baseline-schema.md`: section “When to validate on
+  the server with the database” (sensitive ops vs JWT; stale JWT via
+  `access_version` comparison); `0001` header + `profiles.access_version`
+  comment aligned.
+- [docs] `docs/guides/template-baseline-schema.md`: clarify when **only**
+  `profiles`
+  - `user_roles` suffices vs optional per-role extension tables (“when
+    applicable”).
+- [docs] Template baseline: Stripe id naming — `cus_` / `acct_` / `sub_` / etc.,
+  Connect vs Billing vs Accounts v2; separate JSON keys
+  (`stripe_connect_account_id`, `stripe_customer_id`, …) not a single generic
+  id; `0001` comments aligned.
+- [docs] `docs/guides/template-baseline-schema.md`: section “Stripe: API
+  version, Accounts v2 (`acct_`), and storage” (SDK pinning, greenfield
+  psychologist vs patient mapping, webhook/idempotency notes, limitations);
+  `0001`/`0002` comments aligned with Accounts v2 + `use accounts as customers`.
+- [docs] `.cursor/rules/commit-workflow.mdc` +
+  `docs/standards/rules/commit-workflow.md`: LLM guidance — commit **only
+  staged** changes; **Lefthook** runs format/lint/changelog/security on
+  `git commit` (do not run `pnpm workflow` manually before every commit);
+  **pre-push** runs typecheck/tests on `git push`.
 - [break] `codegen:backend` is **plan-only**: if any domain has `codegen: true`,
   a repository plan file is **required**; strict merge must list every such
   table. Removed legacy stub emission (`legacy-stub.ts`), dropped `--mode` from

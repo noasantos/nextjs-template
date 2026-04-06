@@ -1,0 +1,86 @@
+-- Reference only — not executed by supabase db reset.
+-- See docs/guides/template-baseline-schema.md ("Multi-role extensions",
+-- "Fluri-style: psychologists, patients, assistants").
+--
+-- After `0001_identity_and_observability.sql`, single-tenant apps often need only:
+--   - public.profiles (one row per auth user) — thin SHARED row; see rename note below
+--   - public.user_roles (which app_roles apply)
+--
+-- Multi-role products MAY add **one extension table per actor type** when schemas
+-- diverge (e.g. Fluri: psychologist, patient, assistant). If every user shares the
+-- same columns, `profiles` + user_roles alone can be enough — see guide
+-- ("When profiles alone is enough"). Extension tables: user_id → auth.users; only
+-- role-specific columns. Keep `profiles` for what is COMMON (display, access_version,
+-- optional subscription jsonb — see guide).
+--
+-- Renaming `profiles` (optional): if the name is ambiguous, use e.g.
+-- account_profiles or user_accounts in a migration and update 0001 RPCs:
+-- get_user_access_payload_core, sync_user_roles, sync_profile_subscription,
+-- custom_access_token_hook (they reference public.profiles).
+--
+-- Subscription: patients/assistants often have no SaaS plan. Either keep
+-- profiles.subscription = '{}' for them and only fill JSON for psychologists
+-- (simplest; sync_profile_subscription only for billable users), OR move
+-- subscription columns to psychologist_profiles and customize the hook RPCs.
+--
+-- Stripe (Accounts v2): psychologist Connect + platform billing often uses a single
+-- acct_ (merchant + customer configs) and sub_ for SaaS; pure payers may stay cus_.
+-- Prefer separate TEXT columns or distinct jsonb keys per id type; pin API version
+-- in SDK. See docs/guides/template-baseline-schema.md ("Stripe: API version, Accounts v2").
+--
+-- Example pattern (rename to your domain; uncomment and adapt in a real migration):
+--
+-- CREATE TABLE public.psychologist_profiles (
+--   user_id uuid NOT NULL PRIMARY KEY REFERENCES auth.users (id) ON DELETE CASCADE,
+--   display_name text,
+--   created_at timestamptz NOT NULL DEFAULT now(),
+--   updated_at timestamptz NOT NULL DEFAULT now()
+-- );
+-- ALTER TABLE public.psychologist_profiles ENABLE ROW LEVEL SECURITY;
+-- CREATE POLICY psychologist_profiles_own ON public.psychologist_profiles
+--   FOR ALL TO authenticated
+--   USING (user_id = auth.uid())
+--   WITH CHECK (user_id = auth.uid());
+--
+-- CREATE TABLE public.patient_profiles (
+--   user_id uuid NOT NULL PRIMARY KEY REFERENCES auth.users (id) ON DELETE CASCADE,
+--   preferred_name text,
+--   created_at timestamptz NOT NULL DEFAULT now(),
+--   updated_at timestamptz NOT NULL DEFAULT now()
+-- );
+-- ALTER TABLE public.patient_profiles ENABLE ROW LEVEL SECURITY;
+-- CREATE POLICY patient_profiles_own ON public.patient_profiles
+--   FOR ALL TO authenticated
+--   USING (user_id = auth.uid())
+--   WITH CHECK (user_id = auth.uid());
+--
+-- Optional: assistant as a full login identity (same pattern as patient).
+-- If "assistant" is instead a link to a practice, prefer a membership table
+-- (psychologist_id + assistant_user_id) with its own RLS.
+--
+-- CREATE TABLE public.assistant_profiles (
+--   user_id uuid NOT NULL PRIMARY KEY REFERENCES auth.users (id) ON DELETE CASCADE,
+--   display_name text,
+--   created_at timestamptz NOT NULL DEFAULT now(),
+--   updated_at timestamptz NOT NULL DEFAULT now()
+-- );
+-- ALTER TABLE public.assistant_profiles ENABLE ROW LEVEL SECURITY;
+-- CREATE POLICY assistant_profiles_own ON public.assistant_profiles
+--   FOR ALL TO authenticated
+--   USING (user_id = auth.uid())
+--   WITH CHECK (user_id = auth.uid());
+--
+-- Optional: enforce at most one "primary" role-specific row using partial unique
+-- indexes or triggers; keep product-specific FKs (e.g. psychologist_id) on domain
+-- tables referencing these extension tables.
+--
+-- -----------------------------------------------------------------------------
+-- Fork: organization as billing unit (B2B / clinic pays, not every user)
+-- -----------------------------------------------------------------------------
+-- When Stripe Customer maps to an organization, not to each user:
+--   - public.organizations (id, stripe_customer_id, subscription jsonb, …)
+--   - public.memberships (user_id, organization_id, role) or equivalent
+-- Subscription updates bump org.access_version (or a per-user version only if you
+-- embed org entitlements in JWT). custom_access_token_hook may need to resolve
+-- active org context or omit subscription from JWT and rely on server-side checks.
+-- This template baseline is user-scoped; add migrations + hook changes for org scope.

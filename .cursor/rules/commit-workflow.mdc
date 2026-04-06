@@ -1,44 +1,27 @@
-# 🔄 Commit Workflow
+# Commit workflow
 
-**This is a CURSOR-SPECIFIC rule file.**
+**Docs mirror:** `docs/standards/rules/commit-workflow.md` — run `pnpm sync:cursor-rules-docs` after editing this file.
 
-**Full documentation:** [docs/standards/rules/commit-workflow.md](../../docs/standards/rules/commit-workflow.md)
+## Rule for Cursor / LLM agents
 
-## Rule for Cursor
+### When the user asks to commit
 
-Cursor MUST enforce commit workflow:
+1. **Commit only what is staged.** Do not run `git add -A` or stage unrelated working-tree changes unless the user asked to include them. Use `git status` / `git diff --cached` to confirm.
+2. **Do not run the full local CI pipeline manually before `git commit`** (`pnpm workflow`, `pnpm test`, `pnpm typecheck`, etc.) as a substitute for committing. **Lefthook runs on `git commit`:**
+   - **pre-commit:** `pnpm format`, `oxlint`, changelog check, security/forbidden/docs-drift/cursor-rules parity, etc. (see `lefthook.yml`).
+   - **commit-msg:** `commitlint` (conventional commits).
+3. If **pre-commit fails**, fix the reported issues (or only then run the specific failing command), then commit again.
+4. **Pre-push** (runs on `git push`, not on commit): `pnpm typecheck`, `pnpm test`, publint, knip, etc. Agents should not run the full pre-push suite before every commit unless the user explicitly wants a dry run before pushing.
+5. **Suggest** a conventional commit message (`type(scope): description` per `commitlint.config.js`). Types include `feat`, `fix`, `docs`, `refactor`, `chore`, `ci`, `build`, `perf`, `test`, `style`, `revert`.
 
-1. **REMIND** user to run `pnpm workflow`
-2. **REMIND** user to run security checks
-3. **SUGGEST** conventional commit message
-4. **NEVER** commit without workflow check
+### Optional (human / explicit request)
 
-## Quick Reference
+- Before a large PR, running `pnpm workflow` or targeted checks is fine; it is **not** required before every commit when hooks are installed.
 
-```bash
-# 1. Workflow (mandatory)
-pnpm workflow              # lint → typecheck → build → format
-
-# 2. Security checks
-pnpm check:forbidden
-pnpm check:security-smells
-pnpm check:docs-drift
-
-# 3. Commit
-git add -A
-git commit -m "feat(scope): description"
-```
-
-## Commit Message Format
+## Commit message format
 
 ```
 <type>(<scope>): <description>
-
-Types: feat, fix, docs, test, refactor, chore
 ```
 
----
-
-**Rule ID:** COMMIT-WORKFLOW  
-**Severity:** REQUIRED  
-**Full Docs:** [docs/standards/rules/commit-workflow.md](../../docs/standards/rules/commit-workflow.md)
+**Rule ID:** COMMIT-WORKFLOW

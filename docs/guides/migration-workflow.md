@@ -3,7 +3,12 @@
 ## Critical rule
 
 **New files under `supabase/migrations/` MUST be created with
-`pnpm supabase:migration:new -- <descriptive_name>`.**  
+`pnpm supabase:migration:new -- <descriptive_name>`.**
+
+**Greenfield baseline (optional):** reference SQL for the first identity +
+observability tables lives in `supabase/template-baseline/`; see
+[template-baseline-schema.md](./template-baseline-schema.md) (not executed by
+`db reset` — copy via the workflow above).  
 Do not use `touch`, shell redirects, or `pnpm supabase db diff -f <name>`
 **alone** as the only step — that creates an unstamped migration file and
 bypasses the required header.

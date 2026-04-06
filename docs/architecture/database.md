@@ -174,7 +174,10 @@ and
 
 **Related:** [`.env.example`](../../.env.example),
 [AGENTS.md — Critical rules](../../AGENTS.md#critical-rules-non-negotiable),
-[docs/guides/migration-workflow.md](../guides/migration-workflow.md).
+[docs/guides/migration-workflow.md](../guides/migration-workflow.md),
+[docs/guides/template-baseline-schema.md](../guides/template-baseline-schema.md)
+(greenfield: first identity + observability migration — reference SQL under
+`supabase/template-baseline/`).
 
 ### Rule: Never create migration files manually
 
