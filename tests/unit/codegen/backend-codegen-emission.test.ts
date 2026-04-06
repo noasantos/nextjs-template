@@ -70,7 +70,6 @@ describe("runBackendCodegen (plan emission)", () => {
       repoRoot,
       typesPath,
       planPath,
-      mode: "legacy",
       force: true,
     })
     expect(first.ok).toBe(true)
@@ -89,7 +88,6 @@ describe("runBackendCodegen (plan emission)", () => {
       repoRoot,
       typesPath,
       planPath,
-      mode: "legacy",
       force: false,
     })
     expect(second.ok).toBe(true)

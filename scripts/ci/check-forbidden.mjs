@@ -332,12 +332,33 @@ for (const scope of ["apps", "packages"]) {
   }
 }
 
+/** Only git-tracked migrations are validated (local-only SQL must not fail the hook). */
+function gitTrackedMigrationRelPaths() {
+  if (!isGitRepository()) {
+    return []
+  }
+  try {
+    const out = execSync("git ls-files supabase/migrations/*.sql", {
+      cwd: root,
+      encoding: "utf8",
+      stdio: ["pipe", "pipe", "pipe"],
+    }).trim()
+    return out ? out.split("\n").map(normalizePathPosix).filter(Boolean) : []
+  } catch {
+    return []
+  }
+}
+
 const migrationsDir = join(root, "supabase", "migrations")
 if (existsDir(migrationsDir)) {
-  for (const name of readdirSync(migrationsDir)) {
-    if (!name.endsWith(".sql")) continue
-    const rel = relative(root, join(migrationsDir, name))
-    const text = readFileSync(join(migrationsDir, name), "utf8")
+  for (const rel of gitTrackedMigrationRelPaths()) {
+    const abs = join(root, rel)
+    let text
+    try {
+      text = readFileSync(abs, "utf8")
+    } catch {
+      continue
+    }
     if (
       !text.includes("-- migration-created-via: pnpm supabase:migration:new") ||
       !text.includes("-- created-at-utc:")

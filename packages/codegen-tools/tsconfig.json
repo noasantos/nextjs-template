@@ -3,7 +3,10 @@
   "compilerOptions": {
     "noEmit": true,
     "rootDir": ".",
-    "types": ["node"]
+    "types": ["node"],
+    "paths": {
+      "@workspace/codegen-tools/*": ["./src/*"]
+    }
   },
   "include": ["src/**/*.ts", "fixtures/**/*.ts", "vitest.config.ts"]
 }

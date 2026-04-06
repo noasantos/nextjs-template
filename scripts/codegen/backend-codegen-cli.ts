@@ -1,11 +1,11 @@
 #!/usr/bin/env tsx
 /**
- * Backend repository codegen (legacy stubs and/or plan-driven DTO/mapper/repo).
+ * Plan-driven backend repository codegen (DTO / mapper / port / repository / test scaffold).
  *
  * Usage:
  *   pnpm codegen:backend --check
  *   pnpm codegen:backend --write
- *   pnpm codegen:backend --check --plan config/repository-plan.json --mode strict
+ *   pnpm codegen:backend --check --plan config/repository-plan.json
  *   pnpm codegen:backend --write --domain catalog --table session_types --force
  */
 import { readFileSync } from "node:fs"
@@ -40,8 +40,6 @@ const typesPath =
   argValue("--types") ?? resolve(repoRoot, "packages/supabase-infra/src/types/database.types.ts")
 const mapPath = resolveDomainMapPath(repoRoot, argValue("--map"))
 const planPath = resolveRepositoryPlanPath(repoRoot, argValue("--plan"))
-const modeArg = argValue("--mode")
-const mode = modeArg === "strict" ? "strict" : "legacy"
 const domainFilter = argValue("--domain")
 const tableFilter = argValue("--table")
 const force = process.argv.includes("--force")
@@ -71,7 +69,6 @@ const gen = runBackendCodegen({
   repoRoot,
   typesPath,
   planPath,
-  mode,
   filterDomainId: domainFilter,
   filterTable: tableFilter,
   force,

@@ -104,8 +104,8 @@ Write the file to **`config/repository-plan.json`**.
 
 ```bash
 pnpm codegen:repository-plan:validate -- --strict
-pnpm codegen:backend --check --plan config/repository-plan.json --mode strict
-pnpm codegen:backend --write --plan config/repository-plan.json --mode strict --force
+pnpm codegen:backend --check --plan config/repository-plan.json
+pnpm codegen:backend --write --plan config/repository-plan.json --force
 ```
 
 - If validate or `--check` fails, **you** fix `repository-plan.json` (or

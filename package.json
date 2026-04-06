@@ -36,7 +36,7 @@
     "codegen:domain-map:sync": "tsx scripts/codegen/sync-domain-map-cli.ts",
     "codegen:snapshot-types": "tsx scripts/codegen/snapshot-types-for-codegen-cli.ts",
     "codegen:backend": "tsx scripts/codegen/backend-codegen-cli.ts",
-    "codegen:backend:check:example": "tsx scripts/codegen/backend-codegen-cli.ts --check --plan config/repository-plan.example.json --mode strict --types packages/codegen-tools/fixtures/database.types.mock.ts --map config/domain-map.example.json",
+    "codegen:backend:check:example": "tsx scripts/codegen/backend-codegen-cli.ts --check --plan config/repository-plan.example.json --types packages/codegen-tools/fixtures/database.types.mock.ts --map config/domain-map.example.json",
     "codegen:repository-plan:validate": "tsx scripts/codegen/validate-repository-plan-cli.ts",
     "codegen:repository-plan:validate:example": "tsx scripts/codegen/validate-repository-plan-cli.ts -- --strict --plan config/repository-plan.example.json --types packages/codegen-tools/fixtures/database.types.mock.ts --map config/domain-map.example.json",
     "codegen:repository-plan:context": "tsx scripts/codegen/repository-plan-context-cli.ts",

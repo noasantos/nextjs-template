@@ -1,17 +1,21 @@
-/* oxlint-disable eslint-plugin-import/no-relative-parent-imports -- internal package subfolder */
-/* oxlint-disable complexity -- orchestrates legacy vs plan paths */
+/* oxlint-disable complexity -- orchestrates plan-driven emit */
 import { existsSync, readFileSync } from "node:fs"
 import { resolve } from "node:path"
 
-import { parseDomainMapJson } from "../domain-map-schema"
-import { extractRowColumnNames } from "../extract-table-row-columns"
-import { mergeAndValidateRepositoryPlan, entryKey } from "../merge-repository-plan"
-import { parseRepositoryPlanJson, type RepositoryPlanFile } from "../repository-plan-schema"
-import { emitFromPlan } from "./emit-from-plan"
-import { emitLegacyStubForTable } from "./legacy-stub"
-import { repositoryPath } from "./paths"
+import { parseDomainMapJson } from "@workspace/codegen-tools/domain-map-schema"
+import { extractRowColumnNames } from "@workspace/codegen-tools/extract-table-row-columns"
+import {
+  mergeAndValidateRepositoryPlan,
+  entryKey,
+} from "@workspace/codegen-tools/merge-repository-plan"
+import {
+  parseRepositoryPlanJson,
+  type RepositoryPlanEntry,
+  type RepositoryPlanFile,
+} from "@workspace/codegen-tools/repository-plan-schema"
 
-export type CodegenMode = "legacy" | "strict"
+import { emitFromPlan } from "./emit-from-plan"
+import { repositoryPath } from "./paths"
 
 export type BackendCodegenOptions = {
   checkOnly: boolean
@@ -19,9 +23,8 @@ export type BackendCodegenOptions = {
   repoRoot: string
   /** Default: packages/supabase-infra canonical types */
   typesPath?: string
-  /** When set and file exists, merged entries drive plan-based emit */
+  /** Required when any domain has codegen: true — merged entries drive emit */
   planPath?: string
-  mode?: CodegenMode
   filterDomainId?: string
   filterTable?: string
   force?: boolean
@@ -47,10 +50,7 @@ function loadPlan(path: string): RepositoryPlanFile | null {
   return parseRepositoryPlanJson(raw)
 }
 
-function columnsForEntry(
-  databaseTypesSource: string,
-  entry: import("../repository-plan-schema").RepositoryPlanEntry
-): string[] {
+function columnsForEntry(databaseTypesSource: string, entry: RepositoryPlanEntry): string[] {
   const bucket = entry.read.kind === "view" ? "Views" : "Tables"
   if (entry.dto.include === "all_columns") {
     return extractRowColumnNames(databaseTypesSource, entry.read.name, bucket)
@@ -87,16 +87,19 @@ function runBackendCodegen(opts: BackendCodegenOptions): BackendCodegenResult {
   }
 
   const typesSource = readFileSync(loadTypesPath(opts.repoRoot, opts.typesPath), "utf8")
-  const mode = opts.mode ?? "legacy"
   const planPath = opts.planPath
 
-  if (mode === "strict" && planPath && !existsSync(planPath)) {
-    return {
-      errors: [`Strict mode requires repository plan at ${planPath}`],
-      filesWritten,
-      ok: false,
-      codegenEnabledDomainCount,
-      codegenEnabledTableCount,
+  if (codegenEnabledTableCount > 0) {
+    if (!planPath || !existsSync(planPath)) {
+      return {
+        errors: [
+          "Repository plan required for codegen-enabled domains. Add config/repository-plan.json (or pass planPath) so every codegen table has a plan entry. See docs/guides/backend-codegen.md.",
+        ],
+        filesWritten,
+        ok: false,
+        codegenEnabledDomainCount,
+        codegenEnabledTableCount,
+      }
     }
   }
 
@@ -115,14 +118,14 @@ function runBackendCodegen(opts: BackendCodegenOptions): BackendCodegenResult {
     }
   }
 
-  let mergedEntries = new Map<string, import("../repository-plan-schema").RepositoryPlanEntry>()
+  let mergedEntries = new Map<string, RepositoryPlanEntry>()
 
   if (plan) {
     const mergeOpts: Parameters<typeof mergeAndValidateRepositoryPlan>[0] = {
       databaseTypesSource: typesSource,
       domainMap,
       plan,
-      strict: mode === "strict",
+      strict: true,
     }
     if (typeof opts.filterDomainId === "string") {
       mergeOpts.filterDomainId = opts.filterDomainId
@@ -159,32 +162,25 @@ function runBackendCodegen(opts: BackendCodegenOptions): BackendCodegenResult {
       }
       const k = entryKey(domain.id, table)
       const entry = mergedEntries.get(k)
-      if (entry) {
-        const cols = columnsForEntry(typesSource, entry)
-        if (cols.length === 0) {
-          errors.push(`No columns resolved for plan entry ${k}; check dto.include / types file`)
-          continue
-        }
-        const r = emitFromPlan({
-          checkOnly: opts.checkOnly,
-          domainId: domain.id,
-          entry,
-          repoRoot: opts.repoRoot,
-          columns: cols,
-          force: opts.force === true,
-        })
-        errors.push(...r.errors)
-        filesWritten.push(...r.filesWritten)
-      } else {
-        const legacy = emitLegacyStubForTable({
-          checkOnly: opts.checkOnly,
-          domainId: domain.id,
-          repoRoot: opts.repoRoot,
-          table,
-        })
-        errors.push(...legacy.errors)
-        filesWritten.push(...legacy.filesWritten)
+      if (!entry) {
+        errors.push(`Missing repository-plan entry for codegen table "${k}".`)
+        continue
       }
+      const cols = columnsForEntry(typesSource, entry)
+      if (cols.length === 0) {
+        errors.push(`No columns resolved for plan entry ${k}; check dto.include / types file`)
+        continue
+      }
+      const r = emitFromPlan({
+        checkOnly: opts.checkOnly,
+        domainId: domain.id,
+        entry,
+        repoRoot: opts.repoRoot,
+        columns: cols,
+        force: opts.force === true,
+      })
+      errors.push(...r.errors)
+      filesWritten.push(...r.filesWritten)
     }
   }
 

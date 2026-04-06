@@ -5,7 +5,6 @@ export {
   repositoryPath,
   type BackendCodegenResult,
   type BackendCodegenOptions,
-  type CodegenMode,
 } from "./backend-codegen/run"
 
 function resolveRepoRoot(cwd: string): string {

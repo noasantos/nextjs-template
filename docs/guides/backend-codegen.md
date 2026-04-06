@@ -68,34 +68,36 @@ pnpm codegen:domain-map:sync
 # Optional: copy canonical types into workspace/ for a stable --types path (gitignored)
 pnpm codegen:snapshot-types
 
-# Stub codegen (after validate passes)
+# Backend codegen (after domain-map + repository-plan validate)
 pnpm codegen:backend --check    # default when --write omitted
-pnpm codegen:backend --write    # writes missing *-supabase.repository.ts + port stubs (legacy) or plan-driven files
+pnpm codegen:backend --write    # emits DTO / mapper / port / repository / skipped integration test per plan
 
-# Optional: repository plan (Zod-validated JSON; method lists come from the plan, not heuristics)
-# **Autonomous (no human gates):** follow skill `skills/repository-plan-autonomous-pipeline/SKILL.md`
-# — agent runs context, authors JSON for every codegen table, then strict validate + backend --plan --write --force.
+# Repository plan (Zod-validated JSON; method lists come from the plan)
+# **Autonomous:** skill `skills/repository-plan-autonomous-pipeline/SKILL.md` — context → plan JSON → validate → `--write --force`.
 pnpm codegen:repository-plan:context              # JSON input for the coding agent (deterministic)
 pnpm codegen:repository-plan:context -- --sync-hint   # include domain-map vs types diff text
 # Agent writes config/repository-plan.json using prompts/repository-plan/v1.md, then:
 pnpm codegen:repository-plan:validate
 pnpm codegen:repository-plan:validate -- --strict   # every codegen table must have a plan entry
 
-# Plan-driven backend emit (pass plan explicitly)
+# Plan-driven backend emit (`--plan` defaults to local plan or `*.example.json`; see `config/README.md`)
 pnpm codegen:backend --check --plan config/repository-plan.json
-pnpm codegen:backend --write --plan config/repository-plan.json --mode legacy
-pnpm codegen:backend --write --plan config/repository-plan.json --mode strict --force
+pnpm codegen:backend --write --plan config/repository-plan.json --force
 ```
+
+Every `codegen: true` table must appear in the repository plan (strict merge).
+The emitter produces **only** `@workspace/supabase-data/...` imports (no `../`
+under `packages/supabase-data`), optional `// @type-escape` where needed, and
+mapper imports in repositories that match declared methods (no unused
+`to*Insert` / `to*Update`).
 
 Tables listed in the plan get **DTO + mapper + port + repository + skipped
 integration scaffold** under `packages/supabase-data/src/modules/<domain>/`
 (files include `// @codegen-generated`). The matching **skipped** integration
 test is emitted under `tests/integration/supabase-data/modules/<domain>/` (same
 folder names as `src/modules/<domain>/`, one
-`*.repository.codegen.integration.test.ts` per table). Tables **not** in the
-plan keep **legacy** stub behaviour (missing files only). Use `--force` to
-replace an existing managed file. **`--mode strict`** requires the plan to cover
-every `codegen: true` table.
+`*.repository.codegen.integration.test.ts` per table). Use `--force` to replace
+an existing managed file.
 
 If `--check` says **every domain has `codegen: false`**, the tool does **no**
 work: enable **`codegen: true`** on a domain (or use a workspace map for
@@ -108,9 +110,11 @@ experiments). The template keeps **`codegen: false`** only on **`profiles`** and
 
 `pnpm codegen:sandbox` merges `config/domain-map.json` in memory, assigns
 `observability_events` to domain **`codegen-sandbox`** with **`codegen: true`**,
-and writes stubs under `packages/supabase-data/src/modules/codegen-sandbox/`.
-Your committed `config/domain-map.json` is **not** modified
-(`observability_events` stays in `ignoreTables` there).
+writes a temporary repository plan under `packages/codegen-tools/workspace/`,
+and emits plan-driven files under
+`packages/supabase-data/src/modules/codegen-sandbox/`. Your committed
+`config/domain-map.json` is **not** modified (`observability_events` stays in
+`ignoreTables` there).
 
 ```bash
 pnpm codegen:sandbox

@@ -3,7 +3,8 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { dirname } from "node:path"
 
-import type { RepositoryPlanEntry } from "../repository-plan-schema"
+import type { RepositoryPlanEntry } from "@workspace/codegen-tools/repository-plan-schema"
+
 import { CODEGEN_HEADER, isCodegenManagedSource } from "./constants"
 import { camelFromSnake, pascalFromSnake } from "./naming"
 import { dtoPath, integrationTestPath, mapperPath, portPath, repositoryPath } from "./paths"
@@ -115,6 +116,7 @@ function emitMapper(
   pascal: string,
   entry: RepositoryPlanEntry,
   entityKebab: string,
+  domainId: string,
   camelFields: { snake: string; camel: string }[],
   rowRef: string,
   writeTable: string
@@ -125,14 +127,16 @@ function emitMapper(
 
   const fromBody = camelFields.map((f) => `    ${f.camel}: row.${f.snake},`).join("\n")
 
-  const toInsertLines = camelFields.map(
-    (f) =>
-      `  if (dto.${f.camel} !== undefined) (out as Record<string, unknown>).${f.snake} = dto.${f.camel} as never`
-  )
+  const toInsertLines = camelFields.map((f) => {
+    // @type-escape: generated Insert payload assigns optional DTO fields to snake_case keys
+    return `  if (dto.${f.camel} !== undefined) (out as Record<string, unknown>).${f.snake} = dto.${f.camel} as never`
+  })
+
+  const dtoModuleImport = `@workspace/supabase-data/modules/${domainId}/domain/dto/${entityKebab}.dto`
 
   return `${CODEGEN_HEADER}import type { Database } from "@workspace/supabase-infra/types/database"
 
-import { ${dtoImport} } from "../../domain/dto/${entityKebab}.dto"
+import { ${dtoImport} } from "${dtoModuleImport}"
 
 type ${pascal}Row = ${rowRef}
 type ${pascal}Insert = ${insertTypeRef(writeTable)}
@@ -159,9 +163,14 @@ export { from${pascal}Row, to${pascal}Insert, to${pascal}Update }
 `
 }
 
-function emitPort(pascal: string, entry: RepositoryPlanEntry, entityKebab: string): string {
+function emitPort(
+  pascal: string,
+  entry: RepositoryPlanEntry,
+  entityKebab: string,
+  domainId: string
+): string {
   const dtoName = `${pascal}DTO`
-  const dtoImport = `import type { ${dtoName} } from "../dto/${entityKebab}.dto"`
+  const dtoImport = `import type { ${dtoName} } from "@workspace/supabase-data/modules/${domainId}/domain/dto/${entityKebab}.dto"`
 
   const lines: string[] = []
   const methods = new Set(entry.methods)
@@ -222,6 +231,7 @@ function emitRepository(
   pascal: string,
   entry: RepositoryPlanEntry,
   entityKebab: string,
+  domainId: string,
   columns: string[],
   idColumn: string
 ): string {
@@ -232,11 +242,19 @@ function emitRepository(
   const methods = new Set(entry.methods)
   const deferred = entry.deferred === true
 
-  const portImport = `../../domain/ports/${entityKebab}-repository.port`
-  const mapperImport = `../mappers/${entityKebab}.mapper`
+  const portImport = `@workspace/supabase-data/modules/${domainId}/domain/ports/${entityKebab}-repository.port`
+  const mapperImport = `@workspace/supabase-data/modules/${domainId}/infrastructure/mappers/${entityKebab}.mapper`
 
   const deferThrow = (method: string): string =>
     `    throw new SupabaseRepositoryError("Deferred codegen stub (${method}) for ${entry.table}.", undefined)`
+
+  const mapperImportNames: string[] = [`from${pascal}Row`]
+  if (methods.has("insert") || methods.has("upsert")) {
+    mapperImportNames.push(`to${pascal}Insert`)
+  }
+  if (methods.has("update")) {
+    mapperImportNames.push(`to${pascal}Update`)
+  }
 
   const head: string[] = [
     `${CODEGEN_HEADER}import type { SupabaseClient } from "@supabase/supabase-js"`,
@@ -244,8 +262,8 @@ function emitRepository(
     `import { SupabaseRepositoryError } from "@workspace/supabase-data/lib/supabase-repository-error"`,
     ``,
     `import type { ${pascal}Repository${methods.has("list") ? `, ${pascal}ListParams, ${pascal}ListResult` : ""} } from "${portImport}"`,
-    `import { from${pascal}Row, to${pascal}Insert, to${pascal}Update } from "${mapperImport}"`,
-    `import type { ${dtoName} } from "../../domain/dto/${entityKebab}.dto"`,
+    `import { ${mapperImportNames.join(", ")} } from "${mapperImport}"`,
+    `import type { ${dtoName} } from "@workspace/supabase-data/modules/${domainId}/domain/dto/${entityKebab}.dto"`,
     ``,
     `class ${pascal}SupabaseRepository implements ${pascal}Repository {`,
     `  constructor(private readonly supabase: SupabaseClient) {}`,
@@ -502,15 +520,15 @@ function emitFromPlan(opts: EmitFromPlanOptions): EmitResult {
     },
     {
       path: mapperPath(repoRoot, domainId, entry.table),
-      content: emitMapper(pascal, entry, entityKebab, camelFields, rowRef, writeTable),
+      content: emitMapper(pascal, entry, entityKebab, domainId, camelFields, rowRef, writeTable),
     },
     {
       path: portPath(repoRoot, domainId, entry.table),
-      content: emitPort(pascal, entry, entityKebab),
+      content: emitPort(pascal, entry, entityKebab, domainId),
     },
     {
       path: repositoryPath(repoRoot, domainId, entry.table),
-      content: emitRepository(pascal, entry, entityKebab, opts.columns, idColumn),
+      content: emitRepository(pascal, entry, entityKebab, domainId, opts.columns, idColumn),
     },
     {
       path: integrationTestPath(repoRoot, domainId, entry.table),

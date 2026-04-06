@@ -10,9 +10,9 @@ import { runBackendCodegen } from "../../../packages/codegen-tools/src/backend-c
 const testDir = dirname(fileURLToPath(import.meta.url))
 const repoFixtureRoot = join(testDir, "../../..")
 
-describe("runBackendCodegen (legacy stub)", () => {
-  it("reports missing stub in checkOnly when no plan and file absent", () => {
-    const repoRoot = mkdtempSync(join(tmpdir(), "codegen-legacy-"))
+describe("runBackendCodegen", () => {
+  it("requires a repository plan when any domain has codegen enabled", () => {
+    const repoRoot = mkdtempSync(join(tmpdir(), "codegen-no-plan-"))
     const typesPath = join(repoRoot, "database.types.ts")
     const mapPath = join(repoRoot, "domain-map.json")
 
@@ -51,10 +51,9 @@ describe("runBackendCodegen (legacy stub)", () => {
       domainMapPath: mapPath,
       repoRoot,
       typesPath,
-      mode: "legacy",
     })
     expect(gen.ok).toBe(false)
-    expect(gen.errors.some((e) => e.includes("Missing generated repository"))).toBe(true)
+    expect(gen.errors.some((e) => e.includes("Repository plan required"))).toBe(true)
 
     rmSync(repoRoot, { recursive: true, force: true })
   })

@@ -31,6 +31,10 @@ const runtimeMapPath = join(
   repoRoot,
   "packages/codegen-tools/workspace/domain-map.sandbox-runtime.json"
 )
+const runtimePlanPath = join(
+  repoRoot,
+  "packages/codegen-tools/workspace/repository-plan.sandbox-runtime.json"
+)
 
 function buildSandboxDomainMap(base: DomainMapFile): DomainMapFile {
   const ignoreTables = (base.ignoreTables ?? []).filter((t) => t !== SANDBOX_TABLE)
@@ -70,10 +74,30 @@ if (!validation.ok) {
 mkdirSync(dirname(runtimeMapPath), { recursive: true })
 writeFileSync(runtimeMapPath, `${JSON.stringify(merged, null, 2)}\n`, "utf8")
 
+const sandboxPlan = {
+  version: 1 as const,
+  meta: {
+    generatedAt: new Date().toISOString(),
+    generator: "codegen:sandbox",
+  },
+  entries: [
+    {
+      domainId: SANDBOX_DOMAIN_ID,
+      table: SANDBOX_TABLE,
+      read: { kind: "table" as const, name: SANDBOX_TABLE },
+      methods: ["findById", "list"],
+      dto: { style: "zod" as const, include: "all_columns" as const },
+    },
+  ],
+}
+writeFileSync(runtimePlanPath, `${JSON.stringify(sandboxPlan, null, 2)}\n`, "utf8")
+
 const gen = runBackendCodegen({
   checkOnly: false,
   domainMapPath: runtimeMapPath,
   repoRoot,
+  typesPath,
+  planPath: runtimePlanPath,
 })
 
 if (!gen.ok) {

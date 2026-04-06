@@ -1,5 +1,12 @@
 # Backend codegen config (domain map + repository plan)
 
+**What ships on the template remote:** only **`domain-map.example.json`** and
+**`repository-plan.example.json`**. Keep your real `config/domain-map.json` /
+`config/repository-plan.json` **local** (they are in `.gitignore`). Before you
+push a template PR, **unstage** them if they were added by mistake:
+`git restore --staged -- config/domain-map.json config/repository-plan.json` —
+that does **not** delete the files on disk.
+
 ## Files in git
 
 | File                               | Role                                                                                                                                                                                                             |

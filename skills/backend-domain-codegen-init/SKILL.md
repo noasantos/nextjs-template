@@ -77,8 +77,8 @@ Manual outline (same as that skill):
    [`packages/codegen-tools/prompts/repository-plan/v1.md`](../../packages/codegen-tools/prompts/repository-plan/v1.md);
    write `config/repository-plan.json` **without** human approval gates.
 3. `pnpm codegen:repository-plan:validate -- --strict` →
-   `pnpm codegen:backend --check --plan config/repository-plan.json --mode strict`
-   → `--write` with same flags + `--force`.
+   `pnpm codegen:backend --check --plan config/repository-plan.json` → `--write`
+   with same flags + `--force`.
 
 See [`docs/guides/backend-codegen.md`](../../docs/guides/backend-codegen.md).
 

@@ -30,8 +30,22 @@
   (`observability_events`) without editing `config/domain-map.json`; doc in
   `docs/guides/backend-codegen.md`.
 
+### Security
+
+- [security] `pnpm check:forbidden` rejects **tracked** `config/domain-map.json`
+  / `config/repository-plan.json` (template must ship only `*.example.json`);
+  forks can set `ALLOW_TRACKED_CODEGEN_CONFIG=1` in CI if they version real
+  maps.
+
 ### Changed
 
+- [break] `codegen:backend` is **plan-only**: if any domain has `codegen: true`,
+  a repository plan file is **required**; strict merge must list every such
+  table. Removed legacy stub emission (`legacy-stub.ts`), dropped `--mode` from
+  the CLI, and `pnpm codegen:sandbox` now writes a temporary plan under
+  `packages/codegen-tools/workspace/`. Emitted code uses
+  `@workspace/supabase-data/...` imports and repository mapper imports aligned
+  to declared methods.
 - [docs] `config/README.md`: clarify template (ignored local maps) vs fork
   (optional commit); restore `.gitignore` entries for `config/domain-map.json`
   and `config/repository-plan.json` so template PRs ship only `*.example.json`.
