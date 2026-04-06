@@ -6,8 +6,8 @@
 
 # Commit workflow
 
-**Docs mirror:** `docs/standards/rules/commit-workflow.md` — run
-`pnpm sync:cursor-rules-docs` after editing this file.
+**Canonical:** this file. **Docs copy:**
+`docs/standards/rules/commit-workflow.md` (`pnpm sync:cursor-rules-docs`).
 
 ## Rule for Cursor / LLM agents
 
