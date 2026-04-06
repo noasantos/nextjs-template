@@ -32,6 +32,10 @@
 5. **Suggest** a conventional commit message (`type(scope): description` per
    `commitlint.config.js`). Types include `feat`, `fix`, `docs`, `refactor`,
    `chore`, `ci`, `build`, `perf`, `test`, `style`, `revert`.
+6. **commitlint** (commit-msg hook): each **body** line must be **≤ 100
+   characters** (`body-max-line-length`). Use a **subject-only** message when in
+   doubt, or wrap the body. Prepare-commit-msg hooks may append lines (e.g.
+   tooling footers)—if commit fails on commitlint, shorten or split lines.
 
 ### Optional (human / explicit request)
 

@@ -41,4 +41,8 @@
   output). Optional: **`FORBIDDEN_DIFF_BASE`** to point at the base ref (e.g.
   `origin/develop`).
 
+## Oxlint
+
+- **`packages/ui/**`is in root`.oxlintrc.json`→`ignorePatterns`.** Oxlint does not analyze that tree; agents must not “fix” vendored files for lint. Policy: `docs/tools/oxlint-oxfmt.md`.
+
 Canonical: `AGENTS.md` → Critical rules → `@workspace/ui` immutable.
