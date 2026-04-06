@@ -2,7 +2,8 @@
  * **Baseline access template** — shared literals for DB + JWT tests.
  *
  * ### Roles (`public.app_roles` / `public.user_roles`)
- * Seed rows live in `supabase/seed.sql`. Replace `privilegedRole` with your operator
+ * Seed rows live in `supabase/seed.sql` (see `config.toml` `[db.seed].sql_paths`).
+ * Replace `privilegedRole` with your operator
  * slug when the product does not use `admin`, then add a migration that updates
  * `auth_is_admin()` and any RLS policies that reference the old name.
  *

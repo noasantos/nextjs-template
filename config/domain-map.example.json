@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "domains": [
+    {
+      "id": "demo",
+      "auth": "session",
+      "codegen": true,
+      "exposeActions": true,
+      "readOnly": false,
+      "tables": ["demo_widgets", "demo_widget_events"]
+    }
+  ],
+  "ignoreTables": []
+}

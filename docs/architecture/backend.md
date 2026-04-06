@@ -158,6 +158,21 @@ packages/supabase-data/src/modules/{module}/
         └── {entity}-supabase.repository.ts  # Repository implementation
 ```
 
+### Codegen (optional)
+
+[`docs/guides/backend-codegen.md`](../guides/backend-codegen.md) describes
+`config/domain-map.json` (structural) and optional `config/repository-plan.json`
+(Zod-validated semantic plan: methods, DTO shape, table vs view reads). The
+coding agent runs the autonomous pipeline (skill
+`repository-plan-autonomous-pipeline`: `codegen:repository-plan:context` →
+authored JSON → validate → `codegen:backend --plan`) without human approval
+steps; deterministic emitters write `@codegen-generated` DTOs, mappers, ports,
+and repositories using Supabase client primitives (`select` / `insert` /
+`update` / `upsert` / `delete`) inside infrastructure only. Generated
+repositories currently **throw** `SupabaseRepositoryError` like existing stubs;
+aligning fully with the `Result`/`neverthrow` examples below can be a later
+pass.
+
 ### Example
 
 ```typescript

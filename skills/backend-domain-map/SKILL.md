@@ -52,7 +52,15 @@ usually the canonical `database.types.ts` or an optional snapshot from
    assignments, orphan tables, domains that bundle unrelated aggregates. Refine
    **once** before handing off.
 
-7. **Validate:** The orchestrator must run:
+7. **Repository plan (downstream):** `domain-map.json` is structural only. For
+   per-table **methods / DTOs / view-backed reads**, the coding agent uses
+   `pnpm codegen:repository-plan:context` plus
+   `packages/codegen-tools/prompts/repository-plan/v1.md` to author
+   `config/repository-plan.json`, then `pnpm codegen:repository-plan:validate`
+   and `pnpm codegen:backend --plan ...` (see
+   [`docs/guides/backend-codegen.md`](../../docs/guides/backend-codegen.md)).
+
+8. **Validate:** The orchestrator must run:
 
    ```bash
    pnpm codegen:domain-map:validate

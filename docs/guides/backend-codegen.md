@@ -14,31 +14,49 @@ deterministically, then emit optional repository stubs in
 
 ## Where things live
 
-- **`config/domain-map.json`** — canonical, versioned map. On init / refresh,
-  agents **write here** (merge with existing). This is not optional for the
-  template: validate and backend codegen default to this path.
+- **`config/domain-map.example.json`** — **committed** minimal map (generic
+  `demo_*` tables) aligned with
+  [`database.types.mock.ts`](../../packages/codegen-tools/fixtures/database.types.mock.ts).
+  Copy to `config/domain-map.json` for your project (see
+  [`config/README.md`](../../config/README.md)).
+- **`config/domain-map.json`** — **local** canonical map (gitignored by
+  default). CLIs default to this path when present; otherwise they use
+  **`domain-map.example.json`** (same pattern for **`repository-plan.json`** →
+  **`repository-plan.example.json`**).
+- **`config/repository-plan.example.json`** — **committed** minimal strict plan
+  matching the example domain map. Copy to `config/repository-plan.json` when
+  using plan-driven codegen.
 - **`packages/supabase-infra/src/types/database.types.ts`** — canonical
   generated types (CLI only; never hand-edit).
 - **`packages/codegen-tools/workspace/`** — optional **local** snapshots
   (gitignored). Use when you want a frozen copy of types for one session; see
   [`workspace/README.md`](../../packages/codegen-tools/workspace/README.md) and
   `pnpm codegen:snapshot-types`.
-- **`packages/codegen-tools/fixtures/database.types.mock.ts`** — tiny mock for
-  **unit tests only**; no `domain-map` JSON is committed next to it (tests build
-  a minimal map in code).
+- **`packages/codegen-tools/fixtures/database.types.mock.ts`** — tiny mock
+  `Database` for tests and for **`pnpm codegen:*:example`** scripts (CI uses
+  these against the `*.example.json` files).
 
 ## Files (quick reference)
 
 | File                                                                                                                     | Role                                                  |
 | ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------- |
-| [`config/domain-map.json`](../../config/domain-map.json)                                                                 | Maps tables → domains, `ignoreTables`, flags          |
+| [`config/README.md`](../../config/README.md)                                                                             | Copy workflow: example → local `domain-map` / plan    |
+| [`config/domain-map.example.json`](../../config/domain-map.example.json)                                                 | Committed generic pattern (demo domain)               |
+| `config/domain-map.json` (local; copy from example — gitignored)                                                         | Your project’s map; maps tables → domains             |
+| [`config/repository-plan.example.json`](../../config/repository-plan.example.json)                                       | Committed strict plan template for mock schema        |
+| `config/repository-plan.json` (local; copy from example — gitignored)                                                    | Your strict repository plan                           |
 | [`packages/codegen-tools/workspace/`](../../packages/codegen-tools/workspace/)                                           | Optional snapshot dir (`pnpm codegen:snapshot-types`) |
-| [`packages/codegen-tools/fixtures/database.types.mock.ts`](../../packages/codegen-tools/fixtures/database.types.mock.ts) | Mock `Database` for Vitest only                       |
+| [`packages/codegen-tools/fixtures/database.types.mock.ts`](../../packages/codegen-tools/fixtures/database.types.mock.ts) | Mock `Database` for Vitest + example validation       |
 
 ## Commands
 
 ```bash
-# Structural + coverage validation (JSON schema + every public table accounted for)
+# Template / CI: validate committed examples against the mock Database (no local DB)
+pnpm codegen:domain-map:validate:example
+pnpm codegen:repository-plan:validate:example
+pnpm codegen:backend:check:example
+
+# Your project: after copying example → domain-map.json + repository-plan.json and generating types
 pnpm codegen:domain-map:validate
 
 # Optional paths
@@ -52,14 +70,39 @@ pnpm codegen:snapshot-types
 
 # Stub codegen (after validate passes)
 pnpm codegen:backend --check    # default when --write omitted
-pnpm codegen:backend --write    # writes missing *-supabase.repository.ts + port stubs
+pnpm codegen:backend --write    # writes missing *-supabase.repository.ts + port stubs (legacy) or plan-driven files
+
+# Optional: repository plan (Zod-validated JSON; method lists come from the plan, not heuristics)
+# **Autonomous (no human gates):** follow skill `skills/repository-plan-autonomous-pipeline/SKILL.md`
+# — agent runs context, authors JSON for every codegen table, then strict validate + backend --plan --write --force.
+pnpm codegen:repository-plan:context              # JSON input for the coding agent (deterministic)
+pnpm codegen:repository-plan:context -- --sync-hint   # include domain-map vs types diff text
+# Agent writes config/repository-plan.json using prompts/repository-plan/v1.md, then:
+pnpm codegen:repository-plan:validate
+pnpm codegen:repository-plan:validate -- --strict   # every codegen table must have a plan entry
+
+# Plan-driven backend emit (pass plan explicitly)
+pnpm codegen:backend --check --plan config/repository-plan.json
+pnpm codegen:backend --write --plan config/repository-plan.json --mode legacy
+pnpm codegen:backend --write --plan config/repository-plan.json --mode strict --force
 ```
+
+Tables listed in the plan get **DTO + mapper + port + repository + skipped
+integration scaffold** under `packages/supabase-data/src/modules/<domain>/`
+(files include `// @codegen-generated`). The matching **skipped** integration
+test is emitted under `tests/integration/supabase-data/modules/<domain>/` (same
+folder names as `src/modules/<domain>/`, one
+`*.repository.codegen.integration.test.ts` per table). Tables **not** in the
+plan keep **legacy** stub behaviour (missing files only). Use `--force` to
+replace an existing managed file. **`--mode strict`** requires the plan to cover
+every `codegen: true` table.
 
 If `--check` says **every domain has `codegen: false`**, the tool does **no**
 work: enable **`codegen: true`** on a domain (or use a workspace map for
-experiments). The template ships with `codegen: false` on `profiles` /
-`user-roles` because those modules already have hand-written repositories.
-**`--check` never writes files** — only **`--write`** does.
+experiments). The template keeps **`codegen: false`** only on **`profiles`** and
+**`user-roles`** (hand-written repositories); other domains ship with stubs from
+**`pnpm codegen:backend --write`**. **`--check` never writes files** — only
+**`--write`** does.
 
 ### Try codegen end-to-end (throwaway)
 
@@ -97,12 +140,19 @@ exports needed).
 3. `pnpm codegen:domain-map:sync` — review output.
 4. Update `config/domain-map.json` (agent skill `backend-domain-map` or manual).
 5. `pnpm codegen:domain-map:validate`.
-6. `pnpm codegen:backend --check` then `--write` if you want new stubs.
+6. `pnpm codegen:repository-plan:validate` (if `config/repository-plan.json`
+   exists).
+7. `pnpm codegen:backend --check` (add `--plan config/repository-plan.json` when
+   using a plan).
+8. `pnpm codegen:backend --write` if you want new or updated generated files.
 
 ## Tests
 
-- Validator tests:
-  [`tests/unit/codegen/domain-map-validator.test.ts`](../../tests/unit/codegen/domain-map-validator.test.ts)
+- Validator / merge / emission tests:
+  [`tests/unit/codegen/domain-map-validator.test.ts`](../../tests/unit/codegen/domain-map-validator.test.ts),
+  [`tests/unit/codegen/repository-plan-schema.test.ts`](../../tests/unit/codegen/repository-plan-schema.test.ts),
+  [`tests/unit/codegen/repository-plan-merge.test.ts`](../../tests/unit/codegen/repository-plan-merge.test.ts),
+  [`tests/unit/codegen/backend-codegen-emission.test.ts`](../../tests/unit/codegen/backend-codegen-emission.test.ts)
 - Run: `pnpm --filter @workspace/codegen-tools test`
 
 ## Related

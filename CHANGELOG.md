@@ -4,6 +4,27 @@
 
 ### Added
 
+- [feat] `config/domain-map.example.json` +
+  `config/repository-plan.example.json` (generic `demo_*` tables vs
+  `database.types.mock.ts`), `config/README.md`, `pnpm codegen:*:example`
+  scripts, and `.gitignore` entries for local `config/domain-map.json` /
+  `config/repository-plan.json`; CI runs example-based codegen checks.
+- [feat] `.cursor/skills/<name>/SKILL.md` symlinks for every `skills/*/SKILL.md`
+  (Cursor discovery); `pnpm skills:sync-cursor` +
+  `scripts/skills/sync-cursor-skills.sh` to regenerate after new skills;
+  `scripts/skills/validate-skills.ts` for `pnpm skills:validate` (frontmatter
+  `name` vs folder + symlink check).
+- [feat] Skill `repository-plan-autonomous-pipeline` — human-free sequence:
+  validate domain-map → `codegen:repository-plan:context` → agent writes full
+  `repository-plan.json` → strict validate →
+  `codegen:backend --plan --write --force`.
+- [feat] `pnpm codegen:repository-plan:context` — deterministic JSON for the
+  coding agent to author `config/repository-plan.json` (no OpenAI CLI in repo).
+- [feat] Backend stubs: `codegen: true` on every `config/domain-map.json` domain
+  except hand-maintained `profiles` and `user-roles`;
+  `pnpm codegen:backend --write` emits repository + port stubs under
+  `packages/supabase-data/src/modules/**`; `@workspace/supabase-data` `exports`
+  expanded (sorted) including `./lib/supabase-repository-error`.
 - [feat] `pnpm codegen:sandbox` / `pnpm codegen:sandbox:clean` — generate
   throwaway stubs under `modules/codegen-sandbox/` from real types
   (`observability_events`) without editing `config/domain-map.json`; doc in
@@ -11,6 +32,41 @@
 
 ### Changed
 
+- [docs] `config/README.md`: clarify template (ignored local maps) vs fork
+  (optional commit); restore `.gitignore` entries for `config/domain-map.json`
+  and `config/repository-plan.json` so template PRs ship only `*.example.json`.
+- [refactor] Codegen CLIs (`domain-map:validate`, `repository-plan:validate`,
+  `repository-plan:context`, `domain-map:sync`, `codegen:backend`) resolve
+  `config/domain-map.json` / `config/repository-plan.json` when present, else
+  the matching `*.example.json` (`scripts/codegen/config-defaults.ts`). The
+  committed template remains the example files; local copies override when you
+  create them.
+- [refactor] Codegen integration scaffolds: emit under
+  `tests/integration/supabase-data/modules/<domain>/` (mirrors
+  `packages/supabase-data/src/modules/<domain>/`) instead of a flat
+  `tests/integration/supabase-data/codegen/` folder; see `integrationTestPath`
+  in `@workspace/codegen-tools`.
+- [refactor] Regenerate `config/repository-plan.json` for all codegen-enabled
+  domain tables (65 entries), with strict `idColumn` where the Row has no `id`
+  (`google_sync_idempotency`, `sync_locks`, `webhook_events`, etc.), `upsert` on
+  `google_sync_idempotency` (`idempotency_key`), and `psychologist_assistants`
+  limited to `list` + `insert` (composite PK; codegen targets a single surrogate
+  column). Re-run
+  `pnpm codegen:backend --write --plan config/repository-plan.json --mode strict --force`
+  for matching DTOs, mappers, ports, repositories, and integration test
+  scaffolds.
+- [refactor] Repository plan: remove `codegen:repository-plan:infer` (OpenAI);
+  semantic step is always the coding agent with
+  `codegen:repository-plan:context` + `prompts/repository-plan/v1.md`. Rename
+  export to `@workspace/codegen-tools/build-repository-plan-context`.
+- [docs] `supabase/AGENTS.md` and `supabase/config.toml`: troubleshoot local
+  `supabase start` / `db reset` (Docker, `stop --all`, IDE port conflicts on
+  54321/54322, optional `--ignore-health-check`).
+- [refactor] Supabase seeds: consolidate all post-migration SQL into a single
+  `supabase/seed.sql` (sections commented: bootstrap, buckets, reference values,
+  clinical activities, document templates, subscription plans). `config.toml`
+  `[db.seed].sql_paths` is `["./seed.sql"]`; remove `supabase/seeds/` directory.
+  Docs: `supabase-setup`, `migration-workflow`, `supabase/AGENTS.md`.
 - [docs] Skill `backend-domain-codegen-init`: document mock + workspace map
   experiment flow (validate / `codegen:backend --check` with fixture types).
 - [docs] `backend-codegen.md`: explain `codegen: false` default and `--check` vs
@@ -18,6 +74,14 @@
 
 ### Fixed
 
+- [fix] `config/domain-map.json`: assign every `public` table to a bounded
+  domain (catalog, calendar, clinical, billing, sync, marketplace, audit, etc.)
+  with `ignoreTables: []`; drop stale `profiles` / `app_roles` /
+  `observability_events` references so `pnpm codegen:domain-map:validate`
+  passes.
+- [fix] Seed `000_template_app_roles.sql`: remove obsolete `INSERT` into
+  non-existent `public.app_roles` (roles are the `app_role` enum); restores
+  `supabase db reset` seed phase.
 - [fix] `codegen:backend --check` now prints a clear message when all domains
   have `codegen: false` (previously looked like a silent success).
 - [fix] Add `publint` / `check:exports` to `@workspace/codegen-tools` so

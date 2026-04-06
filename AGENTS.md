@@ -49,8 +49,10 @@
 - **tdd-workflow** - TDD workflow
 - **three-level-docs** - Doc levels
 - **doc-template** - Doc templates
+- **repository-plan-autonomous-pipeline** - Context → agent-authored
+  `repository-plan.json` → validate → `codegen:backend --plan` (human-free)
 
-**See [skills/README.md](./skills/README.md) for all 17 skills.**
+**See [skills/README.md](./skills/README.md) for the full skill index.**
 
 ## 📚 Documentation
 

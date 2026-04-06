@@ -175,6 +175,12 @@ jobs:
 
       - run: pnpm check:docs-drift
 
+      - name: Domain map + backend codegen checks (template examples + mock types)
+        run: |
+          pnpm codegen:domain-map:validate:example
+          pnpm codegen:repository-plan:validate:example
+          pnpm codegen:backend:check:example
+
       - run: pnpm format:check
 
   test:

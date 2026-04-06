@@ -53,7 +53,13 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      demo_widgets_ro: {
+        Row: {
+          id: string
+          name: string
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never

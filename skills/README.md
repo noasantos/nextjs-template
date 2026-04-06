@@ -16,62 +16,65 @@ Custom skills for all AI agents working with this codebase.
    Orchestrate domain-map + validate + `pnpm codegen:backend`
 5. **[backend-domain-map](./backend-domain-map/)** - Infer and review
    `config/domain-map.json` (use as subagent from codegen-init)
+6. **[repository-plan-autonomous-pipeline](./repository-plan-autonomous-pipeline/)** -
+   Human-free: context commands → agent authors `repository-plan.json` →
+   validate → `codegen:backend --plan --write`
 
 ### **Security & Auth**
 
-6. **[logging-required](./logging-required/)** - Enforce structured logging
+7. **[logging-required](./logging-required/)** - Enforce structured logging
    (GR-005)
-7. **[auth-invariants](./auth-invariants/)** - Enforce auth patterns (getClaims
+8. **[auth-invariants](./auth-invariants/)** - Enforce auth patterns (getClaims
    vs getUser)
-8. **[security-check](./security-check/)** - Scan for security issues
+9. **[security-check](./security-check/)** - Scan for security issues
 
 ### **Code Quality**
 
-9. **[jsdoc-generator](./jsdoc-generator/)** - Generate JSDoc for exports
-10. **[file-size-check](./file-size-check/)** - Check file size limits
-11. **[single-responsibility](./single-responsibility/)** - Enforce SRP
+10. **[jsdoc-generator](./jsdoc-generator/)** - Generate JSDoc for exports
+11. **[file-size-check](./file-size-check/)** - Check file size limits
+12. **[single-responsibility](./single-responsibility/)** - Enforce SRP
 
 ### **Database**
 
-12. **[migration-workflow](./migration-workflow/)** - Guide through migration
+13. **[migration-workflow](./migration-workflow/)** - Guide through migration
     creation
-13. **[rls-test-generator](./rls-test-generator/)** - Generate RLS tests per
+14. **[rls-test-generator](./rls-test-generator/)** - Generate RLS tests per
     table
 
 ### **Testing**
 
-14. **[test-location-guide](./test-location-guide/)** - Guide to correct test
+15. **[test-location-guide](./test-location-guide/)** - Guide to correct test
     location (GR-010)
-15. **[test-generator](./test-generator/)** - Generate tests in correct location
-16. **[tdd-workflow](./tdd-workflow/)** - Enforce TDD workflow
+16. **[test-generator](./test-generator/)** - Generate tests in correct location
+17. **[tdd-workflow](./tdd-workflow/)** - Enforce TDD workflow
 
 ### **Documentation**
 
-17. **[three-level-docs](./three-level-docs/)** - Guide to correct doc level
+18. **[three-level-docs](./three-level-docs/)** - Guide to correct doc level
     (GR-019)
-18. **[doc-template](./doc-template/)** - Generate documentation templates
+19. **[doc-template](./doc-template/)** - Generate documentation templates
 
 ### **Prompting**
 
-19. **[llm-to-llm-prompt](./llm-to-llm-prompt/)** - Machine prompts for
+20. **[llm-to-llm-prompt](./llm-to-llm-prompt/)** - Machine prompts for
     downstream LLMs (English, execution-focused)
 
 ### **Template Hardening Tools**
 
-20. **[Package file suffixes](../docs/standards/package-file-suffixes.md)** —
+21. **[Package file suffixes](../docs/standards/package-file-suffixes.md)** —
     `*.component.tsx` / `*.hook.*` / `*.provider.tsx` in `brand` / `core` /
     `forms` / `seo` (not `apps/`, not `packages/ui`); `pnpm check:forbidden`
-21. **[dependency-cruiser](../docs/tools/dependency-cruiser.md)** - Enforce
+22. **[dependency-cruiser](../docs/tools/dependency-cruiser.md)** - Enforce
     architectural boundaries
-22. **[Knip](../docs/tools/knip.md)** - Detect unused dependencies, exports, and
+23. **[Knip](../docs/tools/knip.md)** - Detect unused dependencies, exports, and
     files
-23. **[next-safe-action](../docs/tools/next-safe-action.md)** - Type-safe Server
+24. **[next-safe-action](../docs/tools/next-safe-action.md)** - Type-safe Server
     Actions with auth middleware
-24. **[TypeScript Strict Flags](../docs/tools/typescript-strict.md)** - Enforce
+25. **[TypeScript Strict Flags](../docs/tools/typescript-strict.md)** - Enforce
     strict type checking
-25. **[Security Scanners](../docs/tools/security-scanners.md)** - Automated
+26. **[Security Scanners](../docs/tools/security-scanners.md)** - Automated
     security scanning (OSV, actionlint, zizmor)
-26. **[publint](../docs/tools/publint.md)** - Package linting for published
+27. **[publint](../docs/tools/publint.md)** - Package linting for published
     packages
 
 ## 🤖 How to Use
@@ -122,7 +125,7 @@ This ensures skills stay synchronized with:
 
 | Category           | Skills | Coverage           |
 | ------------------ | ------ | ------------------ |
-| Architecture       | 5      | 100% of patterns   |
+| Architecture       | 6      | 100% of patterns   |
 | Security & Auth    | 3      | 100% of invariants |
 | Code Quality       | 3      | 100% of rules      |
 | Database           | 2      | 100% of workflows  |
@@ -130,14 +133,15 @@ This ensures skills stay synchronized with:
 | Documentation      | 2      | 100% of levels     |
 | Prompting          | 1      | LLM-to-LLM prompts |
 | Template Hardening | 7      | 100% of tooling    |
-| **Total**          | **25** | **100% coverage**  |
+| **Total**          | **26** | **100% coverage**  |
 
 ## 🎯 For Different AI Agents
 
 ### **Cursor IDE**
 
 - Discovers **Agent Skills** from `.cursor/skills/<skill-name>/SKILL.md`
-  (symlink to `skills/<skill-name>/SKILL.md`).
+  (symlink to `skills/<skill-name>/SKILL.md`). After adding a skill, run
+  `pnpm skills:sync-cursor` from the repo root.
 - Each `SKILL.md` includes YAML frontmatter with `name` and `description` for
   discovery.
 - Invoke with `/skill-name` or attach the skill in Agent chat; see

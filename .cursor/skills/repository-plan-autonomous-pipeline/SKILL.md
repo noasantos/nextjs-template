@@ -1,0 +1,1 @@
+../../../skills/repository-plan-autonomous-pipeline/SKILL.md

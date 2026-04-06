@@ -107,8 +107,8 @@ You CAN run SQL locally for experiments; capture changes into a migration with
 ALTER TABLE users ADD COLUMN phone text;
 ```
 
-Seeds belong in seed files (e.g. `supabase/seed.sql`), not ad-hoc migration
-paths.
+Seeds belong in `supabase/seed.sql` (see `supabase/config.toml` →
+`[db.seed].sql_paths`), not ad-hoc migration paths.
 
 ---
 

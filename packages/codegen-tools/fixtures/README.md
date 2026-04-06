@@ -3,11 +3,12 @@
 - **`database.types.mock.ts`** — hand-written subset of the Supabase CLI output
   (`public.Tables`, enums, FKs). Used by unit tests under `tests/unit/codegen/`.
 
-There is **no** checked-in `domain-map.json` here: tests build a minimal valid
-map from the tables declared in the mock (see `domain-map-validator.test.ts`).
-The **product** domain map lives at **`config/domain-map.json`**. For optional
-local copies of real types, use **`../workspace/`** and
-`pnpm codegen:snapshot-types`.
+Unit tests may build a minimal map in code (see `domain-map-validator.test.ts`).
+The repo also ships **`config/domain-map.example.json`** (aligned with this
+mock) for template validation (`pnpm codegen:domain-map:validate:example`). Copy
+it to **`config/domain-map.json`** for your project (see root
+**`config/README.md`**). For optional local copies of real types, use
+**`../workspace/`** and `pnpm codegen:snapshot-types`.
 
 Regenerate real types with `pnpm supabase:types:local` or
 `pnpm supabase:types:linked`; do not replace the canonical

@@ -62,7 +62,27 @@ repeat until exit 0.
 pnpm codegen:domain-map:sync -- --types <path-to-types>
 ```
 
-### 5. Codegen
+### 5. Repository plan (optional semantic layer)
+
+For **human-free, end-to-end** plan + codegen in one run, follow skill
+**[`repository-plan-autonomous-pipeline`](../repository-plan-autonomous-pipeline/SKILL.md)**
+(validate → context → you author JSON for **every** codegen table → strict
+validate → `codegen:backend --plan --write --force`).
+
+Manual outline (same as that skill):
+
+1. `pnpm codegen:domain-map:validate` then
+   `pnpm codegen:repository-plan:context -- --sync-hint`.
+2. Read
+   [`packages/codegen-tools/prompts/repository-plan/v1.md`](../../packages/codegen-tools/prompts/repository-plan/v1.md);
+   write `config/repository-plan.json` **without** human approval gates.
+3. `pnpm codegen:repository-plan:validate -- --strict` →
+   `pnpm codegen:backend --check --plan config/repository-plan.json --mode strict`
+   → `--write` with same flags + `--force`.
+
+See [`docs/guides/backend-codegen.md`](../../docs/guides/backend-codegen.md).
+
+### 6. Codegen
 
 - Check-only (CI / dry run):
 
@@ -80,12 +100,12 @@ After `--write`, add explicit **`exports`** in
 [`packages/supabase-data/package.json`](../../packages/supabase-data/package.json)
 for new modules.
 
-### 6. Docs and changelog
+### 7. Docs and changelog
 
 If you add or change skills/docs, update [CHANGELOG.md](../../CHANGELOG.md) per
 repo rules.
 
-### 7. Experiment: mock types + map in `workspace/` (safe)
+### 8. Experiment: mock types + map in `workspace/` (safe)
 
 To **try the pipeline** without changing committed
 [`config/domain-map.json`](../../config/domain-map.json):

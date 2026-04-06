@@ -34,7 +34,9 @@ when you are done (data is kept by default).
 ## Default development workflow (local Supabase)
 
 **Use the local stack** so schema, RLS, and seeds match `supabase/migrations/`
-and `seed.sql` without touching any hosted project.
+and `supabase/seed.sql` (single file; sections inside are commented — see
+`[db.seed].sql_paths` in `supabase/config.toml`) without touching any hosted
+project.
 
 1. `pnpm supabase start` (once per machine/session).
 2. Copy `.env.example` → `.env.local` if you do not have it yet.

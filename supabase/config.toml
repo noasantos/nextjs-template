@@ -1,5 +1,26 @@
 # Supabase local config — template defaults.
 # Reference: https://supabase.com/docs/guides/local-development/cli/config
+#
+# --- Operational guardrails (this repo) ---
+# - Local development targets the Docker stack from `pnpm supabase start` only.
+# - Optional hosted work: link a **non-production** project only when a human needs it;
+#   keep production project refs and keys out of git (internal runbooks / secret store).
+# - Do **not** apply schema to production from a laptop: ship SQL via committed migrations
+#   and your deployment pipeline (see docs/guides/migration-workflow.md, AGENTS.md).
+# - Prefer repo scripts under `scripts/supabase/*.sh` and `package.json` `pnpm supabase:*`;
+#   avoid ad-hoc `supabase db push --linked` unless your team documents an approved wrapper.
+#
+# --- Seeds ---
+# Single file: `supabase db reset` / `supabase start` runs `./seed.sql` after migrations.
+# Edit `supabase/seed.sql` only (sections are commented inside the file).
+#
+# --- Local troubleshooting (ports) ---
+# If `supabase start` or `db reset` fails with connection reset / EOF on 127.0.0.1:54321
+# or :54322, run `lsof -i :54321 -i :54322`. IDEs (e.g. Cursor) sometimes forward those
+# ports and intercept loopback traffic — remove those forwards or change `[api].port` /
+# `[db].port` below to free values. Other Supabase projects: `supabase stop --all` then
+# `pnpm supabase start` in this repo. Last resort: `supabase start --ignore-health-check`
+# (stack runs; fix ports before relying on Kong health).
 
 project_id = "workspace-local"
 
@@ -154,6 +175,57 @@ enabled = true
 policy = "per_worker"
 inspector_port = 8083
 deno_version = 2
+
+# Edge Functions: `verify_jwt` applies when `supabase/functions/<name>/` exists.
+# Add or remove rows to match functions you scaffold with `pnpm edge:new -- <name>`.
+
+[functions.check-user-role]
+verify_jwt = false
+
+[functions.provision-user-role]
+verify_jwt = false
+
+[functions.google-calendar-webhook]
+verify_jwt = false
+
+[functions.google-calendar-oauth]
+verify_jwt = false
+
+[functions.periodic-sync]
+verify_jwt = false
+
+[functions.pgmq-worker]
+verify_jwt = false
+
+[functions.renew-watch-channels]
+verify_jwt = false
+
+[functions.trigger-periodic-sync]
+verify_jwt = false
+
+[functions.trigger-process-sync-queue]
+verify_jwt = false
+
+[functions.trigger-renew-watch-channels]
+verify_jwt = false
+
+[functions.health]
+verify_jwt = false
+
+[functions.stripe]
+verify_jwt = false
+
+[functions.expand-series]
+verify_jwt = false
+
+[functions.process-pending-session-billing]
+verify_jwt = false
+
+[functions.process-account-deletion-requests]
+verify_jwt = false
+
+[functions.checkout-webhook]
+verify_jwt = false
 
 [analytics]
 enabled = true
