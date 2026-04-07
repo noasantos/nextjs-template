@@ -48,7 +48,13 @@ const pipelineSteps: PipelineStep[] = [
   {
     name: "Phase 2+3: Generate Actions + Hooks",
     command: "pnpm codegen:actions-hooks --write",
-    description: "Generating actions, hooks, and unit tests...",
+    description: "Generating frontend-ready actions, hooks, and unit tests...",
+    required: true,
+  },
+  {
+    name: "Generated Artifact Validation",
+    command: "pnpm codegen:validate-generated-frontend",
+    description: "Checking generated files for placeholders and missing wiring...",
     required: true,
   },
   {
@@ -209,13 +215,13 @@ function main() {
     console.log("   - config/repository-plan.json")
     console.log("   - config/action-semantic-plan.json")
     console.log("   - Repositories with DTOs, mappers, ports")
-    console.log("   - Server Actions with Zod validation")
-    console.log("   - TanStack Query hooks")
+    console.log("   - Frontend-ready Server Actions with Zod validation")
+    console.log("   - Frontend-ready TanStack Query hooks")
     console.log("   - Integration tests")
     console.log("   - Unit tests")
     console.log("\n📝 Next steps:")
-    console.log("   1. Review generated code")
-    console.log("   2. Add package.json exports if needed")
+    console.log("   1. Review generated contracts")
+    console.log("   2. Consume from the frontend")
     console.log("   3. Commit changes")
     console.log("   4. Deploy!")
   } else {

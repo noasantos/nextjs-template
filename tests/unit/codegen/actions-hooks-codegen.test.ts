@@ -1,102 +1,82 @@
+import { readFileSync } from "node:fs"
+import { resolve } from "node:path"
+
 import { describe, expect, it } from "vitest"
 
-import { runActionsHooksCodegen } from "../../../scripts/codegen/actions-hooks-codegen"
+import { parseRepositoryPlanJson } from "../../../packages/codegen-tools/src/repository-plan-schema"
+import {
+  renderActionFile,
+  renderHookTest,
+  renderMutationHook,
+  renderQueryHook,
+  renderQueryKeysFile,
+  runActionsHooksCodegen,
+} from "../../../scripts/codegen/actions-hooks-codegen"
+import { generateSemanticPlan } from "../../../scripts/codegen/actions-semantic-plan"
+
+const repoRoot = resolve(process.cwd(), "../..")
+const fixtureTypesPath = resolve(repoRoot, "packages/codegen-tools/fixtures/database.types.mock.ts")
+const repositoryPlanPath = resolve(repoRoot, "config/repository-plan.example.json")
+const domainMapPath = resolve(repoRoot, "config/domain-map.example.json")
+
+function loadSemanticPlan() {
+  const repositoryPlan = parseRepositoryPlanJson(
+    JSON.parse(readFileSync(repositoryPlanPath, "utf8")) as unknown
+  )
+  const domainMap = JSON.parse(readFileSync(domainMapPath, "utf8")) as unknown
+  const typesSource = readFileSync(fixtureTypesPath, "utf8")
+  return generateSemanticPlan(repositoryPlan, domainMap, typesSource)
+}
 
 describe("actions-hooks-codegen", () => {
-  describe("runActionsHooksCodegen", () => {
-    it("should return ok: true when codegen succeeds in check mode", () => {
-      const result = runActionsHooksCodegen({
-        repoRoot: process.cwd(),
-        typesPath: "packages/codegen-tools/fixtures/database.types.mock.ts",
-        planPath: "config/repository-plan.example.json",
-        domainMapPath: "config/domain-map.example.json",
-        checkOnly: true,
-      })
+  it("builds a semantic plan without placeholders", () => {
+    const semanticPlan = loadSemanticPlan()
+    const listAction = semanticPlan.actions.find((action) => action.method === "list")
+    const insertAction = semanticPlan.actions.find((action) => action.method === "insert")
 
-      expect(typeof result.ok).toBe("boolean")
-      expect(Array.isArray(result.filesWritten)).toBe(true)
-      expect(Array.isArray(result.errors)).toBe(true)
-    })
-
-    it("should handle missing plan file gracefully", () => {
-      const result = runActionsHooksCodegen({
-        repoRoot: process.cwd(),
-        typesPath: "packages/codegen-tools/fixtures/database.types.mock.ts",
-        planPath: "config/nonexistent-plan.json",
-        domainMapPath: "config/domain-map.example.json",
-        checkOnly: true,
-      })
-
-      expect(result.ok).toBe(false)
-      expect(result.errors.length).toBeGreaterThan(0)
-    })
-
-    it("should handle missing domain map file gracefully", () => {
-      const result = runActionsHooksCodegen({
-        repoRoot: process.cwd(),
-        typesPath: "packages/codegen-tools/fixtures/database.types.mock.ts",
-        planPath: "config/repository-plan.example.json",
-        domainMapPath: "config/nonexistent-map.json",
-        checkOnly: true,
-      })
-
-      expect(result.ok).toBe(false)
-      expect(result.errors.length).toBeGreaterThan(0)
-    })
-
-    it("should handle domain filter gracefully", () => {
-      const result = runActionsHooksCodegen({
-        repoRoot: process.cwd(),
-        typesPath: "packages/codegen-tools/fixtures/database.types.mock.ts",
-        planPath: "config/repository-plan.example.json",
-        domainMapPath: "config/domain-map.example.json",
-        checkOnly: true,
-        domainFilter: "demo",
-      })
-
-      expect(typeof result.ok).toBe("boolean")
-      expect(Array.isArray(result.errors)).toBe(true)
-    })
-
-    it("should track generated files count", () => {
-      const result = runActionsHooksCodegen({
-        repoRoot: process.cwd(),
-        typesPath: "packages/codegen-tools/fixtures/database.types.mock.ts",
-        planPath: "config/repository-plan.example.json",
-        domainMapPath: "config/domain-map.example.json",
-        checkOnly: true,
-      })
-
-      expect(result).toHaveProperty("filesWritten")
-      expect(result).toHaveProperty("actionsGenerated")
-      expect(result).toHaveProperty("hooksGenerated")
-      expect(result).toHaveProperty("queryKeysUpdated")
-    })
+    expect(semanticPlan.meta.requiresHumanReview).toBe(false)
+    expect(listAction?.inputSchema.zodSchema).not.toContain("TODO")
+    expect(listAction?.outputSchema.returnType).not.toContain("unknown")
+    expect(insertAction?.frontendContract.hookName).toContain("InsertMutation")
   })
 
-  describe("template generation", () => {
-    it("should handle codegen without crashing", () => {
-      const result = runActionsHooksCodegen({
-        repoRoot: process.cwd(),
-        typesPath: "packages/codegen-tools/fixtures/database.types.mock.ts",
-        planPath: "config/repository-plan.example.json",
-        domainMapPath: "config/domain-map.example.json",
-        checkOnly: true,
-      })
+  it("renders action and hooks without TODO placeholders", () => {
+    const semanticPlan = loadSemanticPlan()
+    const listAction = semanticPlan.actions.find((action) => action.method === "list")
+    const insertAction = semanticPlan.actions.find((action) => action.method === "insert")
 
-      expect(Array.isArray(result.filesWritten)).toBe(true)
+    if (!listAction || !insertAction) {
+      throw new Error("Missing expected semantic actions for fixture")
+    }
+
+    const actionFile = renderActionFile(listAction)
+    const hookTest = renderHookTest(listAction)
+    const queryHook = renderQueryHook(listAction)
+    const mutationHook = renderMutationHook(insertAction)
+    const queryKeys = renderQueryKeysFile("demo", semanticPlan.actions)
+
+    for (const content of [actionFile, hookTest, queryHook, mutationHook, queryKeys]) {
+      expect(content).not.toContain("TODO")
+      expect(content).not.toMatch(/[=]\s*unknown\b/)
+      expect(content).not.toContain("Wire Server Action")
+    }
+
+    expect(hookTest).toContain("vi.doMock")
+    expect(hookTest).toContain("await import(")
+    expect(hookTest).not.toContain(`import { ${listAction.frontendContract.hookName} }`)
+  })
+
+  it("keeps check mode operational", () => {
+    const result = runActionsHooksCodegen({
+      checkOnly: true,
+      domainMapPath,
+      planPath: repositoryPlanPath,
+      repoRoot,
+      semanticPlanPath: undefined,
+      typesPath: fixtureTypesPath,
     })
 
-    it("should report query keys update count", () => {
-      const result = runActionsHooksCodegen({
-        repoRoot: process.cwd(),
-        typesPath: "packages/codegen-tools/fixtures/database.types.mock.ts",
-        planPath: "config/repository-plan.example.json",
-        domainMapPath: "config/domain-map.example.json",
-        checkOnly: true,
-      })
-
-      expect(typeof result.queryKeysUpdated).toBe("number")
-    })
+    expect(result.ok).toBe(true)
+    expect(result.errors).toEqual([])
   })
 })

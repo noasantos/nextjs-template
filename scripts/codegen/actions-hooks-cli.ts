@@ -78,7 +78,7 @@ if (checkOnly) {
     process.stdout.write(`  ${f}\n`)
   }
   process.stdout.write(
-    "\nNext steps:\n  1. Add explicit exports in packages/supabase-data/package.json\n  2. Run: pnpm typecheck\n  3. Run: pnpm lint\n  4. Review TODOs in generated files\n"
+    "\nNext steps:\n  1. Run: pnpm codegen:validate-generated-frontend\n  2. Run: pnpm typecheck\n  3. Run: pnpm lint\n  4. Consume the generated contracts from the frontend\n"
   )
 } else if (write) {
   process.stdout.write("Nothing to generate.\n")

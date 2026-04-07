@@ -10,7 +10,7 @@
     "lint": "oxlint",
     "format": "oxfmt --write",
     "typecheck": "tsc --noEmit",
-    "build": "tsc --noEmit",
+    "build": "tsc --noEmit && node -e \"const fs=require('node:fs');fs.mkdirSync('dist',{recursive:true});fs.writeFileSync('dist/.turbo-build','');\"",
     "check:exports": "publint"
   },
   "devDependencies": {

@@ -2,192 +2,665 @@
 /**
  * Phase 0: Semantic Plan Generation
  *
- * Analyzes repository-plan.json and generates semantic plan JSON
- * This semantic plan is then consumed by actions-fill-todos.ts (Phase 1)
- *
- * Usage:
- *   pnpm tsx scripts/codegen/actions-semantic-plan.ts
+ * Builds a deterministic, frontend-consumable semantic plan from:
+ * - repository-plan.json
+ * - domain-map.json
+ * - database.types.ts
  */
 
 import { readFileSync, writeFileSync } from "node:fs"
 import { resolve } from "node:path"
 
+import { parseDomainMapJson, type DomainEntry } from "@workspace/codegen-tools/domain-map-schema"
+import {
+  extractTableShapes,
+  type ExtractedField,
+} from "@workspace/codegen-tools/extract-table-shapes"
 import {
   parseRepositoryPlanJson,
+  type RepositoryPlanEntry,
   type RepositoryPlanFile,
-} from "../../packages/codegen-tools/src/repository-plan-schema"
+} from "@workspace/codegen-tools/repository-plan-schema"
 
 const repoRoot = resolve(process.cwd())
 
+function argValue(flag: string): string | undefined {
+  const index = process.argv.indexOf(flag)
+  if (index === -1 || !process.argv[index + 1]) {
+    return undefined
+  }
+  return process.argv[index + 1]
+}
+
+type CrudMethod = RepositoryPlanEntry["methods"][number]
+type ActionKind = "query" | "mutation"
+type AuthPolicy = "public" | "session" | "admin"
+
+interface SemanticField {
+  description?: string
+  name: string
+  required: boolean
+  sample: string
+  type: string
+  validation: string[]
+  zodSchema: string
+}
+
 interface ActionSemanticPlan {
-  domainId: string
-  table: string
-  method: string
   actionName: string
-  inputSchema: {
-    zodSchema: string
-    typeName: string
-    fields: Array<{
-      name: string
-      type: string
-      validation: string[]
-      required: boolean
-      description?: string
-    }>
-  }
-  outputSchema: {
-    returnType: string
-    fields: Array<{ name: string; type: string; source: "row" | "computed" | "relation" }>
-  }
-  repositoryCall: {
-    method: string
-    arguments: string[]
-    errorHandling?: boolean
-  }
-  auth: {
-    requiredRole?: string
-    tenantScoping: boolean
-    customChecks?: string[]
-  }
-  logging: {
-    successMetadata: string[]
-    errorMetadata: string[]
-  }
-  cacheInvalidation?: {
+  actionPath: string
+  authPolicy: AuthPolicy
+  cacheInvalidation: {
     invalidateKeys: string[]
     optimisticUpdate: boolean
-    setQueryData?: {
-      queryKey: string
-      updaterFn: string
-    }
   }
+  domainId: string
+  frontendContract: {
+    actionImportPath: string
+    generateHook: boolean
+    hookImportPath?: string
+    hookKind?: "mutation" | "query"
+    hookName?: string
+    queryKeyFactory?: string
+  }
+  inputSchema: {
+    fields: SemanticField[]
+    typeName: string
+    zodSchema: string
+  }
+  kind: ActionKind
+  logging: {
+    errorMetadata: string[]
+    successMetadata: string[]
+  }
+  method: CrudMethod
   notes?: string[]
+  outputSchema: {
+    fields: Array<{ name: string; source: "computed" | "relation" | "row"; type: string }>
+    returnType: string
+  }
+  queryKeyPolicy?: {
+    accessor: string
+    paramsTypeName?: string
+    scope: "all" | "byId" | "list"
+  }
+  repositoryCall: {
+    arguments: string[]
+    method: CrudMethod
+  }
+  table: string
+  tenantScoping: boolean
 }
 
 interface SemanticPlanFile {
-  version: number
-  generatedAt: string
   actions: ActionSemanticPlan[]
+  generatedAt: string
   meta: {
+    confidence: "high" | "low" | "medium"
     generator: string
     modelUsed?: string
-    confidence: "high" | "medium" | "low"
     requiresHumanReview: boolean
   }
+  version: number
 }
 
-function toKebabCase(str: string): string {
-  return str
+function toKebabCase(value: string): string {
+  return value
     .replace(/([a-z])([A-Z])/g, "$1-$2")
     .toLowerCase()
     .replace(/[^a-z0-9-]/g, "-")
     .replace(/-+/g, "-")
 }
 
-function toCamelCase(str: string): string {
-  return toKebabCase(str).replace(/-([a-z])/g, (_, c: string) => c.toUpperCase())
+function toCamelCase(value: string): string {
+  return toKebabCase(value).replace(/-([a-z])/g, (_, c: string) => c.toUpperCase())
 }
 
-function toPascalCase(str: string): string {
-  const camel = toCamelCase(str)
+function toPascalCase(value: string): string {
+  const camel = toCamelCase(value)
   return camel.charAt(0).toUpperCase() + camel.slice(1)
 }
 
-function generateSemanticPlan(plan: RepositoryPlanFile): SemanticPlanFile {
+function stripUndefinedAndNull(typeText: string): string {
+  return typeText
+    .split("|")
+    .map((part) => part.trim())
+    .filter((part) => part !== "undefined" && part !== "null")
+    .join(" | ")
+}
+
+function isUuidField(name: string): boolean {
+  return name === "id" || name.endsWith("_id") || name.endsWith("Id")
+}
+
+function toDtoFieldName(columnName: string): string {
+  return toCamelCase(columnName)
+}
+
+function mapPrimitiveType(
+  typeText: string,
+  fieldName: string
+): { type: string; zodSchema: string } {
+  const normalized = stripUndefinedAndNull(typeText)
+  const looseCellSchema = "z.union([z.string(), z.number(), z.boolean(), z.null()])"
+  const looseCellType = "string | number | boolean | null"
+
+  if (/^".*"( \| ".*")+$/.test(normalized) || /^".*"$/.test(normalized)) {
+    const variants = normalized
+      .split("|")
+      .map((part) => part.trim())
+      .filter(Boolean)
+    return {
+      type: variants.join(" | "),
+      zodSchema: `z.enum([${variants.join(", ")}])`,
+    }
+  }
+
+  if (normalized === "string") {
+    return {
+      type: "string",
+      zodSchema: isUuidField(fieldName) ? 'z.uuid({ error: "Invalid UUID" })' : "z.string()",
+    }
+  }
+
+  if (normalized === "number") {
+    return { type: "number", zodSchema: "z.number()" }
+  }
+
+  if (normalized === "boolean") {
+    return { type: "boolean", zodSchema: "z.boolean()" }
+  }
+
+  if (normalized === "Json") {
+    return { type: looseCellType, zodSchema: looseCellSchema }
+  }
+
+  if (normalized.endsWith("[]")) {
+    const item = mapPrimitiveType(normalized.slice(0, -2), fieldName)
+    return {
+      type: `${item.type}[]`,
+      zodSchema: `z.array(${item.zodSchema})`,
+    }
+  }
+
+  return { type: looseCellType, zodSchema: looseCellSchema }
+}
+
+function toSemanticField(
+  field: ExtractedField,
+  options?: { forceOptional?: boolean }
+): SemanticField {
+  const dtoFieldName = toDtoFieldName(field.name)
+  const primitive = mapPrimitiveType(field.typeText, field.name)
+  const required = options?.forceOptional ? false : !field.isOptional
+  const nullableSchema = field.isNullable
+    ? `${primitive.zodSchema}.nullable()`
+    : primitive.zodSchema
+  const zodSchema = required ? nullableSchema : `${nullableSchema}.optional()`
+
+  return {
+    description: `Generated from database field "${field.name}"`,
+    name: dtoFieldName,
+    required,
+    sample: sampleValueForField(dtoFieldName, primitive.type),
+    type: field.isNullable ? `${primitive.type} | null` : primitive.type,
+    validation: collectValidationHints(field.name, primitive.type, field.isNullable, required),
+    zodSchema,
+  }
+}
+
+function sampleValueForField(fieldName: string, fieldType: string): string {
+  if (fieldType === "string" || fieldType.includes("string")) {
+    return isUuidField(fieldName)
+      ? '"00000000-0000-0000-0000-000000000000"'
+      : `"sample-${toKebabCase(fieldName)}"`
+  }
+  if (fieldType === "number") {
+    return "1"
+  }
+  if (fieldType === "boolean") {
+    return "true"
+  }
+  if (fieldType.endsWith("[]")) {
+    return "[]"
+  }
+  if (fieldType.includes("number")) {
+    return "1"
+  }
+  if (fieldType.includes("boolean")) {
+    return "true"
+  }
+  if (fieldType.includes("null")) {
+    return "null"
+  }
+  return `"sample-${toKebabCase(fieldName)}"`
+}
+
+function collectValidationHints(
+  fieldName: string,
+  fieldType: string,
+  isNullable: boolean,
+  required: boolean
+): string[] {
+  const hints: string[] = []
+  if (fieldType === "string" && isUuidField(fieldName)) {
+    hints.push("uuid")
+  }
+  if (fieldType === "number") {
+    hints.push("number")
+  }
+  if (fieldType === "boolean") {
+    hints.push("boolean")
+  }
+  if (isNullable) {
+    hints.push("nullable")
+  }
+  hints.push(required ? "required" : "optional")
+  return hints
+}
+
+function renderZodObject(fields: SemanticField[]): string {
+  if (fields.length === 0) {
+    return "z.object({})"
+  }
+
+  const body = fields.map((field) => `  ${field.name}: ${field.zodSchema},`).join("\n")
+  return `z.object({\n${body}\n})`
+}
+
+function inferAuthPolicy(domain: DomainEntry): AuthPolicy {
+  if (domain.auth === "public") {
+    return "public"
+  }
+  if (domain.auth === "admin") {
+    return "admin"
+  }
+  return "session"
+}
+
+function inferTenantScoping(entry: RepositoryPlanEntry): boolean {
+  return entry.table.includes("psychologist") || entry.table.includes("patient")
+}
+
+function inferActionKind(method: CrudMethod): ActionKind {
+  return method === "list" || method === "findById" ? "query" : "mutation"
+}
+
+function defaultAuditFields(entry: RepositoryPlanEntry): string[] {
+  return entry.auditSafeFields && entry.auditSafeFields.length > 0
+    ? entry.auditSafeFields.map(toDtoFieldName)
+    : ["id", "createdAt", "updatedAt"]
+}
+
+function queryKeyFactoryName(table: string, method: CrudMethod): string {
+  const tableCamel = toCamelCase(table)
+  if (method === "findById") {
+    return `${tableCamel}ById`
+  }
+  if (method === "list") {
+    return `${tableCamel}List`
+  }
+  return tableCamel
+}
+
+function hookNameFor(table: string, method: CrudMethod): string | undefined {
+  const tablePascal = toPascalCase(table)
+  if (method === "list") {
+    return `use${tablePascal}Query`
+  }
+  if (method === "findById") {
+    return `use${tablePascal}ByIdQuery`
+  }
+  if (method === "insert") {
+    return `use${tablePascal}InsertMutation`
+  }
+  if (method === "update") {
+    return `use${tablePascal}UpdateMutation`
+  }
+  if (method === "delete") {
+    return `use${tablePascal}DeleteMutation`
+  }
+  if (method === "upsert") {
+    return `use${tablePascal}UpsertMutation`
+  }
+  return undefined
+}
+
+function hookFileNameFor(table: string, method: CrudMethod): string | undefined {
+  if (method === "list") {
+    return `use-${toKebabCase(table)}-query.hook.codegen`
+  }
+  if (method === "findById") {
+    return `use-${toKebabCase(table)}-by-id-query.hook.codegen`
+  }
+  if (method === "insert" || method === "update" || method === "delete" || method === "upsert") {
+    return `use-${toKebabCase(table)}-${toKebabCase(method)}-mutation.hook.codegen`
+  }
+  return undefined
+}
+
+function inferListFields(entry: RepositoryPlanEntry, rowFields: ExtractedField[]): SemanticField[] {
+  const filters = (entry.list?.filterFields ?? []).map((fieldName) => {
+    const rowField = rowFields.find((candidate) => candidate.name === fieldName)
+    return toSemanticField(
+      rowField ?? {
+        isNullable: false,
+        isOptional: true,
+        name: fieldName,
+        typeText: "string",
+      },
+      { forceOptional: true }
+    )
+  })
+
+  return [
+    ...filters,
+    {
+      description: "Pagination limit",
+      name: "limit",
+      required: false,
+      sample: "20",
+      type: "number",
+      validation: ["number", "optional"],
+      zodSchema: `z.number().int().positive().max(${entry.list?.maxPageSize ?? 100}).optional()`,
+    },
+    {
+      description: "Pagination offset",
+      name: "offset",
+      required: false,
+      sample: "0",
+      type: "number",
+      validation: ["number", "optional"],
+      zodSchema: "z.number().int().nonnegative().optional()",
+    },
+  ]
+}
+
+function nonSystemField(field: ExtractedField): boolean {
+  if (field.name === "id") {
+    return false
+  }
+  return !["created_at", "updated_at", "deleted_at"].includes(field.name)
+}
+
+function inferInputFields(
+  entry: RepositoryPlanEntry,
+  method: CrudMethod,
+  shapes: ReturnType<typeof extractTableShapes>
+) {
+  const idColumn = entry.idColumn ?? "id"
+  const rawIdField = shapes.row.find((field) => field.name === idColumn) ?? {
+    isNullable: false,
+    isOptional: false,
+    name: idColumn,
+    typeText: "string",
+  }
+  const rowIdField = {
+    ...rawIdField,
+    typeText: "string",
+  }
+
+  if (method === "findById" || method === "delete") {
+    return [toSemanticField(rowIdField)]
+  }
+
+  if (method === "list") {
+    return inferListFields(entry, shapes.row)
+  }
+
+  if (method === "insert") {
+    return shapes.insert.filter(nonSystemField).map((field) => toSemanticField(field))
+  }
+
+  if (method === "update" || method === "upsert") {
+    const updateFields = shapes.update
+      .filter((field) => field.name !== idColumn)
+      .filter(nonSystemField)
+      .map((field) => toSemanticField(field, { forceOptional: true }))
+
+    return [
+      toSemanticField(rowIdField),
+      {
+        description: "Partial DTO payload",
+        name: "data",
+        required: true,
+        sample: renderObjectSample(updateFields),
+        type: `{ ${updateFields.map((field) => `${field.name}?: ${field.type}`).join("; ")} }`,
+        validation: ["required"],
+        zodSchema: `${renderZodObject(updateFields)}.refine((value) => Object.keys(value).length > 0, { message: "At least one field is required" })`,
+      },
+    ]
+  }
+
+  return []
+}
+
+function renderObjectSample(fields: SemanticField[]): string {
+  const firstRequired = fields.find((field) => field.required) ?? fields[0]
+  if (!firstRequired) {
+    return "{}"
+  }
+  return `{ ${firstRequired.name}: ${firstRequired.sample} }`
+}
+
+function inferOutputType(
+  entry: RepositoryPlanEntry,
+  method: CrudMethod
+): ActionSemanticPlan["outputSchema"] {
+  const dtoType = `${toPascalCase(entry.table)}DTO`
+  if (method === "list") {
+    return {
+      fields: [{ name: "rows", source: "row", type: `${dtoType}[]` }],
+      returnType: `{ rows: ${dtoType}[] }`,
+    }
+  }
+  if (method === "findById") {
+    return {
+      fields: [{ name: "entity", source: "row", type: `${dtoType} | null` }],
+      returnType: `${dtoType} | null`,
+    }
+  }
+  if (method === "delete") {
+    return {
+      fields: [{ name: "success", source: "computed", type: "true" }],
+      returnType: "{ success: true }",
+    }
+  }
+  return {
+    fields: [{ name: "entity", source: "row", type: dtoType }],
+    returnType: dtoType,
+  }
+}
+
+function inferRepositoryArguments(method: CrudMethod): string[] {
+  if (method === "findById" || method === "delete") {
+    return ["validated.id"]
+  }
+  if (method === "list" || method === "insert") {
+    return ["validated"]
+  }
+  if (method === "update" || method === "upsert") {
+    return ["validated.id", "validated.data"]
+  }
+  return []
+}
+
+function inferLoggingMetadata(method: CrudMethod): ActionSemanticPlan["logging"] {
+  if (method === "list") {
+    return {
+      errorMetadata: ["input"],
+      successMetadata: ["rowCount: result.rows.length"],
+    }
+  }
+  if (method === "delete") {
+    return {
+      errorMetadata: ["input"],
+      successMetadata: ["id: validated.id"],
+    }
+  }
+  if (method === "insert") {
+    return {
+      errorMetadata: ["input"],
+      successMetadata: ["id: (result as { id?: string | number | boolean | null }).id ?? null"],
+    }
+  }
+  if (method === "update" || method === "upsert") {
+    return {
+      errorMetadata: ["input"],
+      successMetadata: [
+        "id: (result as { id?: string | number | boolean | null }).id ?? validated.id",
+      ],
+    }
+  }
+  return {
+    errorMetadata: ["input"],
+    successMetadata: ["id: validated.id"],
+  }
+}
+
+function inferCacheInvalidation(entry: RepositoryPlanEntry, method: CrudMethod) {
+  const baseAccessor = `${toCamelCase(entry.domainId)}QueryKeys.${toCamelCase(entry.table)}()`
+  if (method === "list" || method === "findById") {
+    return {
+      invalidateKeys: [],
+      optimisticUpdate: false,
+    }
+  }
+  return {
+    invalidateKeys: [baseAccessor],
+    optimisticUpdate: false,
+  }
+}
+
+function buildActionSemanticPlan(
+  entry: RepositoryPlanEntry,
+  method: CrudMethod,
+  domain: DomainEntry,
+  typesSource: string
+): ActionSemanticPlan {
+  const shapes = extractTableShapes(
+    typesSource,
+    entry.read.name,
+    entry.read.kind === "view" ? "Views" : "Tables"
+  )
+  const inputFields = inferInputFields(entry, method, shapes)
+  const outputSchema = inferOutputType(entry, method)
+  const domainKebab = toKebabCase(entry.domainId)
+  const tableKebab = toKebabCase(entry.table)
+  const methodCamel = toCamelCase(method)
+  const actionName = `${methodCamel}${toPascalCase(entry.table)}Action`
+  const hookName = hookNameFor(entry.table, method)
+  const hookFileName = hookFileNameFor(entry.table, method)
+  const hookKind = inferActionKind(method)
+
+  return {
+    actionName,
+    actionPath: `@workspace/supabase-data/actions/${domainKebab}/${tableKebab}-${methodCamel}.codegen`,
+    authPolicy: inferAuthPolicy(domain),
+    cacheInvalidation: inferCacheInvalidation(entry, method),
+    domainId: entry.domainId,
+    frontendContract: {
+      actionImportPath: `@workspace/supabase-data/actions/${domainKebab}/${tableKebab}-${methodCamel}.codegen`,
+      generateHook: Boolean(hookName && hookFileName),
+      hookImportPath: hookFileName
+        ? `@workspace/supabase-data/hooks/${domainKebab}/${hookFileName}`
+        : undefined,
+      hookKind,
+      hookName,
+      queryKeyFactory: queryKeyFactoryName(entry.table, method),
+    },
+    inputSchema: {
+      fields: inputFields,
+      typeName: `${toPascalCase(entry.table)}${toPascalCase(method)}Input`,
+      zodSchema: renderZodObject(inputFields),
+    },
+    kind: hookKind,
+    logging: inferLoggingMetadata(method),
+    method,
+    notes: [
+      `Generated for ${entry.table}.${method}`,
+      `Audit-safe fields: ${defaultAuditFields(entry).join(", ")}`,
+    ],
+    outputSchema,
+    queryKeyPolicy:
+      method === "list"
+        ? {
+            accessor: queryKeyFactoryName(entry.table, method),
+            paramsTypeName: `${toPascalCase(entry.table)}${toPascalCase(method)}Input`,
+            scope: "list",
+          }
+        : method === "findById"
+          ? {
+              accessor: queryKeyFactoryName(entry.table, method),
+              paramsTypeName: `${toPascalCase(entry.table)}${toPascalCase(method)}Input`,
+              scope: "byId",
+            }
+          : undefined,
+    repositoryCall: {
+      arguments: inferRepositoryArguments(method),
+      method,
+    },
+    table: entry.table,
+    tenantScoping: inferTenantScoping(entry),
+  }
+}
+
+function generateSemanticPlan(
+  plan: RepositoryPlanFile,
+  domainMapRaw: unknown,
+  typesSource: string
+): SemanticPlanFile {
+  const domainMap = parseDomainMapJson(domainMapRaw)
   const actions: ActionSemanticPlan[] = []
 
-  for (const entry of plan.entries || []) {
-    for (const method of entry.methods) {
-      const actionSemantic: ActionSemanticPlan = {
-        domainId: entry.domainId,
-        table: entry.table,
-        method,
-        actionName: `${method}${toPascalCase(entry.table)}Action`,
-        inputSchema: {
-          zodSchema: `z.object({
-  // TODO: Define fields based on ${entry.table}.${method} requirements
-})`,
-          typeName: `${toPascalCase(entry.table)}${toPascalCase(method)}Input`,
-          fields: [],
-        },
-        outputSchema: {
-          returnType: `Promise<{ data: ${toPascalCase(entry.table)}DTO[] }>`,
-          fields: [{ name: "data", type: `${toPascalCase(entry.table)}DTO[]`, source: "row" }],
-        },
-        repositoryCall: {
-          method: method === "list" ? "list" : method === "findById" ? "findById" : method,
-          arguments:
-            method === "list"
-              ? ["{}"]
-              : method === "insert"
-                ? ["validated"]
-                : ["validated.id", method === "update" ? "validated.data" : ""],
-          errorHandling: true,
-        },
-        auth: {
-          tenantScoping: entry.table.includes("patient") || entry.table.includes("psychologist"),
-          customChecks: [],
-        },
-        logging: {
-          successMetadata: ["entityId: result?.id"],
-          errorMetadata: ["input: JSON.stringify(input)"],
-        },
-        cacheInvalidation:
-          method !== "list" && method !== "findById"
-            ? {
-                invalidateKeys: [`["${entry.domainId}","${toKebabCase(entry.table)}"]`],
-                optimisticUpdate: false,
-              }
-            : undefined,
-        notes: [],
-      }
+  for (const entry of plan.entries) {
+    const domain = domainMap.domains.find((candidate) => candidate.id === entry.domainId)
+    if (!domain || domain.exposeActions === false || domain.codegen === false) {
+      continue
+    }
 
-      actions.push(actionSemantic)
+    for (const method of entry.methods) {
+      actions.push(buildActionSemanticPlan(entry, method, domain, typesSource))
     }
   }
 
   return {
-    version: 1,
-    generatedAt: new Date().toISOString(),
     actions,
+    generatedAt: new Date().toISOString(),
     meta: {
+      confidence: "high",
       generator: "actions-semantic-plan",
-      confidence: "medium",
-      requiresHumanReview: true,
+      requiresHumanReview: false,
     },
+    version: 2,
   }
 }
 
-// Main
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const planPath = resolve(repoRoot, "config/repository-plan.json")
+  const planPath = resolve(repoRoot, argValue("--plan") ?? "config/repository-plan.json")
+  const domainMapPath = resolve(repoRoot, argValue("--map") ?? "config/domain-map.json")
+  const typesPath = resolve(
+    repoRoot,
+    argValue("--types") ?? "packages/supabase-infra/src/types/database.types.ts"
+  )
 
   try {
     const plan = parseRepositoryPlanJson(JSON.parse(readFileSync(planPath, "utf8")))
-    const semanticPlan = generateSemanticPlan(plan)
-
+    const domainMap = JSON.parse(readFileSync(domainMapPath, "utf8")) as unknown
+    const typesSource = readFileSync(typesPath, "utf8")
+    const semanticPlan = generateSemanticPlan(plan, domainMap, typesSource)
     const outputPath = resolve(repoRoot, "config/action-semantic-plan.json")
+
     writeFileSync(outputPath, JSON.stringify(semanticPlan, null, 2) + "\n", "utf8")
 
-    console.log(`✅ Generated semantic plan: ${outputPath}`)
-    console.log(`   - ${semanticPlan.actions.length} action plans`)
-    console.log(`   - Confidence: ${semanticPlan.meta.confidence}`)
-    console.log(`   - Requires human review: ${semanticPlan.meta.requiresHumanReview}`)
-    console.log("")
-    console.log("📝 Next steps:")
-    console.log("   1. Review and edit config/action-semantic-plan.json")
-    console.log(
-      "   2. Run: pnpm codegen:actions-fill-todos --plan config/action-semantic-plan.json"
-    )
-    console.log("   3. Review generated code")
-    console.log("   4. Run: pnpm typecheck && pnpm lint")
+    console.log(`Generated semantic plan: ${outputPath}`)
+    console.log(`  Actions: ${semanticPlan.actions.length}`)
+    console.log(`  Confidence: ${semanticPlan.meta.confidence}`)
+    console.log(`  Requires human review: ${semanticPlan.meta.requiresHumanReview}`)
   } catch (error) {
-    console.error(
-      "❌ Error generating semantic plan:",
-      error instanceof Error ? error.message : error
-    )
+    console.error("Error generating semantic plan:", error instanceof Error ? error.message : error)
     process.exit(1)
   }
 }
 
-export type { ActionSemanticPlan, SemanticPlanFile }
+export { generateSemanticPlan, type ActionSemanticPlan, type SemanticPlanFile, type SemanticField }

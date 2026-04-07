@@ -7,6 +7,7 @@
     "./domain-map-schema": "./src/domain-map-schema.ts",
     "./extract-public-table-names": "./src/extract-public-table-names.ts",
     "./extract-public-view-names": "./src/extract-public-view-names.ts",
+    "./extract-table-shapes": "./src/extract-table-shapes.ts",
     "./extract-table-row-columns": "./src/extract-table-row-columns.ts",
     "./repository-plan-schema": "./src/repository-plan-schema.ts",
     "./merge-repository-plan": "./src/merge-repository-plan.ts",
