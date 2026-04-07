@@ -93,11 +93,17 @@ mapper imports in repositories that match declared methods (no unused
 
 Tables listed in the plan get **DTO + mapper + port + repository + skipped
 integration scaffold** under `packages/supabase-data/src/modules/<domain>/`
-(files include `// @codegen-generated`). The matching **skipped** integration
-test is emitted under `tests/integration/supabase-data/modules/<domain>/` (same
-folder names as `src/modules/<domain>/`, one
-`*.repository.codegen.integration.test.ts` per table). Use `--force` to replace
-an existing managed file.
+(files include `// codegen:backend —` and use a **`.codegen` filename segment**
+— e.g. `{table}.dto.codegen.ts`, `{table}-supabase.repository.codegen.ts` — so
+`pnpm codegen:clean` can remove them). **Path helpers** live in
+[`packages/codegen-tools/src/backend-codegen/plan-module-paths.ts`](../../packages/codegen-tools/src/backend-codegen/plan-module-paths.ts)
+(import specifiers + basenames; also exported as
+`@workspace/codegen-tools/backend-codegen/plan-module-paths` and from
+`@workspace/codegen-tools/backend-codegen`). The matching **skipped**
+integration test is emitted under
+`tests/integration/supabase-data/modules/<domain>/` (same folder names as
+`src/modules/<domain>/`, one `*.repository.codegen.integration.test.ts` per
+table). Use `--force` to replace an existing managed file.
 
 If `--check` says **every domain has `codegen: false`**, the tool does **no**
 work: enable **`codegen: true`** on a domain (or use a workspace map for

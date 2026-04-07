@@ -60,7 +60,7 @@ if (!existsSync(queryKeysPath)) {
  * Import keys from this module only — avoid string literals in hooks/components.
  * 
  * @module @workspace/supabase-data/hooks/${domainSegment}/query-keys
- * @codegen-generated
+ * codegen:new-hook (generated)
  */
 export const ${keysExportName} = {
   all: ["${domainSegment}"] as const,
@@ -91,7 +91,7 @@ if (hookType === "query") {
  * replace the queryFn body. Do not add console.log — observability lives in the action (logServerEvent).
  *
  * @module @workspace/supabase-data/hooks/${domainSegment}/${hookFileBase}
- * @codegen-generated
+ * codegen:new-hook (generated)
  */
 "use client"
 
@@ -120,7 +120,7 @@ export function ${hookFnName}(filters?: Record<string, unknown>) {
  * Do not add console.log — use structured logging in the action (logServerEvent).
  *
  * @module @workspace/supabase-data/hooks/${domainSegment}/${hookFileBase}
- * @codegen-generated
+ * codegen:new-hook (generated)
  */
 "use client"
 

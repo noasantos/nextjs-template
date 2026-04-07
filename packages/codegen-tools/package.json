@@ -13,7 +13,8 @@
     "./build-repository-plan-context": "./src/build-repository-plan-context.ts",
     "./validate-domain-map": "./src/validate-domain-map.ts",
     "./sync-domain-map-report": "./src/sync-domain-map-report.ts",
-    "./backend-codegen": "./src/backend-codegen.ts"
+    "./backend-codegen": "./src/backend-codegen.ts",
+    "./backend-codegen/plan-module-paths": "./src/backend-codegen/plan-module-paths.ts"
   },
   "scripts": {
     "lint": "oxlint .",

@@ -28,6 +28,10 @@ Automation scripts for development, CI/CD, maintenance.
 
 **Backend codegen:**
 
+- **Do not hand-edit** `*.codegen.*`; fix `scripts/codegen/*` and
+  `packages/codegen-tools/` and re-run. `pnpm codegen:clean` deletes only
+  `*.codegen.*` (plus semantic plan placeholder); `profiles` / `user-access` /
+  `user-roles` modules and `codegen:backend` `*.ts` stubs are **not** matched.
 - `codegen:domain-map:validate` - Validate `config/domain-map.json` vs
   `database.types.ts`
 - `codegen:domain-map:sync` - Report tables missing from map / stale map rows

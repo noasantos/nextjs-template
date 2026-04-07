@@ -77,7 +77,7 @@ describe("runBackendCodegen (plan emission)", () => {
 
     const repoFile = join(
       repoRoot,
-      "packages/supabase-data/src/modules/victicio/infrastructure/repositories/demo-widgets-supabase.repository.ts"
+      "packages/supabase-data/src/modules/victicio/infrastructure/repositories/demo-widgets-supabase.repository.codegen.ts"
     )
     const disk = readFileSync(repoFile, "utf8")
     expect(isCodegenManagedSource(disk)).toBe(true)

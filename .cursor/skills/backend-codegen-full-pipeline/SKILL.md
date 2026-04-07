@@ -6,6 +6,17 @@ production-ready code
 **Triggers:** User asks to "generate backend", "run codegen", "create
 repositories", "generate actions", "regenerate code"
 
+## Critical (do not violate)
+
+- **Never hand-edit** `*.codegen.*`. If output is wrong, **change the
+  generator** under `scripts/codegen/` and `packages/codegen-tools/`, then
+  re-run `pnpm codegen:backend` / `pnpm codegen:actions-hooks` /
+  `pnpm codegen:full-pipeline`.
+- **`pnpm codegen:clean`** deletes only paths matching `*.codegen.*` (and resets
+  `config/action-semantic-plan.json` from `action-semantic-plan.example.json`).
+  Template modules `profiles`, `user-access`, `user-roles` and backend stubs
+  (`*.ts` with `// codegen:backend —`) are **not** removed by clean.
+
 ---
 
 ## What This Skill Does
@@ -21,9 +32,9 @@ This skill runs the **COMPLETE automated pipeline**:
 4. **Phase 3: Hooks** - Generates TanStack Query hooks with query keys, unit
    tests
 5. **Validation** - Runs typecheck, lint, tests automatically
-6. **Auto-Fix** - Automatically fixes common issues
 
-**Zero manual intervention required** - the skill handles everything!
+**Zero manual intervention required** for a green run — failures are fixed in
+**codegen scripts**, not in generated files.
 
 ---
 
@@ -133,11 +144,9 @@ pnpm lint       # Code style validation
 pnpm test       # Unit + integration tests
 ```
 
-**Auto-Fix:**
-
-- If typecheck fails → Analyzes errors, suggests fixes
-- If lint fails → Runs `pnpm format` automatically
-- If tests fail → Reports failures, suggests fixes
+**On failure:** adjust **`scripts/codegen/*`** and
+**`packages/codegen-tools/`**, then re-run — **do not** patch `*.codegen.*` by
+hand. Optional: `pnpm format` if lint is style-only.
 
 ### Step 6: Final Report
 

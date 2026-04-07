@@ -8,6 +8,13 @@ import type { RepositoryPlanEntry } from "@workspace/codegen-tools/repository-pl
 import { CODEGEN_HEADER, isCodegenManagedSource } from "./constants"
 import { camelFromSnake, pascalFromSnake } from "./naming"
 import { dtoPath, integrationTestPath, mapperPath, portPath, repositoryPath } from "./paths"
+import {
+  planDtoImportSpecifier,
+  planMapperImportSpecifier,
+  planModuleEntityKebab,
+  planPortImportSpecifier,
+  planRepositoryImportSpecifier,
+} from "./plan-module-paths"
 
 type EmitFromPlanOptions = {
   checkOnly: boolean
@@ -56,7 +63,7 @@ function ensureWrite(
     if (!isCodegenManagedSource(disk)) {
       return {
         ok: false,
-        error: `File exists but is not codegen-managed (missing @codegen-generated): ${absPath}`,
+        error: `File exists but is not codegen-managed (missing codegen:backend — header): ${absPath}`,
         wrote: false,
       }
     }
@@ -132,7 +139,7 @@ function emitMapper(
     return `  if (dto.${f.camel} !== undefined) (out as Record<string, unknown>).${f.snake} = dto.${f.camel} as never`
   })
 
-  const dtoModuleImport = `@workspace/supabase-data/modules/${domainId}/domain/dto/${entityKebab}.dto`
+  const dtoModuleImport = planDtoImportSpecifier(domainId, entityKebab)
 
   return `${CODEGEN_HEADER}import type { Database } from "@workspace/supabase-infra/types/database"
 
@@ -170,7 +177,7 @@ function emitPort(
   domainId: string
 ): string {
   const dtoName = `${pascal}DTO`
-  const dtoImport = `import type { ${dtoName} } from "@workspace/supabase-data/modules/${domainId}/domain/dto/${entityKebab}.dto"`
+  const dtoImport = `import type { ${dtoName} } from "${planDtoImportSpecifier(domainId, entityKebab)}"`
 
   const lines: string[] = []
   const methods = new Set(entry.methods)
@@ -242,8 +249,8 @@ function emitRepository(
   const methods = new Set(entry.methods)
   const deferred = entry.deferred === true
 
-  const portImport = `@workspace/supabase-data/modules/${domainId}/domain/ports/${entityKebab}-repository.port`
-  const mapperImport = `@workspace/supabase-data/modules/${domainId}/infrastructure/mappers/${entityKebab}.mapper`
+  const portImport = planPortImportSpecifier(domainId, entityKebab)
+  const mapperImport = planMapperImportSpecifier(domainId, entityKebab)
 
   const deferThrow = (method: string): string =>
     `    throw new SupabaseRepositoryError("Deferred codegen stub (${method}) for ${entry.table}.", undefined)`
@@ -263,7 +270,7 @@ function emitRepository(
     ``,
     `import type { ${pascal}Repository${methods.has("list") ? `, ${pascal}ListParams, ${pascal}ListResult` : ""} } from "${portImport}"`,
     `import { ${mapperImportNames.join(", ")} } from "${mapperImport}"`,
-    `import type { ${dtoName} } from "@workspace/supabase-data/modules/${domainId}/domain/dto/${entityKebab}.dto"`,
+    `import type { ${dtoName} } from "${planDtoImportSpecifier(domainId, entityKebab)}"`,
     ``,
     `class ${pascal}SupabaseRepository implements ${pascal}Repository {`,
     `  constructor(private readonly supabase: SupabaseClient) {}`,
@@ -492,7 +499,7 @@ function emitIntegrationStub(
 ): string {
   return `${CODEGEN_HEADER}import { describe, it } from "vitest"
 
-import { ${pascal}SupabaseRepository } from "@workspace/supabase-data/modules/${domainId}/infrastructure/repositories/${entityKebab}-supabase.repository"
+import { ${pascal}SupabaseRepository } from "${planRepositoryImportSpecifier(domainId, entityKebab)}"
 
 describe.skip("${entityKebab} repository (codegen scaffold)", () => {
   it("CRUD round-trip — wire Supabase test client and un-skip", () => {
@@ -507,7 +514,7 @@ function emitFromPlan(opts: EmitFromPlanOptions): EmitResult {
   const filesWritten: string[] = []
   const { entry, domainId, repoRoot } = opts
   const pascal = pascalFromSnake(entry.table)
-  const entityKebab = entry.table.replace(/_/g, "-")
+  const entityKebab = planModuleEntityKebab(entry.table)
   const camelFields = opts.columns.map((snake) => ({ snake, camel: camelFromSnake(snake) }))
   const rowRef = rowTypeRef(entry)
   const writeTable = entry.write?.name ?? entry.table

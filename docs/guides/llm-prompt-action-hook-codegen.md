@@ -94,8 +94,8 @@ completion**) for:
 ### Deliverables
 
 1. A **script or Turbo task** (e.g. `pnpm codegen:actions-hooks`) that runs
-   Phase A and writes files idempotently (`// @codegen-generated` header
-   optional but recommended).
+   Phase A and writes files idempotently (use `*.codegen.*` filenames; backend
+   stubs use `// codegen:backend —` on line 1).
 2. **Documentation snippet** in `docs/architecture/data-access-pattern.md` if
    behaviour differs from the human-authored baseline.
 3. **CHANGELOG** `[Unreleased]` entries under **Added** / **Changed** for new

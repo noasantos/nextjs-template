@@ -1,35 +1,50 @@
 import { join } from "node:path"
 
+import {
+  planDtoBasename,
+  planMapperBasename,
+  planModuleEntityKebab,
+  planPortBasename,
+  planRepositoryBasename,
+  planRepositoryIntegrationTestBasename,
+} from "./plan-module-paths"
+
 function entityKebab(table: string): string {
-  return table.replace(/_/g, "-")
+  return planModuleEntityKebab(table)
 }
 
 function moduleRoot(repoRoot: string, domainId: string): string {
   return join(repoRoot, "packages", "supabase-data", "src", "modules", domainId)
 }
 
+/** Suffix `.codegen.ts` keeps module artifacts removable via `pnpm codegen:clean`. */
 function dtoPath(repoRoot: string, domainId: string, table: string): string {
-  const kebab = entityKebab(table)
-  return join(moduleRoot(repoRoot, domainId), "domain", "dto", `${kebab}.dto.ts`)
+  const kebab = planModuleEntityKebab(table)
+  return join(moduleRoot(repoRoot, domainId), "domain", "dto", planDtoBasename(kebab))
 }
 
 function mapperPath(repoRoot: string, domainId: string, table: string): string {
-  const kebab = entityKebab(table)
-  return join(moduleRoot(repoRoot, domainId), "infrastructure", "mappers", `${kebab}.mapper.ts`)
+  const kebab = planModuleEntityKebab(table)
+  return join(
+    moduleRoot(repoRoot, domainId),
+    "infrastructure",
+    "mappers",
+    planMapperBasename(kebab)
+  )
 }
 
 function portPath(repoRoot: string, domainId: string, table: string): string {
-  const kebab = entityKebab(table)
-  return join(moduleRoot(repoRoot, domainId), "domain", "ports", `${kebab}-repository.port.ts`)
+  const kebab = planModuleEntityKebab(table)
+  return join(moduleRoot(repoRoot, domainId), "domain", "ports", planPortBasename(kebab))
 }
 
 function repositoryPath(repoRoot: string, domainId: string, table: string): string {
-  const kebab = entityKebab(table)
+  const kebab = planModuleEntityKebab(table)
   return join(
     moduleRoot(repoRoot, domainId),
     "infrastructure",
     "repositories",
-    `${kebab}-supabase.repository.ts`
+    planRepositoryBasename(kebab)
   )
 }
 
@@ -39,7 +54,7 @@ function repositoryPath(repoRoot: string, domainId: string, table: string): stri
  * `tests/integration/supabase-data/modules/<domainId>/`.
  */
 function integrationTestPath(repoRoot: string, domainId: string, table: string): string {
-  const kebab = entityKebab(table)
+  const kebab = planModuleEntityKebab(table)
   return join(
     repoRoot,
     "tests",
@@ -47,7 +62,7 @@ function integrationTestPath(repoRoot: string, domainId: string, table: string):
     "supabase-data",
     "modules",
     domainId,
-    `${kebab}.repository.codegen.integration.test.ts`
+    planRepositoryIntegrationTestBasename(kebab)
   )
 }
 

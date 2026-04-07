@@ -1,82 +1,100 @@
 #!/bin/bash
-# Clean ONLY auto-generated files (by naming convention)
-# NEVER deletes manual files or configs
+# Remove generated backend files by **filename** (see docs/guides/codegen-cleanup.md).
 #
-# NAMING CONVENTION:
-# - Auto-generated: *.codegen.ts, *.codegen.test.ts, *.codegen.test.tsx
-# - Manual: *.ts (no .codegen. in name)
-
+# Never deleted under `modules/`:
+# - `profiles/`, `user-access/`, `user-roles/` (hand-maintained; see backend-codegen.md)
+#
+# Elsewhere: only `*.codegen.*` (actions/hooks) and semantic-plan reset.
+#
+# If output is wrong, fix `scripts/codegen/` / `packages/codegen-tools/` and re-run
+# generators — do not patch `*.codegen.*` by hand.
+#
 set -e
 
-RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-echo "🧹 Cleaning auto-generated files..."
+echo "🧹 Cleaning files matching *.codegen.* ..."
 echo ""
 
-echo "📋 Files PRESERVED (never deleted):"
-echo -e "${GREEN}  ✓${NC} config/*.json"
+echo "📋 Preserved:"
+echo -e "${GREEN}  ✓${NC} config/domain-map.json, config/repository-plan.json (local)"
+echo -e "${GREEN}  ✓${NC} config/*.example.json"
 echo -e "${GREEN}  ✓${NC} packages/supabase-infra/src/types/database.types.ts"
-echo -e "${GREEN}  ✓${NC} Manual actions (_shared/, user-access/, user-roles/, profiles/, example/)"
-echo -e "${GREEN}  ✓${NC} Manual tests (tests/unit/codegen/, tests/integration/supabase-auth/)"
-echo -e "${GREEN}  ✓${NC} Files WITHOUT .codegen. in filename"
+echo -e "${GREEN}  ✓${NC} Manual actions: _shared/, user-access/, user-roles/, profiles/, example/"
+echo -e "${GREEN}  ✓${NC} modules/profiles/, user-access/, user-roles/ (skipped by prune)"
 echo ""
 
-# Clean modules (ONLY *.codegen.ts)
-echo "🗑️  Cleaning auto-generated modules..."
-MODULES_COUNT=$(find packages/supabase-data/src/modules -type f -name "*.codegen.ts" 2>/dev/null | wc -l)
-find packages/supabase-data/src/modules -type f -name "*.codegen.ts" -delete 2>/dev/null || true
-echo -e "${GREEN}  ✓${NC} Cleaned $MODULES_COUNT module files"
-echo ""
+# Plan-driven module artifacts: `*.dto.codegen.ts` / `*.mapper.codegen.ts` / `*.port.codegen.ts` /
+# `*.repository.codegen.ts` (all match `*.codegen.ts`), plus legacy names from older emits.
+MODULE_FIND=(
+  packages/supabase-data/src/modules
+  "(" "!" -path "*/profiles/*" "!" -path "*/user-access/*" "!" -path "*/user-roles/*" ")"
+  -type f
+  "("
+  -name "*.codegen.ts"
+  -o -name "*.dto.ts"
+  -o -name "*.mapper.ts"
+  -o -name "*-repository.port.ts"
+  -o -name "*-supabase.repository.ts"
+  ")"
+)
+echo "🗑️  modules … plan-driven dto/mapper/port/repository (*.codegen.ts + legacy names)"
+M=$(find "${MODULE_FIND[@]}" 2>/dev/null | wc -l | tr -d "[:space:]")
+find "${MODULE_FIND[@]}" -delete 2>/dev/null || true
+echo -e "${GREEN}  ✓${NC} $M file(s)"
 
-# Clean hooks (ONLY *.codegen.ts)
-echo "🗑️  Cleaning auto-generated hooks..."
-HOOKS_COUNT=$(find packages/supabase-data/src/hooks -mindepth 2 -type f -name "*.codegen.ts" 2>/dev/null | wc -l)
+# Hooks
+echo "🗑️  hooks … *.codegen.ts"
+H=$(find packages/supabase-data/src/hooks -mindepth 2 -type f -name "*.codegen.ts" 2>/dev/null | wc -l | tr -d "[:space:]")
 find packages/supabase-data/src/hooks -mindepth 2 -type f -name "*.codegen.ts" -delete 2>/dev/null || true
-echo -e "${GREEN}  ✓${NC} Cleaned $HOOKS_COUNT hook files"
-echo ""
+echo -e "${GREEN}  ✓${NC} $H file(s)"
 
-# Clean actions (ONLY *.codegen.ts, excluding manual dirs)
-echo "🗑️  Cleaning auto-generated actions..."
-ACTIONS_COUNT=$(find packages/supabase-data/src/actions -mindepth 2 -type f -name "*.codegen.ts" \
-  ! -path "*/_shared/*" \
-  ! -path "*/user-access/*" \
-  ! -path "*/user-roles/*" \
-  ! -path "*/profiles/*" \
-  ! -path "*/example/*" \
-  2>/dev/null | wc -l)
+# Actions (exclude manual dirs)
+echo "🗑️  actions … *.codegen.ts"
+A=$(find packages/supabase-data/src/actions -mindepth 2 -type f -name "*.codegen.ts" \
+  ! -path "*/_shared/*" ! -path "*/user-access/*" ! -path "*/user-roles/*" \
+  ! -path "*/profiles/*" ! -path "*/example/*" 2>/dev/null | wc -l | tr -d "[:space:]")
 find packages/supabase-data/src/actions -mindepth 2 -type f -name "*.codegen.ts" \
-  ! -path "*/_shared/*" \
-  ! -path "*/user-access/*" \
-  ! -path "*/user-roles/*" \
-  ! -path "*/profiles/*" \
-  ! -path "*/example/*" \
+  ! -path "*/_shared/*" ! -path "*/user-access/*" ! -path "*/user-roles/*" \
+  ! -path "*/profiles/*" ! -path "*/example/*" \
   -delete 2>/dev/null || true
-echo -e "${GREEN}  ✓${NC} Cleaned $ACTIONS_COUNT action files"
+echo -e "${GREEN}  ✓${NC} $A file(s)"
+
+# Integration tests (backend emit: *.repository.codegen.integration.test.ts)
+# Unit: actions-hooks *.codegen.test.ts; generate-action-tests *.codegen.action.test.ts;
+# generate-hook-tests *.hook.codegen.test.tsx — include *.tsx so hook tests are removed.
+CODEGEN_TEST_FIND=( \( -name '*.codegen.test.ts' -o -name '*.codegen.*.test.ts' -o -name '*.codegen.test.tsx' -o -name '*.codegen.*.test.tsx' \) )
+
+echo "🗑️  integration tests … *.codegen*.test.ts(x)"
+TI=$(find tests/integration/supabase-data/modules -type f "${CODEGEN_TEST_FIND[@]}" 2>/dev/null | wc -l | tr -d "[:space:]")
+find tests/integration/supabase-data/modules -type f "${CODEGEN_TEST_FIND[@]}" -delete 2>/dev/null || true
+echo -e "${GREEN}  ✓${NC} $TI file(s)"
+
+echo "🗑️  unit tests … *.codegen*.test.ts(x)"
+TU=$(find tests/unit/supabase-data -type f "${CODEGEN_TEST_FIND[@]}" 2>/dev/null | wc -l | tr -d "[:space:]")
+find tests/unit/supabase-data -type f "${CODEGEN_TEST_FIND[@]}" -delete 2>/dev/null || true
+echo -e "${GREEN}  ✓${NC} $TU file(s)"
+echo -e "${YELLOW}  Manual tests under tests/unit/codegen etc. preserved${NC}"
 echo ""
 
-# Clean integration tests (ALL *.codegen.*.test.ts files)
-echo "🗑️  Cleaning auto-generated integration tests..."
-TESTS_COUNT=$(find tests/integration/supabase-data/modules -type f \( -name "*.codegen.test.ts" -o -name "*.codegen.*.test.ts" \) 2>/dev/null | wc -l)
-find tests/integration/supabase-data/modules -type f \( -name "*.codegen.test.ts" -o -name "*.codegen.*.test.ts" \) -delete 2>/dev/null || true
-echo -e "${GREEN}  ✓${NC} Cleaned $TESTS_COUNT integration test files"
+# Reset semantic plan placeholder
+echo "🗑️  Reset config/action-semantic-plan.json …"
+if [ -f config/action-semantic-plan.example.json ]; then
+  cp config/action-semantic-plan.example.json config/action-semantic-plan.json
+  echo -e "${GREEN}  ✓${NC} from action-semantic-plan.example.json"
+else
+  printf '%s\n' '{"version":1,"generatedAt":"1970-01-01T00:00:00.000Z","actions":[],"meta":{"generator":"codegen-clean","confidence":"high","requiresHumanReview":false}}' > config/action-semantic-plan.json
+  echo -e "${GREEN}  ✓${NC} minimal JSON"
+fi
 echo ""
 
-# Clean unit tests (ALL *.codegen.test.ts and *.codegen.*.test.ts files)
-echo "🗑️  Cleaning auto-generated unit tests..."
-UNIT_TESTS_COUNT=$(find tests/unit/supabase-data -type f \( -name "*.codegen.test.ts" -o -name "*.codegen.*.test.ts" \) 2>/dev/null | wc -l)
-find tests/unit/supabase-data -type f \( -name "*.codegen.test.ts" -o -name "*.codegen.*.test.ts" \) -delete 2>/dev/null || true
-echo -e "${GREEN}  ✓${NC} Cleaned $UNIT_TESTS_COUNT unit test files"
-echo -e "${YELLOW}  Note: Manual tests are PRESERVED${NC}"
-echo ""
-
-# Prune empty domain folders left after *.codegen.ts deletion (safe: only dirs with zero entries)
-echo "🗑️  Pruning empty domain directories under actions/hooks/tests..."
+# Prune empties
 PRUNE_BASES=(
   "packages/supabase-data/src/actions"
   "packages/supabase-data/src/hooks"
+  "packages/supabase-data/src/modules"
   "tests/unit/supabase-data/actions"
   "tests/unit/supabase-data/hooks"
   "tests/integration/supabase-data/modules"
@@ -84,24 +102,16 @@ PRUNE_BASES=(
 PRUNED=0
 for base in "${PRUNE_BASES[@]}"; do
   if [ -d "$base" ]; then
-    COUNT=$(find "$base" -mindepth 1 -depth -type d -empty 2>/dev/null | wc -l | tr -d "[:space:]")
+    C=$(find "$base" -mindepth 1 -depth -type d -empty 2>/dev/null | wc -l | tr -d "[:space:]")
     find "$base" -mindepth 1 -depth -type d -empty -delete 2>/dev/null || true
-    PRUNED=$((PRUNED + COUNT))
+    PRUNED=$((PRUNED + C))
   fi
 done
-echo -e "${GREEN}  ✓${NC} Removed $PRUNED empty director(y/ies) (template dirs with files unchanged)"
-echo ""
+echo -e "${GREEN}  ✓${NC} Pruned $PRUNED empty dir(s)"
 
-echo "📊 Final state:"
-echo "   Actions: $(find packages/supabase-data/src/actions -type f -name '*.ts' | wc -l | xargs)"
-echo "   Modules: $(find packages/supabase-data/src/modules -type f -name '*.ts' 2>/dev/null | wc -l | xargs)"
-echo "   Hooks: $(find packages/supabase-data/src/hooks -type f -name '*.ts' 2>/dev/null | wc -l | xargs)"
-echo ""
+if [ ! -f packages/supabase-data/src/modules/.gitkeep ]; then
+  touch packages/supabase-data/src/modules/.gitkeep
+fi
 
-echo "Manual files preserved:"
-find packages/supabase-data/src/actions -type f -name "*.ts" | while read file; do
-  echo -e "${GREEN}  ✓${NC} $file"
-done
 echo ""
-
-echo -e "${GREEN}✅ Clean complete!${NC}"
+echo -e "${GREEN}✅ codegen:clean done.${NC}"

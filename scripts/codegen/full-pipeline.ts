@@ -13,11 +13,14 @@
  * Usage:
  *   pnpm tsx scripts/codegen/full-pipeline.ts
  *   pnpm tsx scripts/codegen/full-pipeline.ts --skip-validation  # Skip validation
+ *   pnpm tsx scripts/codegen/full-pipeline.ts --no-rollback      # Keep partial output on failure
  */
 
 import { execSync } from "node:child_process"
 import { existsSync, readFileSync } from "node:fs"
 import { resolve } from "node:path"
+
+import { rollbackCodegenWorkspace } from "./pipeline-rollback"
 
 const repoRoot = resolve(process.cwd())
 
@@ -106,6 +109,7 @@ function main() {
   const args = new Set(process.argv.slice(2))
   const skipValidation = args.has("--skip-validation")
   const skipTests = args.has("--skip-tests")
+  const noRollback = args.has("--no-rollback")
 
   console.log("🚀 Full Codegen Pipeline")
   console.log("=".repeat(50))
@@ -144,6 +148,17 @@ function main() {
       // If required step fails, stop pipeline
       if (step.required) {
         console.error(`\n❌ Required step failed: ${step.name}`)
+        if (!noRollback) {
+          try {
+            rollbackCodegenWorkspace(repoRoot)
+          } catch (rollbackErr) {
+            console.error("\n⚠️  Rollback threw unexpectedly:", rollbackErr)
+          }
+        } else {
+          console.error(
+            "\n⚠️  Skipping rollback (--no-rollback). Partial codegen output was left on disk."
+          )
+        }
         console.error("\n💡 Common solutions:")
 
         if (step.name.includes("Phase 0")) {
@@ -164,8 +179,8 @@ function main() {
         }
 
         console.error("\n🔧 To fix and re-run:")
-        console.error("   1. Fix the error manually")
-        console.error("   2. Clean generated files: pnpm codegen:clean")
+        console.error("   1. Fix the error manually (or rollback already ran above)")
+        console.error("   2. If needed: pnpm codegen:pipeline:rollback or pnpm codegen:clean")
         console.error("   3. Re-run pipeline: pnpm codegen:full-pipeline")
 
         process.exit(1)

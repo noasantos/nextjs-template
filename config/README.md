@@ -9,10 +9,12 @@ that does **not** delete the files on disk.
 
 ## Files in git
 
-| File                               | Role                                                                                                                                                                                                             |
-| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`domain-map.example.json`**      | Minimal, **generic** example: maps the `demo_*` tables from [`packages/codegen-tools/fixtures/database.types.mock.ts`](../packages/codegen-tools/fixtures/database.types.mock.ts). Use as a structural template. |
-| **`repository-plan.example.json`** | Matching **strict** repository plan for that same mock schema (two tables).                                                                                                                                      |
+| File                                    | Role                                                                                                                                                                                                             |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`domain-map.example.json`**           | Minimal, **generic** example: maps the `demo_*` tables from [`packages/codegen-tools/fixtures/database.types.mock.ts`](../packages/codegen-tools/fixtures/database.types.mock.ts). Use as a structural template. |
+| **`repository-plan.example.json`**      | Matching **strict** repository plan for that same mock schema (two tables).                                                                                                                                      |
+| **`action-semantic-plan.example.json`** | Empty semantic plan shape; `pnpm codegen:clean` copies this over `action-semantic-plan.json`.                                                                                                                    |
+| **`action-semantic-plan.json`**         | Committed **placeholder** in the template; Phase 0 overwrites with a real plan when you run codegen.                                                                                                             |
 
 ## CLI defaults
 

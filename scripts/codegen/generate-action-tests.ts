@@ -35,7 +35,7 @@ function generateActionTest(plan: ActionSemanticPlan): string {
   return `/**
  * Unit tests for ${actionName}
  * 
- * @codegen-generated
+ * codegen:generate-action-tests (generated)
  */
 import { describe, expect, it, vi, beforeEach } from "vitest"
 

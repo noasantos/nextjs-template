@@ -148,15 +148,22 @@ Supabase queries outside infrastructure layers.
 packages/supabase-data/src/modules/{module}/
 ├── domain/
 │   ├── dto/
-│   │   └── {entity}.dto.ts          # EntityDTO, CreateEntityData, UpdateEntityData
+│   │   └── {entity}.dto.ts          # Hand-written (e.g. profiles, user-access)
 │   └── ports/
-│       └── {entity}-repository.port.ts  # Repository interface
+│       └── {entity}-repository.port.ts
 └── infrastructure/
     ├── mappers/
-    │   └── {entity}.mapper.ts       # Mapper class (Row → DTO)
+    │   └── {entity}.mapper.ts
     └── repositories/
-        └── {entity}-supabase.repository.ts  # Repository implementation
+        └── {entity}-supabase.repository.ts
 ```
+
+**Plan-driven codegen** (`pnpm codegen:backend`) emits the same layout with a
+**`.codegen` segment** so `pnpm codegen:clean` can delete by filename:
+`{entity}.dto.codegen.ts`, `{entity}.mapper.codegen.ts`,
+`{entity}-repository.port.codegen.ts`,
+`{entity}-supabase.repository.codegen.ts`. Import paths use the same suffix
+(e.g. `.../session-types.dto.codegen`).
 
 ### Codegen (optional)
 
@@ -166,8 +173,8 @@ packages/supabase-data/src/modules/{module}/
 coding agent runs the autonomous pipeline (skill
 `repository-plan-autonomous-pipeline`: `codegen:repository-plan:context` →
 authored JSON → validate → `codegen:backend --plan`) without human approval
-steps; deterministic emitters write `@codegen-generated` DTOs, mappers, ports,
-and repositories using Supabase client primitives (`select` / `insert` /
+steps; deterministic emitters write `codegen:backend`‑marked DTOs, mappers,
+ports, and repositories using Supabase client primitives (`select` / `insert` /
 `update` / `upsert` / `delete`) inside infrastructure only. Generated
 repositories currently **throw** `SupabaseRepositoryError` like existing stubs;
 aligning fully with the `Result`/`neverthrow` examples below can be a later

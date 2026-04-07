@@ -42,7 +42,7 @@ function generateHookTest(domainId: string, table: string, hookType: "query" | "
   return `/**
  * Unit tests for ${hookName}
  * 
- * @codegen-generated
+ * codegen:generate-hook-tests (generated)
  */
 import { describe, expect, it, vi, beforeEach } from "vitest"
 import { renderHook, waitFor } from "@testing-library/react"

@@ -11,6 +11,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { dirname, join, resolve } from "node:path"
 
+import { planRepositoryImportSpecifier } from "../../packages/codegen-tools/src/backend-codegen/plan-module-paths"
 import type { ActionSemanticPlan } from "./actions-semantic-plan"
 
 const repoRoot = resolve(process.cwd())
@@ -45,7 +46,7 @@ function generateCompleteAction(plan: ActionSemanticPlan): string {
  * Handles ${plan.method} operation for ${plan.table}.
  * 
  * @module @workspace/supabase-data/actions/${domainKebab}/${tableKebab}-${methodCamel}
- * @codegen-generated
+ * codegen:actions-fill-todos (generated)
  */
 "use server"
 
@@ -53,7 +54,7 @@ import { z } from "zod"
 
 import { requireAuth } from "@workspace/supabase-data/lib/auth/require-auth"
 import { createServerAuthClient } from "@workspace/supabase-auth/server/create-server-auth-client"
-import { ${repositoryClassName} } from "@workspace/supabase-data/modules/${repositoryModule}/infrastructure/repositories/${tableKebab}-supabase.repository.codegen"
+import { ${repositoryClassName} } from "${planRepositoryImportSpecifier(repositoryModule, tableKebab)}"
 import { logServerEvent } from "@workspace/logging/server"
 
 ${generateInputSchema(plan)}

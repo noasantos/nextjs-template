@@ -11,6 +11,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { dirname, join, relative, resolve } from "node:path"
 
+import { planRepositoryImportSpecifier } from "../../packages/codegen-tools/src/backend-codegen/plan-module-paths"
 import {
   parseDomainMapJson,
   type DomainEntry,
@@ -81,10 +82,12 @@ function generateServerAction(
   const repositoryClassName = `${toPascalCase(tableName)}SupabaseRepository`
   const repositoryModule = domainKebab
 
-  // Determine table type from domain config
-  const isPublic = domainConfig?.auth === "public"
-  const isRoleGated = domainConfig?.auth === "role-gated"
-  const isTenantScoped = domainConfig?.auth === "tenant" || !domainConfig?.auth
+  // Domain map `auth` may extend beyond Zod enum at runtime; keep flags for template branches.
+  type AuthFlag = NonNullable<DomainEntry["auth"]> | "tenant" | "role-gated"
+  const authFlag = domainConfig?.auth as AuthFlag | undefined
+  const isPublic = authFlag === "public"
+  const isRoleGated = authFlag === "role-gated"
+  const isTenantScoped = authFlag === "tenant" || authFlag === undefined
 
   // Generate audit safe fields constant
   const auditSafeFields = '["id", "createdAt", "updatedAt"] as const'
@@ -131,20 +134,47 @@ function generateServerAction(
     })
     throw new Error("Access denied")
   }
+  void psychologistId // Reserved for tenant-scoped filters; RLS may already enforce scope.
 `
     : ""
 
-  // Generate repository call with tenant ID if needed
-  const repositoryCallCode = isTenantScoped
-    ? `const result = await repository.${methodCamel}({ ...validated, psychologistId })`
-    : `const result = await repository.${methodCamel}(validated)`
+  // Repository methods have heterogeneous signatures; stubs use narrow casts until TODO schemas are filled.
+  const repositoryCallCode = (() => {
+    switch (methodName) {
+      case "list":
+        // @type-escape: generated action stub — list params unknown until semantic plan fills Zod input
+        return `const result = await repository.list(validated as never)`
+      case "findById":
+        // @type-escape: generated action stub — id shape from validated after TODO input schema
+        return `const result = await repository.findById((validated as unknown as { id: string }).id)`
+      case "insert":
+        // @type-escape: generated action stub — insert payload unknown until TODO input schema
+        return `const result = await repository.insert(validated as never)`
+      case "update":
+        // @type-escape: generated action stub — id + patch unknown until TODO input schema
+        return `const result = await repository.update((validated as unknown as { id: string }).id, validated as never)`
+      case "delete":
+        // @type-escape: generated action stub — delete id unknown until TODO input schema
+        return `await repository.delete((validated as unknown as { id: string }).id)`
+      default:
+        return `const result = await (repository as Record<string, (v: unknown) => Promise<unknown>>)["${methodCamel}"](validated)`
+    }
+  })()
 
-  // Generate imports based on table type
+  // Generate imports based on table type (tenant helper only when tenant resolution runs)
   const imports = isPublic
     ? `import { createServerAnonClient } from "@workspace/supabase-auth/server/create-server-anon-client"`
-    : `import { requireAuth } from "@workspace/supabase-data/lib/auth/require-auth"
+    : isTenantScoped
+      ? `import { requireAuth } from "@workspace/supabase-data/lib/auth/require-auth"
 import { createServerAuthClient } from "@workspace/supabase-auth/server/create-server-auth-client"
 import { getPsychologistIdForUser } from "@workspace/supabase-data/lib/auth/resolve-tenant"`
+      : `import { requireAuth } from "@workspace/supabase-data/lib/auth/require-auth"
+import { createServerAuthClient } from "@workspace/supabase-auth/server/create-server-auth-client"`
+
+  const successReturn =
+    methodName === "delete"
+      ? `return null as ${toPascalCase(tableName)}${toPascalCase(methodName)}Output`
+      : "return result"
 
   return `/**
  * ${toPascalCase(methodName)}${toPascalCase(tableName)} Server Action
@@ -161,14 +191,14 @@ import { getPsychologistIdForUser } from "@workspace/supabase-data/lib/auth/reso
  * \`\`\`
  * 
  * @module @workspace/supabase-data/actions/${domainKebab}/${tableKebab}-${methodCamel}
- * @codegen-generated
+ * codegen:actions-hooks (generated) — do not hand-edit
  */
 "use server"
 
 import { z } from "zod"
 
 ${imports}
-import { ${repositoryClassName} } from "@workspace/supabase-data/modules/${repositoryModule}/infrastructure/repositories/${tableKebab}-supabase.repository"
+import { ${repositoryClassName} } from "${planRepositoryImportSpecifier(repositoryModule, tableKebab)}"
 import { logServerEvent } from "@workspace/logging/server"
 import { sanitizeForAudit } from "@workspace/supabase-data/lib/audit/sanitize-phi"
 
@@ -200,13 +230,9 @@ const ${toPascalCase(tableName)}${toPascalCase(methodName)}InputSchema = z.objec
 export type ${toPascalCase(tableName)}${toPascalCase(methodName)}Input = z.infer<typeof ${toPascalCase(tableName)}${toPascalCase(methodName)}InputSchema>
 
 /**
- * Output type for ${actionName}
+ * Output type for ${actionName} — unknown until the action is wired to real DTOs / port types.
  */
-export type ${toPascalCase(tableName)}${toPascalCase(methodName)}Output = {
-  // TODO: Define output shape
-  id?: string
-  createdAt?: string
-}
+export type ${toPascalCase(tableName)}${toPascalCase(methodName)}Output = unknown
 
 /**
  * ${toPascalCase(methodName)}${toPascalCase(tableName)} Server Action
@@ -217,7 +243,8 @@ export async function ${actionName}(
   input: ${toPascalCase(tableName)}${toPascalCase(methodName)}Input
 ): Promise<${toPascalCase(tableName)}${toPascalCase(methodName)}Output> {
   const startedAt = Date.now()
-  
+  let actorIdForLog = "unknown"
+
   try {${
     isPublic
       ? `
@@ -242,12 +269,13 @@ export async function ${actionName}(
       service: "supabase-data",
     })
 
-    return result`
+    ${successReturn}`
       : `
     // 1. Identity + rate limit (SSOT via requireAuth)
-    const { userId, claims } = await requireAuth({
+    const { userId${isRoleGated ? ", claims" : ""} } = await requireAuth({
       action: "${methodCamel}_${tableKebab}",
-    })${roleCheckCode}${tenantResolutionCode}
+    })
+    actorIdForLog = userId${roleCheckCode}${tenantResolutionCode}
     // 2. Input validation — before any DB call
     const validated = ${toPascalCase(tableName)}${toPascalCase(methodName)}InputSchema.parse(input)
 
@@ -272,12 +300,12 @@ export async function ${actionName}(
       service: "supabase-data",
     })
 
-    return result`
+    ${successReturn}`
   }
   } catch (error) {
     // 6. Log error with sanitized metadata (HIPAA compliant)
     await logServerEvent({
-      actorId: ${isPublic ? '"anonymous"' : "userId"},
+      actorId: ${isPublic ? '"anonymous"' : "actorIdForLog"},
       actorType: ${isPublic ? '"unknown"' : '"user"'},
       component: "${domainKebab}.${tableKebab}.${methodCamel}",
       durationMs: Date.now() - startedAt,
@@ -328,8 +356,8 @@ function generateQueryKeys(
  * TanStack Query key factory for domain "${domainKebab}".
  * Import keys from this module only — avoid string literals in hooks/components.
  * 
- * @module @workspace/supabase-data/hooks/${domainKebab}/query-keys
- * @codegen-generated
+ * @module @workspace/supabase-data/hooks/${domainKebab}/query-keys.codegen
+ * codegen:actions-hooks (generated) — do not hand-edit
  */
 export const ${exportName} = {
   all: ["${domainKebab}"] as const,
@@ -352,19 +380,19 @@ function generateQueryHook(domainId: string, tableName: string, actionName: stri
  * Do not add console.log — observability lives in the action (logServerEvent).
  * 
  * @module @workspace/supabase-data/hooks/${domainKebab}/use-${tableKebab}-query.hook
- * @codegen-generated
+ * codegen:actions-hooks (generated) — do not hand-edit
  */
 "use client"
 
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, type UseQueryResult } from "@tanstack/react-query"
 
-import { ${queryKeysExport} } from "@workspace/supabase-data/hooks/${domainKebab}/query-keys"
-import { ${actionName} } from "@workspace/supabase-data/actions/${domainKebab}/${tableKebab}-list.codegen"
+import { ${queryKeysExport} } from "@workspace/supabase-data/hooks/${domainKebab}/query-keys.codegen"
 
+// TODO: import { ${actionName} } from "@workspace/supabase-data/actions/${domainKebab}/${tableKebab}-list.codegen"
 // TODO: Narrow the input type based on your action's requirements
 type QueryFilters = Record<string, unknown>
 
-export function ${hookName}(filters?: QueryFilters) {
+export function ${hookName}(filters?: QueryFilters): UseQueryResult<unknown, Error> {
   return useQuery({
     queryKey: ${queryKeysExport}.${tableCamel}List(filters),
     queryFn: async () => {
@@ -392,19 +420,19 @@ function generateMutationHook(domainId: string, tableName: string, actionName: s
  * Do not add console.log — use structured logging in the action (logServerEvent).
  * 
  * @module @workspace/supabase-data/hooks/${domainKebab}/use-${tableKebab}-mutation.hook
- * @codegen-generated
+ * codegen:actions-hooks (generated) — do not hand-edit
  */
 "use client"
 
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient, type UseMutationResult } from "@tanstack/react-query"
 
-import { ${queryKeysExport} } from "@workspace/supabase-data/hooks/${domainKebab}/query-keys"
-import { ${actionName} } from "@workspace/supabase-data/actions/${domainKebab}/${tableKebab}-insert.codegen"
+import { ${queryKeysExport} } from "@workspace/supabase-data/hooks/${domainKebab}/query-keys.codegen"
 
+// TODO: import { ${actionName} } from "@workspace/supabase-data/actions/${domainKebab}/${tableKebab}-insert.codegen"
 // TODO: Narrow the input type based on your action's requirements
 type MutationInput = unknown
 
-export function ${hookName}() {
+export function ${hookName}(): UseMutationResult<unknown, Error, MutationInput, unknown> {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (_input: MutationInput) => {
@@ -435,7 +463,7 @@ function generateActionTest(
   return `/**
  * Unit tests for ${actionName}
  * 
- * @codegen-generated
+ * codegen:actions-hooks (generated) — do not hand-edit
  */
 import { describe, expect, it, vi, beforeEach } from "vitest"
 
@@ -580,7 +608,7 @@ function generateHookTest(
   return `/**
  * Unit tests for ${hookName}
  * 
- * @codegen-generated
+ * codegen:actions-hooks (generated) — do not hand-edit
  */
 import { describe, expect, it, vi, beforeEach } from "vitest"
 import { renderHook, waitFor } from "@testing-library/react"
