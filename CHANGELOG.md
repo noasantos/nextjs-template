@@ -4,6 +4,27 @@
 
 ### Added
 
+- [feat] Rebuilt `supabase/migrations` from `supabase/temp-migrations` with
+  template-first baseline (`baseline_identity_and_observability`), extensions
+  (`domain_infrastructure_extensions`), product schema split across 35 stamped
+  files with descriptive `product_public_*` suffixes (pg_dump chunks repacked
+  for Supabase migrator + `SET check_function_bodies = false` per slice), and
+  `unassigned_storage_buckets_and_policies` for storage buckets/policies; types
+  regenerated via `pnpm supabase:types:local`.
+- [fix] `supabase/seed.sql` — seed `public.app_roles` (`admin`, `user`,
+  `psychologist`, `patient`, `assistant`) so `user_roles` FK + RLS tests work
+  after the rebaseline.
+- [fix] `@workspace/supabase-auth` `package.json` exports — add `./testing/*` →
+  `./src/testing/*.ts` so RLS tests can import `ACCESS_CONTROL_TEMPLATE`.
+- [fix] `unassigned_storage_buckets_and_policies` migration — drop duplicate
+  `catalog_clinical_activities` column adds; use `pg_policies` / `pg_trigger`
+  guards instead of `DROP … IF EXISTS` so `supabase db reset` stays quiet (no
+  duplicate-column or missing-object notices).
+
+- [docs] `docs/guides/migration-rebaselining-prompt.md` — analysis + phased plan
+  for rebuilding `supabase/migrations` from `supabase/temp-migrations` with
+  template baseline first; English LLM-to-LLM prompt for the implementing agent;
+  linked from `docs/guides/migration-workflow.md`.
 - [docs] `supabase/template-baseline/` +
   `docs/guides/template-baseline-schema.md` — reference first migrations
   (identity, `observability_events`, JWT hook), `auth.users` vs `profiles`, hook
@@ -15,11 +36,11 @@
   `sync_profile_subscription` (service_role) to merge JSON and bump
   `access_version`; doc section “Subscription in the JWT” in
   `docs/guides/template-baseline-schema.md`.
-- [docs] Template baseline: “Fluri-style” section — `auth.users` + thin
-  `profiles`
-  - `user_roles` + per-role extension tables; optional rename of `profiles`;
-    subscription strategies when only some roles are billable; assistant as
-    profile vs membership; `0002_role_extension_pattern.sql` comments aligned.
+- [docs] Template baseline: multi-actor section — `auth.users` + thin
+  `profiles` + `user_roles` + per-role extension tables; optional rename of
+  `profiles`; subscription strategies when only some roles are billable; staff
+  as profile vs membership; `0002_role_extension_pattern.sql` comments aligned
+  (generic provider/customer/staff examples, no product-specific labels).
 - [feat] `config/domain-map.example.json` +
   `config/repository-plan.example.json` (generic `demo_*` tables vs
   `database.types.mock.ts`), `config/README.md`, `pnpm codegen:*:example`
@@ -55,6 +76,10 @@
 
 ### Changed
 
+- [docs] `docs/guides/template-baseline-schema.md` and
+  `supabase/template-baseline/0002_role_extension_pattern.sql`: generic
+  multi-actor naming in prose and commented DDL (e.g. `provider_profiles`,
+  `staff_profiles`); doc cross-references point at the multi-actor section only.
 - [refactor] Remove `config/domain-map.json` from git tracking (keep local copy
   gitignored; template ships `domain-map.example.json` only). `.gitignore`
   comments reference template mode and `git rm --cached` if the file was

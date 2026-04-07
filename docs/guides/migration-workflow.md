@@ -151,6 +151,9 @@ place — add a new migration.
 
 ## Related documentation
 
+- **[Migration rebaselining (legacy `temp-migrations` → `migrations`)](./migration-rebaselining-prompt.md)**
+  — Analysis + LLM-to-LLM prompt for rebuilding the migration track with the
+  template baseline first.
 - **[Database → Migrations](../architecture/database.md#migrations)** —
   Canonical rules (`docs/architecture/database.md`)
 - **[Golden Rules GR-015](../standards/golden-rules.md#gr-015-cli-generated-migrations-only-critical---human-confirmation-required)**
@@ -185,4 +188,4 @@ pnpm supabase:migration:stamp -- supabase/migrations/<timestamp>_<descriptive_na
 pnpm supabase db reset   # local only, when you need a clean apply
 ```
 
-**Last updated:** 2026-03-28
+**Last updated:** 2026-04-06

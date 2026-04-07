@@ -56,19 +56,19 @@ API versions; named releases may include breaking changes.
 **`acct_` id** can carry multiple **configurations** (e.g. `merchant` for
 Connect payouts, `customer` so the same account can be charged platform SaaS
 subscriptions, `recipient` where applicable). That replaces the older v1 pattern
-of maintaining a separate **`cus_`** for “psychologist pays the platform” while
+of maintaining a separate **`cus_`** for “the seller pays the platform” while
 also having an **`acct_`** for Connect—see
 [SaaS platform payments & billing](https://docs.stripe.com/connect/accounts-v2/saas-platform-payments-billing)
 and
 [Use accounts as customers](https://docs.stripe.com/connect/use-accounts-as-customers)
 (`customer_account` on Billing/Payments APIs where supported).
 
-**Greenfield multi-actor (e.g. Fluri-style) — typical mapping:**
+**Greenfield multi-actor — typical mapping (example roles):**
 
-| Actor                                           | What to persist (examples)                                                                                                                        | Notes                                                                                                                                   |
-| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| **Psychologist (Connect + pays platform SaaS)** | `stripe_account_id` → **`acct_`** (v2 account with merchant + customer configs); `stripe_subscription_id` → **`sub_`** for platform recurring fee | Prefer **one `acct_`** + `customer_account=acct_…` on Subscriptions over a parallel **`cus_`** for the same person when on Accounts v2. |
-| **Patient (payer only)**                        | Often **`cus_`** (v1 Customer) or a v2 Account with **customer** config only—product choice                                                       | Simpler flows often keep **`cus_`** for pure payers; unify only if you need the same identity model everywhere.                         |
+| Actor                                     | What to persist (examples)                                                                                                                        | Notes                                                                                                                                   |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| **Seller / Connect (pays platform SaaS)** | `stripe_account_id` → **`acct_`** (v2 account with merchant + customer configs); `stripe_subscription_id` → **`sub_`** for platform recurring fee | Prefer **one `acct_`** + `customer_account=acct_…` on Subscriptions over a parallel **`cus_`** for the same person when on Accounts v2. |
+| **Buyer / payer only**                    | Often **`cus_`** (v1 Customer) or a v2 Account with **customer** config only—product choice                                                       | Simpler flows often keep **`cus_`** for pure payers; unify only if you need the same identity model everywhere.                         |
 
 Stripe object ids are **case-sensitive** and may be **long**; use **`text`** (or
 `varchar(255)`) in Postgres for dedicated columns. Prefer **separate
@@ -209,9 +209,9 @@ flowchart LR
   - `user_roles` with one row (e.g. `member`). Add columns to `profiles` as
     needed.
 
-- **Multiple actor types** (e.g. **Fluri-style**: psychologists and patients as
-  first-class UX): keep the same core. Add **one extension table per actor
-  type** (e.g. `psychologist_profiles`, `patient_profiles`) with
+- **Multiple actor types** (e.g. provider vs patient as first-class UX): keep
+  the same core. Add **one extension table per actor type** (e.g.
+  `provider_profiles`, `patient_profiles`) with
   `user_id UUID PRIMARY KEY REFERENCES auth.users(id)`. Put domain-specific
   columns and FKs there; keep `profiles` for subscription snapshot,
   `access_version`, and shared display fields. RLS on extensions should tie to
@@ -220,7 +220,7 @@ flowchart LR
 Details and commented examples:
 `supabase/template-baseline/0002_role_extension_pattern.sql`.
 
-## Fluri-style: psychologists, patients, assistants
+## Multi-actor example: providers, patients, assistants
 
 In a multi-actor product, **canonical identity stays `auth.users`** (id, email,
 phone). Everything in `public` is **app-owned** data keyed by that id.
@@ -229,12 +229,12 @@ phone). Everything in `public` is **app-owned** data keyed by that id.
 
 Recommended shape:
 
-| Layer                                           | Purpose                                                                                                                                                                                                                                                            |
-| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **`auth.users`**                                | Single source of truth for credentials and contact fields you get from Auth.                                                                                                                                                                                       |
-| **`public.profiles`** (or a rename — see below) | **One row per user** (1:1 with `auth.users`), holding only what is **shared by every** user type you model: e.g. `full_name`, `avatar_url`, **`access_version`**, and optionally a **generic** `subscription` jsonb (see strategies).                              |
-| **`user_roles` + `app_roles`**                  | Which **hats** this account has (`psychologist`, `patient`, `assistant`, …). Drives UX routing and RLS; not a substitute for extension rows.                                                                                                                       |
-| **Extension tables**                            | **Optional, when applicable** — one table per actor **type** only if that role needs **its own** columns and FKs. Example: `psychologist_profiles`, `patient_profiles`. Put **only** fields that belong to that role: clinical prefs, billing IDs, org links, etc. |
+| Layer                                           | Purpose                                                                                                                                                                                                                               |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`auth.users`**                                | Single source of truth for credentials and contact fields you get from Auth.                                                                                                                                                          |
+| **`public.profiles`** (or a rename — see below) | **One row per user** (1:1 with `auth.users`), holding only what is **shared by every** user type you model: e.g. `full_name`, `avatar_url`, **`access_version`**, and optionally a **generic** `subscription` jsonb (see strategies). |
+| **`user_roles` + `app_roles`**                  | Which **hats** this account has (role strings you define). Drives UX routing and RLS; not a substitute for extension rows.                                                                                                            |
+| **Extension tables**                            | **Optional, when applicable** — one table per actor **type** only if that role needs **its own** columns and FKs. Example: `provider_profiles`, `customer_profiles`. Put **only** fields that belong to that role.                    |
 
 **When `profiles` alone is enough:** many products need **only** `auth.users` +
 `profiles` + `user_roles` (and the hook RPCs). That is enough when all users
@@ -244,18 +244,18 @@ with `user_roles`. **Extension tables** are not mandatory; add them when schemas
 **diverge** by actor (different columns, different FK targets, cleaner RLS per
 table) and you want to avoid a wide `profiles` full of `NULL`s.
 
-**“When applicable”** means: create a row in `psychologist_profiles` only for
-users who **are** psychologists; patients may have no row there. It also means:
+**“When applicable”** means: create a row in e.g. `provider_profiles` only for
+users who have that role; other roles may have no row there. It also means:
 **skip extension tables entirely** if your product never needs that split.
 
-Patients and assistants typically **do not** pay for the same “SaaS plan” as the
-psychologist. That does **not** require removing `profiles`; it requires a
+Non-paying roles typically **do not** share the same SaaS subscription as the
+paying seller role. That does **not** require removing `profiles`; it requires a
 **clear rule** for where billing state lives (see subscription strategies).
 
 ### Renaming `profiles`
 
 The name `profiles` is a **template convention**. If it collides with your
-product language (“profile” = public psychologist page vs “account”):
+product language (“profile” = public listing vs “account”):
 
 - You may rename the table (e.g. `account_profiles`, `user_accounts`) in a
   **real migration** and update every reference: RLS policies, FKs from other
@@ -265,29 +265,29 @@ product language (“profile” = public psychologist page vs “account”):
 
 There is **no** requirement to rename: many teams keep `profiles` as the **thin
 shared row** and use **role-specific** names only on extension tables
-(`psychologist_profiles`, …).
+(`provider_profiles`, …).
 
 ### Subscription when only some roles are billable
 
 Two established options:
 
 1. **Single column on the thin row (simplest)** — Keep `profiles.subscription`
-   as `jsonb NOT NULL DEFAULT '{}'::jsonb`. **Psychologists** get full keys in
-   the DB (`status`, `plan_id`, optional Stripe ids for webhooks). **Patients
-   and assistants** keep `{}` in the DB. The JWT always carries
+   as `jsonb NOT NULL DEFAULT '{}'::jsonb`. **Paying roles** get full keys in
+   the DB (`status`, `plan_id`, optional Stripe ids for webhooks). **Other
+   roles** keep `{}` in the DB. The JWT always carries
    **`subscription_claims_for_jwt`** output (empty object if no whitelisted
    keys); Stripe customer/subscription ids stay **out of JWT** unless you extend
    the whitelist (not recommended). **`sync_profile_subscription`** only for
    billable users as needed.
 
 2. **Subscription only on the extension table** — Add `subscription jsonb` (or
-   normalized billing columns) **only** on `psychologist_profiles`. Then you
+   normalized billing columns) **only** on e.g. `provider_profiles`. Then you
    **must** change `get_user_access_payload_core` to build the JWT subscription
-   from that table (e.g. `LEFT JOIN` + `COALESCE`) when the user is a
-   psychologist, and return `'{}'::jsonb` otherwise; and replace or wrap
-   `sync_profile_subscription` with a function that updates
-   `psychologist_profiles` instead of `profiles`. This keeps the thin row free
-   of billing for non-payers at the cost of **custom SQL**.
+   from that table (e.g. `LEFT JOIN` + `COALESCE`) when the user has that role,
+   and return `'{}'::jsonb` otherwise; and replace or wrap
+   `sync_profile_subscription` with a function that updates `provider_profiles`
+   instead of `profiles`. This keeps the thin row free of billing for non-payers
+   at the cost of **custom SQL**.
 
 For most teams, **option 1** is enough: empty jsonb is cheap, and the JWT shape
 stays uniform.
@@ -296,11 +296,11 @@ stays uniform.
 
 Model assistants either as:
 
-- **`assistant_profiles`** (1:1 with `auth.users`), if the assistant is a full
-  login with their own identity; or
-- A **membership** table (e.g. assistant linked to a practice/psychologist) if
-  “assistant” is not a global role but a relationship — your domain FKs live in
-  extension tables, not in `profiles`.
+- **`staff_profiles`** (1:1 with `auth.users`), if staff is a full login with
+  their own identity; or
+- A **membership** table (e.g. staff linked to an organization) if “staff” is
+  not a global role but a relationship — your domain FKs live in extension
+  tables, not in `profiles`.
 
 ### Mental model
 
@@ -309,9 +309,9 @@ auth.users          ← canonical identity (always)
     │
     ├── profiles    ← shared: display + access_version + optional subscription jsonb
     ├── user_roles  ← which roles apply to this account
-    ├── psychologist_profiles  ← psychologist-only columns + optional billing
-    ├── patient_profiles       ← patient-only columns
-    └── assistant_profiles     ← assistant-only columns (or use membership table)
+    ├── provider_profiles      ← seller-only columns + optional billing
+    ├── customer_profiles      ← buyer-only columns
+    └── staff_profiles         ← staff-only columns (or use membership table)
 ```
 
 ## Applying on a greenfield database
