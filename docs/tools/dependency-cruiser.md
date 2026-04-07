@@ -130,19 +130,27 @@ for detailed rule definitions and can be customized as the architecture evolves.
 
 ## Current Violations
 
-As of the initial setup, there are 41 server-to-client violations detected in
-the codebase. These are primarily:
+As of the latest update, there should be **zero violations** when running
+Dependency Cruiser.
 
-- Server actions importing `server-only` or Next.js server modules
-- Auth utilities using server-side code
-- Logging packages with server sinks
+The following server-only paths are allowed to import server modules:
 
-These violations should be addressed by:
+- `server` - Any path containing 'server'
+- `database` - Database-related code
+- `supabase-admin` - Supabase admin utilities
+- `supabase-auth/src/(session|server|proxy)` - Auth server utilities
+- **`supabase-data/src/actions`** - Server Actions
+- **`supabase-data/src/lib/auth`** - Auth utilities for Server Actions (rate
+  limiting, requireAuth, tenant resolution)
+- `supabase-infra/src/(env|clients)` - Infrastructure clients
+- `logging/src/server` - Server-side logging
+- `apps/.*/app/` - App Router server components
+- `apps/.*/components/.*-header` - Header components
+- `apps/.*/proxy\.ts` - Proxy files
+- `apps/.*/i18n/` - Internationalization
 
-1. Moving server-only logic to properly named server files (containing 'server'
-   in the path)
-2. Using server actions for data mutations
-3. Separating client and server logging utilities
+These paths are allowed because they contain server-only code that should never
+be imported into client components.
 
 ## Integration with Other Tools
 

@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "generatedAt": "2026-04-07T00:00:00.000Z",
+  "generator": "llm-semantic-analysis-qwen3.5-plus",
+  "modelUsed": "qwen3.5-plus",
+  "confidence": "high",
+  "requiresHumanReview": false,
+  "analysisNotes": [
+    "Analyzed 200+ tables in database.types.ts",
+    "Identified 17 logical domains based on table relationships and business context",
+    "PHI fields identified for HIPAA compliance (patient data, clinical notes)",
+    "Tenant scoping applied to all tables with psychologist_id foreign key",
+    "Auth rules determined by domain sensitivity (public catalog vs clinical data)"
+  ],
+  "actions": [
+    {
+      "domainId": "catalog",
+      "table": "catalog_clinical_activities",
+      "method": "list",
+      "actionName": "listClinicalActivitiesAction",
+      "inputSchema": {
+        "zodSchema": "z.object({\n  limit: z.number().int().positive().max(100, { error: \"Limit must be between 1 and 100\" }).optional().default(50),\n  offset: z.number().int().nonnegative({ error: \"Offset must be non-negative\" }).optional().default(0),\n  active: z.boolean().optional(),\n  activityKind: z.string().optional(),\n})",
+        "typeName": "ListClinicalActivitiesInput",
+        "fields": [
+          {
+            "name": "limit",
+            "type": "number",
+            "validation": ["int()", "positive()", "max(100)"],
+            "required": false,
+            "description": "Pagination limit (default: 50)"
+          },
+          {
+            "name": "offset",
+            "type": "number",
+            "validation": ["int()", "nonnegative()"],
+            "required": false,
+            "description": "Pagination offset (default: 0)"
+          },
+          {
+            "name": "active",
+            "type": "boolean",
+            "validation": [],
+            "required": false,
+            "description": "Filter by active status"
+          },
+          {
+            "name": "activityKind",
+            "type": "string",
+            "validation": [],
+            "required": false,
+            "description": "Filter by activity kind"
+          }
+        ]
+      },
+      "outputSchema": {
+        "returnType": "Promise<CatalogClinicalActivityDTO[]>",
+        "fields": [
+          { "name": "id", "type": "string", "source": "row" },
+          { "name": "name", "type": "string", "source": "row" },
+          { "name": "activityKind", "type": "string", "source": "row" },
+          { "name": "active", "type": "boolean", "source": "row" }
+        ]
+      },
+      "repositoryCall": {
+        "method": "findAll",
+        "arguments": ["validated"],
+        "errorHandling": true
+      },
+      "auth": {
+        "requiredRole": undefined,
+        "tenantScoping": false,
+        "customChecks": [],
+        "notes": "Public read-only catalog data - no auth required"
+      },
+      "logging": {
+        "successMetadata": ["count"],
+        "errorMetadata": []
+      },
+      "phiFields": [],
+      "auditSafeFields": ["id", "name", "activityKind"]
+    }
+  ]
+}

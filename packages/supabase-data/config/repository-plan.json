@@ -1,0 +1,1296 @@
+{
+  "version": 1,
+  "meta": {
+    "generatedAt": "2026-04-07T13:26:53.813Z",
+    "generator": "llm-semantic-analysis-qwen3.5-plus",
+    "promptVersion": "v1"
+  },
+  "entries": [
+    {
+      "domainId": "catalog",
+      "table": "catalog_clinical_activities",
+      "read": {
+        "kind": "table",
+        "name": "catalog_clinical_activities"
+      },
+      "methods": ["findById", "list"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": [],
+      "auditSafeFields": ["id"]
+    },
+    {
+      "domainId": "catalog",
+      "table": "catalog_document_templates",
+      "read": {
+        "kind": "table",
+        "name": "catalog_document_templates"
+      },
+      "methods": ["findById", "list"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": [],
+      "auditSafeFields": ["id"]
+    },
+    {
+      "domainId": "catalog",
+      "table": "reference_values",
+      "read": {
+        "kind": "table",
+        "name": "reference_values"
+      },
+      "methods": ["findById", "list"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": [],
+      "auditSafeFields": ["id"]
+    },
+    {
+      "domainId": "catalog",
+      "table": "session_types",
+      "read": {
+        "kind": "table",
+        "name": "session_types"
+      },
+      "methods": ["findById", "list"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": [],
+      "auditSafeFields": ["id"]
+    },
+    {
+      "domainId": "catalog",
+      "table": "subscription_plans",
+      "read": {
+        "kind": "table",
+        "name": "subscription_plans"
+      },
+      "methods": ["findById", "list"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": [],
+      "auditSafeFields": ["id"]
+    },
+    {
+      "domainId": "assistants",
+      "table": "assistant_invites",
+      "read": {
+        "kind": "table",
+        "name": "assistant_invites"
+      },
+      "write": {
+        "kind": "table",
+        "name": "assistant_invites"
+      },
+      "methods": ["findById", "list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": ["invited_email", "invited_phone"],
+      "auditSafeFields": [
+        "id",
+        "psychologist_id",
+        "invited_email",
+        "invited_phone",
+        "invite_status",
+        "invite_token",
+        "expires_at",
+        "invited_at",
+        "accepted_at",
+        "revoked_at",
+        "metadata",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "domainId": "assistants",
+      "table": "psychologist_assistants",
+      "read": {
+        "kind": "table",
+        "name": "psychologist_assistants"
+      },
+      "write": {
+        "kind": "table",
+        "name": "psychologist_assistants"
+      },
+      "methods": ["list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "phiFields": ["full_name", "email", "phone", "avatar_url"],
+      "auditSafeFields": [
+        "id",
+        "psychologist_id",
+        "user_id",
+        "role",
+        "permissions",
+        "active",
+        "last_active_at",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "domainId": "audit",
+      "table": "audit_logs",
+      "read": {
+        "kind": "table",
+        "name": "audit_logs"
+      },
+      "methods": ["findById", "list"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": [],
+      "auditSafeFields": [
+        "id",
+        "user_id",
+        "user_type",
+        "table_name",
+        "record_id",
+        "action",
+        "changed_fields",
+        "correlation_id",
+        "user_agent",
+        "ip_address",
+        "created_at"
+      ]
+    },
+    {
+      "domainId": "audit",
+      "table": "encryption_audit_log",
+      "read": {
+        "kind": "table",
+        "name": "encryption_audit_log"
+      },
+      "methods": ["findById", "list"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": [],
+      "auditSafeFields": ["id", "user_id", "operation", "key_id", "created_at"]
+    },
+    {
+      "domainId": "audit",
+      "table": "patient_deletion_audit_log",
+      "read": {
+        "kind": "table",
+        "name": "patient_deletion_audit_log"
+      },
+      "methods": ["findById", "list"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": [],
+      "auditSafeFields": [
+        "id",
+        "patient_id",
+        "psychologist_id",
+        "deletion_requested_at",
+        "deletion_completed_at",
+        "reason"
+      ]
+    },
+    {
+      "domainId": "audit",
+      "table": "psychologist_preferences_audit_log",
+      "read": {
+        "kind": "table",
+        "name": "psychologist_preferences_audit_log"
+      },
+      "methods": ["findById", "list"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": [],
+      "auditSafeFields": ["id", "psychologist_id", "action", "changed_fields", "created_at"]
+    },
+    {
+      "domainId": "calendar",
+      "table": "availability_exceptions",
+      "read": {
+        "kind": "table",
+        "name": "availability_exceptions"
+      },
+      "write": {
+        "kind": "table",
+        "name": "availability_exceptions"
+      },
+      "methods": ["findById", "list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": ["reason"],
+      "auditSafeFields": [
+        "id",
+        "psychologist_id",
+        "exception_date",
+        "start_time",
+        "end_time",
+        "is_available",
+        "created_at"
+      ]
+    },
+    {
+      "domainId": "calendar",
+      "table": "busy_slots",
+      "read": {
+        "kind": "table",
+        "name": "busy_slots"
+      },
+      "write": {
+        "kind": "table",
+        "name": "busy_slots"
+      },
+      "methods": ["findById", "list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": ["reason", "metadata"],
+      "auditSafeFields": [
+        "id",
+        "psychologist_id",
+        "slot_date",
+        "start_time",
+        "end_time",
+        "slot_type",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "domainId": "calendar",
+      "table": "calendar_change_log",
+      "read": {
+        "kind": "table",
+        "name": "calendar_change_log"
+      },
+      "write": {
+        "kind": "table",
+        "name": "calendar_change_log"
+      },
+      "methods": ["findById", "list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": [],
+      "auditSafeFields": [
+        "id",
+        "psychologist_id",
+        "event_id",
+        "change_type",
+        "changed_fields",
+        "old_values",
+        "new_values",
+        "correlation_id",
+        "google_event_id",
+        "sync_direction",
+        "processed_at",
+        "created_at"
+      ]
+    },
+    {
+      "domainId": "calendar",
+      "table": "calendar_event_series",
+      "read": {
+        "kind": "table",
+        "name": "calendar_event_series"
+      },
+      "write": {
+        "kind": "table",
+        "name": "calendar_event_series"
+      },
+      "methods": ["findById", "list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": ["title", "description", "location", "metadata"],
+      "auditSafeFields": [
+        "id",
+        "psychologist_id",
+        "event_type",
+        "rrule",
+        "effective_start",
+        "effective_end",
+        "start_time",
+        "end_time",
+        "duration_minutes",
+        "timezone",
+        "all_day",
+        "color",
+        "google_event_id",
+        "google_sync_status",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "domainId": "calendar",
+      "table": "calendar_event_series_exceptions",
+      "read": {
+        "kind": "table",
+        "name": "calendar_event_series_exceptions"
+      },
+      "write": {
+        "kind": "table",
+        "name": "calendar_event_series_exceptions"
+      },
+      "methods": ["findById", "list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": ["reason", "modified_fields"],
+      "auditSafeFields": [
+        "id",
+        "series_id",
+        "exception_type",
+        "original_date",
+        "new_start_datetime",
+        "new_end_datetime",
+        "created_at"
+      ]
+    },
+    {
+      "domainId": "calendar",
+      "table": "calendar_events",
+      "read": {
+        "kind": "table",
+        "name": "calendar_events"
+      },
+      "write": {
+        "kind": "table",
+        "name": "calendar_events"
+      },
+      "methods": ["findById", "list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": ["title", "description", "location", "private_notes", "metadata"],
+      "auditSafeFields": [
+        "id",
+        "psychologist_id",
+        "series_id",
+        "event_type",
+        "status",
+        "source",
+        "all_day",
+        "start_datetime",
+        "end_datetime",
+        "duration_minutes",
+        "timezone",
+        "color",
+        "google_event_id",
+        "google_sync_status",
+        "google_sync_error",
+        "last_synced_at",
+        "remote_updated_at",
+        "remote_etag",
+        "sync_origin",
+        "original_start_datetime",
+        "original_end_datetime",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "domainId": "calendar",
+      "table": "calendar_holidays",
+      "read": {
+        "kind": "table",
+        "name": "calendar_holidays"
+      },
+      "write": {
+        "kind": "table",
+        "name": "calendar_holidays"
+      },
+      "methods": ["findById", "list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": [],
+      "auditSafeFields": [
+        "id",
+        "name",
+        "description",
+        "date",
+        "year",
+        "type",
+        "country",
+        "state",
+        "city",
+        "source",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "domainId": "clinical-sessions",
+      "table": "clinical_session_details",
+      "read": {
+        "kind": "table",
+        "name": "clinical_session_details"
+      },
+      "write": {
+        "kind": "table",
+        "name": "clinical_session_details"
+      },
+      "methods": ["findById", "list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": [],
+      "auditSafeFields": [
+        "id",
+        "calendar_event_id",
+        "clinical_session_id",
+        "patient_id",
+        "psychologist_client_id",
+        "psychologist_service_id",
+        "session_type_id",
+        "session_number",
+        "attendance_confirmed",
+        "billing_status",
+        "billing_attempt_count",
+        "billing_last_attempt_at",
+        "billing_last_error",
+        "billing_next_attempt_at",
+        "reminder_sent_at",
+        "confirmation_sent_at",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "domainId": "clinical-sessions",
+      "table": "psychologist_clinical_sessions",
+      "read": {
+        "kind": "table",
+        "name": "psychologist_clinical_sessions"
+      },
+      "write": {
+        "kind": "table",
+        "name": "psychologist_clinical_sessions"
+      },
+      "methods": ["findById", "list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": [],
+      "auditSafeFields": [
+        "id",
+        "psychologist_id",
+        "patient_id",
+        "calendar_event_id",
+        "clinical_session_id",
+        "session_number",
+        "status",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "domainId": "documents",
+      "table": "generated_documents",
+      "read": {
+        "kind": "table",
+        "name": "generated_documents"
+      },
+      "write": {
+        "kind": "table",
+        "name": "generated_documents"
+      },
+      "methods": ["findById", "list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": ["document_content", "template_used", "generated_data"],
+      "auditSafeFields": [
+        "id",
+        "psychologist_id",
+        "patient_id",
+        "document_type",
+        "status",
+        "version",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "domainId": "documents",
+      "table": "psychologist_patient_guardian_documents",
+      "read": {
+        "kind": "table",
+        "name": "psychologist_patient_guardian_documents"
+      },
+      "write": {
+        "kind": "table",
+        "name": "psychologist_patient_guardian_documents"
+      },
+      "methods": ["findById", "list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": ["document_content", "document_type", "file_url"],
+      "auditSafeFields": ["id", "psychologist_id", "patient_id", "guardian_id", "created_at", "updated_at"]
+    },
+    {
+      "domainId": "financial",
+      "table": "psychologist_financial_entries",
+      "read": {
+        "kind": "table",
+        "name": "psychologist_financial_entries"
+      },
+      "write": {
+        "kind": "table",
+        "name": "psychologist_financial_entries"
+      },
+      "methods": ["findById", "list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": [],
+      "auditSafeFields": [
+        "id",
+        "psychologist_id",
+        "charge_id",
+        "invoice_id",
+        "entry_type",
+        "amount_cents",
+        "currency",
+        "status",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "domainId": "financial",
+      "table": "psychologist_invoices",
+      "read": {
+        "kind": "table",
+        "name": "psychologist_invoices"
+      },
+      "write": {
+        "kind": "table",
+        "name": "psychologist_invoices"
+      },
+      "methods": ["findById", "list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": [],
+      "auditSafeFields": [
+        "id",
+        "psychologist_id",
+        "patient_id",
+        "total_amount_cents",
+        "currency",
+        "status",
+        "stripe_invoice_id",
+        "stripe_payment_intent_id",
+        "due_date",
+        "paid_at",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "domainId": "financial",
+      "table": "psychologist_patient_charges",
+      "read": {
+        "kind": "table",
+        "name": "psychologist_patient_charges"
+      },
+      "write": {
+        "kind": "table",
+        "name": "psychologist_patient_charges"
+      },
+      "methods": ["findById", "list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": [],
+      "auditSafeFields": [
+        "id",
+        "psychologist_id",
+        "patient_id",
+        "service_id",
+        "amount_cents",
+        "currency",
+        "status",
+        "due_date",
+        "paid_at",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "domainId": "google-sync",
+      "table": "google_calendar_connections",
+      "read": {
+        "kind": "table",
+        "name": "google_calendar_connections"
+      },
+      "write": {
+        "kind": "table",
+        "name": "google_calendar_connections"
+      },
+      "methods": ["findById", "list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": [],
+      "auditSafeFields": [
+        "id",
+        "psychologist_id",
+        "google_user_id",
+        "google_email",
+        "connection_status",
+        "last_synced_at",
+        "sync_enabled",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "domainId": "google-sync",
+      "table": "google_sync_idempotency",
+      "read": {
+        "kind": "table",
+        "name": "google_sync_idempotency"
+      },
+      "write": {
+        "kind": "table",
+        "name": "google_sync_idempotency"
+      },
+      "methods": ["list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "phiFields": [],
+      "auditSafeFields": ["id", "psychologist_id", "operation_type", "operation_key", "result_hash", "created_at"]
+    },
+    {
+      "domainId": "google-sync",
+      "table": "google_sync_inbound_coalesce",
+      "read": {
+        "kind": "table",
+        "name": "google_sync_inbound_coalesce"
+      },
+      "write": {
+        "kind": "table",
+        "name": "google_sync_inbound_coalesce"
+      },
+      "methods": ["list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "phiFields": [],
+      "auditSafeFields": [
+        "id",
+        "psychologist_id",
+        "connection_id",
+        "google_event_id",
+        "operation_type",
+        "payload",
+        "processed",
+        "locked_at",
+        "locked_by",
+        "created_at"
+      ]
+    },
+    {
+      "domainId": "google-sync",
+      "table": "google_sync_job_dedup",
+      "read": {
+        "kind": "table",
+        "name": "google_sync_job_dedup"
+      },
+      "write": {
+        "kind": "table",
+        "name": "google_sync_job_dedup"
+      },
+      "methods": ["list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "phiFields": [],
+      "auditSafeFields": ["id", "psychologist_id", "job_key", "last_run_at"]
+    },
+    {
+      "domainId": "google-sync",
+      "table": "google_sync_logs",
+      "read": {
+        "kind": "table",
+        "name": "google_sync_logs"
+      },
+      "write": {
+        "kind": "table",
+        "name": "google_sync_logs"
+      },
+      "methods": ["findById", "list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": [],
+      "auditSafeFields": [
+        "id",
+        "psychologist_id",
+        "connection_id",
+        "sync_direction",
+        "operation_type",
+        "google_event_id",
+        "status",
+        "error_message",
+        "duration_ms",
+        "created_at"
+      ]
+    },
+    {
+      "domainId": "google-sync",
+      "table": "google_sync_worker_metrics",
+      "read": {
+        "kind": "table",
+        "name": "google_sync_worker_metrics"
+      },
+      "write": {
+        "kind": "table",
+        "name": "google_sync_worker_metrics"
+      },
+      "methods": ["findById", "list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": [],
+      "auditSafeFields": [
+        "id",
+        "psychologist_id",
+        "worker_id",
+        "jobs_processed",
+        "jobs_failed",
+        "avg_duration_ms",
+        "last_heartbeat_at",
+        "created_at"
+      ]
+    },
+    {
+      "domainId": "notes",
+      "table": "psychologist_notes",
+      "read": {
+        "kind": "table",
+        "name": "psychologist_notes"
+      },
+      "write": {
+        "kind": "table",
+        "name": "psychologist_notes"
+      },
+      "methods": ["findById", "list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": [
+        "title",
+        "content",
+        "clinical_observations",
+        "interventions_used",
+        "patient_response",
+        "homework_assigned",
+        "risk_assessment",
+        "treatment_progress"
+      ],
+      "auditSafeFields": [
+        "id",
+        "psychologist_id",
+        "patient_id",
+        "session_id",
+        "note_type",
+        "visibility",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "domainId": "notes",
+      "table": "psychologist_quick_notes",
+      "read": {
+        "kind": "table",
+        "name": "psychologist_quick_notes"
+      },
+      "write": {
+        "kind": "table",
+        "name": "psychologist_quick_notes"
+      },
+      "methods": ["findById", "list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": ["content", "tags"],
+      "auditSafeFields": ["id", "psychologist_id", "patient_id", "created_at", "updated_at"]
+    },
+    {
+      "domainId": "onboarding",
+      "table": "psychologist_onboarding_state",
+      "read": {
+        "kind": "table",
+        "name": "psychologist_onboarding_state"
+      },
+      "write": {
+        "kind": "table",
+        "name": "psychologist_onboarding_state"
+      },
+      "methods": ["list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "phiFields": [],
+      "auditSafeFields": [
+        "id",
+        "psychologist_id",
+        "current_step",
+        "completed_steps",
+        "onboarding_completed",
+        "completed_at",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "domainId": "patients",
+      "table": "psychologist_patient_activities",
+      "read": {
+        "kind": "table",
+        "name": "psychologist_patient_activities"
+      },
+      "write": {
+        "kind": "table",
+        "name": "psychologist_patient_activities"
+      },
+      "methods": ["findById", "list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": ["activity_name", "description", "patient_response", "notes"],
+      "auditSafeFields": [
+        "id",
+        "psychologist_id",
+        "patient_id",
+        "catalog_activity_id",
+        "completed_at",
+        "status",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "domainId": "patients",
+      "table": "psychologist_patient_assessments",
+      "read": {
+        "kind": "table",
+        "name": "psychologist_patient_assessments"
+      },
+      "write": {
+        "kind": "table",
+        "name": "psychologist_patient_assessments"
+      },
+      "methods": ["findById", "list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": ["assessment_name", "assessment_result", "clinical_interpretation", "administered_by"],
+      "auditSafeFields": [
+        "id",
+        "psychologist_id",
+        "patient_id",
+        "assessment_date",
+        "status",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "domainId": "patients",
+      "table": "psychologist_patient_emergency_contacts",
+      "read": {
+        "kind": "table",
+        "name": "psychologist_patient_emergency_contacts"
+      },
+      "write": {
+        "kind": "table",
+        "name": "psychologist_patient_emergency_contacts"
+      },
+      "methods": ["findById", "list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": ["full_name", "phone", "email", "address", "relationship"],
+      "auditSafeFields": ["id", "psychologist_id", "patient_id", "priority", "created_at", "updated_at"]
+    },
+    {
+      "domainId": "patients",
+      "table": "psychologist_patient_guardians",
+      "read": {
+        "kind": "table",
+        "name": "psychologist_patient_guardians"
+      },
+      "write": {
+        "kind": "table",
+        "name": "psychologist_patient_guardians"
+      },
+      "methods": ["findById", "list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": ["full_name", "date_of_birth", "cpf", "rg", "address", "phone", "email", "profession", "gender"],
+      "auditSafeFields": [
+        "id",
+        "psychologist_id",
+        "patient_id",
+        "relationship_type",
+        "is_primary",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "domainId": "patients",
+      "table": "psychologist_patient_medical_items",
+      "read": {
+        "kind": "table",
+        "name": "psychologist_patient_medical_items"
+      },
+      "write": {
+        "kind": "table",
+        "name": "psychologist_patient_medical_items"
+      },
+      "methods": ["findById", "list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": [
+        "item_name",
+        "dosage",
+        "frequency",
+        "prescribed_by",
+        "notes",
+        "allergen_name",
+        "reaction_description",
+        "severity"
+      ],
+      "auditSafeFields": [
+        "id",
+        "psychologist_id",
+        "patient_id",
+        "item_type",
+        "started_at",
+        "discontinued_at",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "domainId": "patients",
+      "table": "psychologist_patient_services",
+      "read": {
+        "kind": "table",
+        "name": "psychologist_patient_services"
+      },
+      "write": {
+        "kind": "table",
+        "name": "psychologist_patient_services"
+      },
+      "methods": ["findById", "list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": [],
+      "auditSafeFields": ["id", "psychologist_id", "patient_id", "service_id", "active", "created_at", "updated_at"]
+    },
+    {
+      "domainId": "patients",
+      "table": "psychologist_patients",
+      "read": {
+        "kind": "table",
+        "name": "psychologist_patients"
+      },
+      "write": {
+        "kind": "table",
+        "name": "psychologist_patients"
+      },
+      "methods": ["findById", "list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": [
+        "manual_first_name",
+        "manual_last_name",
+        "manual_full_name",
+        "manual_preferred_name",
+        "manual_date_of_birth",
+        "manual_place_of_birth",
+        "manual_address",
+        "manual_phone",
+        "manual_email",
+        "manual_cpf",
+        "manual_rg",
+        "manual_gender",
+        "manual_profession",
+        "manual_pronouns",
+        "synced_display_name",
+        "synced_full_name",
+        "synced_date_of_birth",
+        "synced_phone",
+        "synced_email",
+        "synced_address",
+        "synced_cpf",
+        "synced_rg",
+        "synced_gender",
+        "synced_profession",
+        "synced_pronouns",
+        "synced_place_of_birth",
+        "initial_complaint",
+        "disorders",
+        "known_allergies",
+        "current_medications",
+        "clinical_notes",
+        "clinical_hypothesis",
+        "therapeutic_goals",
+        "treatment_plan",
+        "risk_level",
+        "suicide_risk_assessment",
+        "discharge_reason",
+        "informed_consent_document_url",
+        "informed_consent_signed",
+        "informed_consent_date",
+        "data_sharing_consent",
+        "data_sharing_consent_date",
+        "attached_documents"
+      ],
+      "auditSafeFields": [
+        "id",
+        "patient_id",
+        "psychologist_id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "deleted_at",
+        "deleted_by",
+        "archived_at",
+        "archived_by",
+        "status",
+        "invite_status",
+        "invite_token",
+        "invite_sent_via",
+        "invite_sent_at",
+        "invite_expires_at",
+        "invite_reminder_sent_at",
+        "invite_reminder_count",
+        "is_minor",
+        "requires_legal_guardian",
+        "first_session_date",
+        "last_session_date",
+        "total_sessions_count",
+        "default_session_price",
+        "price_set_at",
+        "price_set_by",
+        "preferred_contact_method",
+        "recovery_deadline",
+        "relationship_start_date",
+        "relationship_end_date",
+        "retention_until"
+      ]
+    },
+    {
+      "domainId": "preferences",
+      "table": "psychologist_preferences",
+      "read": {
+        "kind": "table",
+        "name": "psychologist_preferences"
+      },
+      "write": {
+        "kind": "table",
+        "name": "psychologist_preferences"
+      },
+      "methods": ["findById", "list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": [],
+      "auditSafeFields": [
+        "id",
+        "psychologist_id",
+        "timezone",
+        "locale",
+        "currency",
+        "preferences",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "domainId": "preferences",
+      "table": "psychologist_services",
+      "read": {
+        "kind": "table",
+        "name": "psychologist_services"
+      },
+      "write": {
+        "kind": "table",
+        "name": "psychologist_services"
+      },
+      "methods": ["findById", "list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": [],
+      "auditSafeFields": [
+        "id",
+        "psychologist_id",
+        "service_name",
+        "description",
+        "default_price_cents",
+        "currency",
+        "active",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    {
+      "domainId": "observability",
+      "table": "observability_events",
+      "read": {
+        "kind": "table",
+        "name": "observability_events"
+      },
+      "methods": ["findById", "list"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": [],
+      "auditSafeFields": ["id", "event_type", "severity", "source", "correlation_id", "payload", "created_at"]
+    },
+    {
+      "domainId": "account-management",
+      "table": "account_deletion_requests",
+      "read": {
+        "kind": "table",
+        "name": "account_deletion_requests"
+      },
+      "write": {
+        "kind": "table",
+        "name": "account_deletion_requests"
+      },
+      "methods": ["findById", "list", "insert", "update", "delete"],
+      "dto": {
+        "style": "zod",
+        "include": "all_columns"
+      },
+      "idColumn": "id",
+      "phiFields": [],
+      "auditSafeFields": [
+        "id",
+        "user_id",
+        "requested_by",
+        "reason",
+        "metadata",
+        "status",
+        "requested_at",
+        "processing_started_at",
+        "processed_at",
+        "approved_at",
+        "cancelled_at",
+        "failed_at",
+        "failure_reason",
+        "retention_until"
+      ]
+    }
+  ]
+}

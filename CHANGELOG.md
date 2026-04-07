@@ -4,50 +4,25 @@
 
 ### Added
 
-- [feat] Auth + data layer implementation (HIPAA compliant) — rate limiting with
-  Upstash Redis (60 req/min per user), PHI audit sanitization utility
-  (`sanitizeForAudit`), `requireAuth()` updated with decision log + rate limit +
-  `{ userId, claims }` return shape, tenant resolution helper
-  (`getPsychologistIdForUser`), and codegen template rewrite with table-type
-  routing (public/tenant/role-gated), PHI sanitization in error metadata, and
-  explicit tenant context passing to repositories.
-- [feat] Repository plan schema extended with `phiFields` and `auditSafeFields`
-  for HIPAA-compliant audit logging; example configs updated.
-- [feat] `SanitizedAuditMetadata` type added to `@workspace/logging/contracts`
-  for type-safe audit metadata.
-- [docs] `docs/guides/supabase-verification.md` — manual verification guide for
-  JWT expiry (900s) and RLS policy compliance (InitPlan caching, indexes,
-  SECURITY DEFINER functions).
-- [docs] `docs/guides/auth-data-layer-implementation.md` — complete
-  implementation summary with files created, dependencies, manual verification
-  checklist, and next steps.
-- [docs] `tests/unit/supabase-data/COVERAGE_GAP.md` — documented unit test
-  coverage gap (Path B) with mitigation via integration + RLS tests.
+- [docs] `docs/guides/pre-push-workflow.md` — comprehensive guide for pre-push
+  validation workflow with troubleshooting for typecheck, test, publint, knip,
+  audit, and depcruise.
 
-- [feat] Rebuilt `supabase/migrations` from `supabase/temp-migrations` with
-  template-first baseline (`baseline_identity_and_observability`), extensions
-  (`domain_infrastructure_extensions`), product schema split across 35 stamped
-  files with descriptive `product_public_*` suffixes (pg_dump chunks repacked
-  for Supabase migrator + `SET check_function_bodies = false` per slice), and
-  `unassigned_storage_buckets_and_policies` for storage buckets/policies; types
-  regenerated via `pnpm supabase:types:local`.
-- [fix] `supabase/seed.sql` — seed `public.app_roles` (`admin`, `user`,
-  `psychologist`, `patient`, `assistant`) so `user_roles` FK + RLS tests work
-  after the rebaseline.
-- [fix] `@workspace/supabase-auth` `package.json` exports — add `./testing/*` →
-  `./src/testing/*.ts` so RLS tests can import `ACCESS_CONTROL_TEMPLATE`.
-- [fix] `unassigned_storage_buckets_and_policies` migration — drop duplicate
-  `catalog_clinical_activities` column adds; use `pg_policies` / `pg_trigger`
-  guards instead of `DROP … IF EXISTS` so `supabase db reset` stays quiet (no
-  duplicate-column or missing-object notices).
-- [feat] Fluri fork — branch `fluri` carries rebaselined `supabase/migrations`,
-  `supabase/temp-migrations` (pg_dump sources for traceability), updated
-  `supabase/seed.sql`, and regenerated `packages/supabase-infra` DB types.
+### Changed
 
-- [docs] `docs/guides/migration-rebaselining-prompt.md` — analysis + phased plan
-  for rebuilding `supabase/migrations` from `supabase/temp-migrations` with
-  template baseline first; English LLM-to-LLM prompt for the implementing agent;
-  linked from `docs/guides/migration-workflow.md`.
+- [fix] `.dependency-cruiser.cjs` — allow `supabase-data/src/lib/auth` as
+  server-only path to fix server-to-client violations for auth utility files
+  (requireAuth, rate-limit, resolve-tenant).
+- [fix] `pnpm.overrides` in `package.json` — force vite@7.3.2 to resolve
+  security vulnerabilities (GHSA-v2wj-q39q-566r, GHSA-p9ff-h696-f583).
+- [fix] `packages/supabase-data/config/` — copy config files (domain-map.json,
+  repository-plan.json, action-semantic-plan.json) to fix publint export
+  validation errors.
+
+### Fixed
+
+- [fix] Pre-push hooks now pass all validations (typecheck, test, publint, knip,
+  audit, depcruise).
 - [docs] `supabase/template-baseline/` +
   `docs/guides/template-baseline-schema.md` — reference first migrations
   (identity, `observability_events`, JWT hook), `auth.users` vs `profiles`, hook
