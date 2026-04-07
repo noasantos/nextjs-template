@@ -20,7 +20,7 @@
     "check:exports": "publint"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.101.1",
+    "@supabase/supabase-js": "^2.102.1",
     "@workspace/supabase-infra": "workspace:*"
   },
   "devDependencies": {
@@ -30,7 +30,7 @@
     "@workspace/supabase-infra": "workspace:*",
     "@workspace/typescript-config": "workspace:*",
     "publint": "^0.3.18",
-    "typescript": "^5.9.3",
-    "vitest": "^4.1.2"
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.3"
   }
 }
