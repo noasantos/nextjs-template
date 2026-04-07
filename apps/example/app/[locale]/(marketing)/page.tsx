@@ -48,6 +48,8 @@ export default async function MarketingHomePage() {
 
   return (
     <>
+      {/* JSON-LD must be injected as raw script content for crawlers to parse it correctly. */}
+      {/* eslint-disable-next-line react/no-danger */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{

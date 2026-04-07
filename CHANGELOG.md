@@ -21,6 +21,9 @@
 
 ### Changed
 
+- [refactor] `scripts/codegen/full-pipeline.ts` — before the monorepo test step,
+  print that Vitest/turbo can run a long time with sparse output; header docs
+  clarify `--skip-tests` vs `--skip-validation`.
 - [refactor] **GitHub only:** workflows no longer trigger on `push` to
   `main`/`master` (`pull_request` + `workflow_dispatch`). **Lefthook pre-push
   stays** — typecheck, test, publint, knip, audit, depcruise still run locally
