@@ -68,14 +68,6 @@ function ensureDir(filePath: string): void {
   }
 }
 
-function argValue(flag: string): string | undefined {
-  const i = process.argv.indexOf(flag)
-  if (i === -1 || !process.argv[i + 1]) {
-    return undefined
-  }
-  return process.argv[i + 1]
-}
-
 function generateServerAction(
   domainId: string,
   tableName: string,
@@ -150,23 +142,20 @@ function generateServerAction(
   const repositoryCallCode = (() => {
     switch (methodName) {
       case "list":
-        return `// @type-escape: generated action stub — list params unknown until semantic plan fills Zod input
-    const result = await repository.list(validated as never)`
+        // @type-escape: generated action stub — list params unknown until semantic plan fills Zod input
+        return `const result = await repository.list(validated as never)`
       case "findById":
-        return `// @type-escape: generated action stub — id shape from validated after TODO input schema
-    const result = await repository.findById((validated as unknown as { id: string }).id)`
+        // @type-escape: generated action stub — id shape from validated after TODO input schema
+        return `const result = await repository.findById((validated as unknown as { id: string }).id)`
       case "insert":
-        return `// @type-escape: generated action stub — insert payload unknown until TODO input schema
-    const result = await repository.insert(validated as never)`
+        // @type-escape: generated action stub — insert payload unknown until TODO input schema
+        return `const result = await repository.insert(validated as never)`
       case "update":
-        return `// @type-escape: generated action stub — id shape from validated after TODO input schema
-    const validatedId = (validated as unknown as { id: string }).id
-    // @type-escape: generated action stub — update patch unknown until TODO input schema
-    const validatedPatch = validated as never
-    const result = await repository.update(validatedId, validatedPatch)`
+        // @type-escape: generated action stub — id + patch unknown until TODO input schema
+        return `const result = await repository.update((validated as unknown as { id: string }).id, validated as never)`
       case "delete":
-        return `// @type-escape: generated action stub — delete id unknown until TODO input schema
-    await repository.delete((validated as unknown as { id: string }).id)`
+        // @type-escape: generated action stub — delete id unknown until TODO input schema
+        return `await repository.delete((validated as unknown as { id: string }).id)`
       default:
         return `const result = await (repository as Record<string, (v: unknown) => Promise<unknown>>)["${methodCamel}"](validated)`
     }
@@ -504,8 +493,6 @@ vi.mock("@workspace/logging/server", () => ({
   logServerEvent: vi.fn(),
 }))
 
-const swallowExpectedError = (): undefined => undefined
-
 describe("${actionName}", () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -524,7 +511,7 @@ describe("${actionName}", () => {
       const { logServerEvent } = await import("@workspace/logging/server")
       vi.mocked(getClaims).mockResolvedValue({ claims: null } as any)
 
-      await ${actionName}({} as any).catch(swallowExpectedError)
+      await ${actionName}({} as any).catch(() => {})
 
       expect(logServerEvent).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -590,7 +577,7 @@ ${
         } as any
       )
 
-      await ${actionName}({} as any).catch(swallowExpectedError)
+      await ${actionName}({} as any).catch(() => {})
 
       expect(logServerEvent).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -623,7 +610,7 @@ ${
         } as any
       )
 
-      await ${actionName}({} as any).catch(swallowExpectedError)
+      await ${actionName}({} as any).catch(() => {})
 
       expect(logServerEvent).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -929,6 +916,14 @@ export function runActionsHooksCodegen(options: ActionsHooksCodegenOptions): Cod
 
 // CLI Entry Point
 if (import.meta.url === `file://${process.argv[1]}`) {
+  const argValue = (flag: string): string | undefined => {
+    const i = process.argv.indexOf(flag)
+    if (i === -1 || !process.argv[i + 1]) {
+      return undefined
+    }
+    return process.argv[i + 1]
+  }
+
   const write = process.argv.includes("--write")
   const checkOnly = process.argv.includes("--check") || !write
   if (write && process.argv.includes("--check")) {

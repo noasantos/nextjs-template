@@ -162,73 +162,31 @@
       "exposeActions": true,
       "readOnly": false,
       "tables": ["account_deletion_requests"]
-    },
-    {
-      "id": "public-directory",
-      "auth": "public",
-      "codegen": false,
-      "exposeActions": true,
-      "readOnly": false,
-      "tables": ["public_linktree_links", "public_locations", "public_profiles"]
-    },
-    {
-      "id": "identity-profiles",
-      "auth": "session",
-      "codegen": false,
-      "exposeActions": true,
-      "readOnly": false,
-      "tables": ["user_admins", "user_assistants", "user_patients", "user_psychologists"]
-    },
-    {
-      "id": "practice-operations",
-      "auth": "session",
-      "codegen": false,
-      "exposeActions": true,
-      "readOnly": false,
-      "tables": [
-        "psychologist_session_cancellation_policy",
-        "psychologist_weekly_schedules",
-        "session_reschedule_logs",
-        "session_reschedule_requests"
-      ]
-    },
-    {
-      "id": "billing-platform",
-      "auth": "session",
-      "codegen": false,
-      "exposeActions": true,
-      "readOnly": false,
-      "tables": [
-        "psychologist_stripe_connect",
-        "psychologist_subscriptions",
-        "public_client_checkout_intents",
-        "session_billing_dead_letter"
-      ]
-    },
-    {
-      "id": "stripe-infra",
-      "auth": "admin",
-      "codegen": false,
-      "exposeActions": false,
-      "readOnly": true,
-      "tables": ["stripe_idempotency_log", "stripe_webhook_events", "webhook_audit_log", "webhook_events"]
-    },
-    {
-      "id": "sync-infra",
-      "auth": "admin",
-      "codegen": false,
-      "exposeActions": false,
-      "readOnly": false,
-      "tables": ["sync_conflict_resolutions", "sync_locks"]
-    },
-    {
-      "id": "platform-audit",
-      "auth": "admin",
-      "codegen": false,
-      "exposeActions": false,
-      "readOnly": true,
-      "tables": ["security_audit_events", "unified_events"]
     }
   ],
-  "ignoreTables": []
+  "ignoreTables": [
+    "psychologist_session_cancellation_policy",
+    "psychologist_stripe_connect",
+    "psychologist_subscriptions",
+    "psychologist_weekly_schedules",
+    "public_client_checkout_intents",
+    "public_linktree_links",
+    "public_locations",
+    "public_profiles",
+    "security_audit_events",
+    "session_billing_dead_letter",
+    "session_reschedule_logs",
+    "session_reschedule_requests",
+    "stripe_idempotency_log",
+    "stripe_webhook_events",
+    "sync_conflict_resolutions",
+    "sync_locks",
+    "unified_events",
+    "user_admins",
+    "user_assistants",
+    "user_patients",
+    "user_psychologists",
+    "webhook_audit_log",
+    "webhook_events"
+  ]
 }
