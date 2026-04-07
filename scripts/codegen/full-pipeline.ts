@@ -12,7 +12,8 @@
  *
  * Usage:
  *   pnpm tsx scripts/codegen/full-pipeline.ts
- *   pnpm tsx scripts/codegen/full-pipeline.ts --skip-validation  # Skip validation
+ *   pnpm tsx scripts/codegen/full-pipeline.ts --skip-tests       # Skip monorepo tests (much faster)
+ *   pnpm tsx scripts/codegen/full-pipeline.ts --skip-validation  # Skip optional validation (incl. tests)
  *   pnpm tsx scripts/codegen/full-pipeline.ts --no-rollback      # Keep partial output on failure
  */
 
@@ -70,9 +71,12 @@ const pipelineSteps: PipelineStep[] = [
   },
 ]
 
-function runCommand(command: string, description: string): boolean {
+function runCommand(command: string, description: string, hint?: string): boolean {
   console.log(`\n📋 ${description}`)
   console.log(`   Command: ${command}`)
+  if (hint) {
+    console.log(`   ${hint}`)
+  }
 
   try {
     execSync(command, {
@@ -140,7 +144,12 @@ function main() {
       continue
     }
 
-    const success = runCommand(step.command, step.description)
+    const testSuiteHint =
+      step.name === "Test Suite"
+        ? "Note: turbo + Vitest may run for several minutes with sparse logs (especially @workspace/supabase-data). Not frozen. Next time: pnpm codegen:full-pipeline --skip-tests (same as pnpm codegen:full-pipeline:clean)."
+        : undefined
+
+    const success = runCommand(step.command, step.description, testSuiteHint)
 
     if (!success) {
       failedSteps.push(step.name)

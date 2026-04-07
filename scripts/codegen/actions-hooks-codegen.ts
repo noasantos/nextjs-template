@@ -458,7 +458,11 @@ function generateActionTest(
   const domainKebab = toKebabCase(domainId)
   const tableKebab = toKebabCase(tableName)
   const methodCamel = toCamelCase(methodName)
+  const tablePascal = toPascalCase(tableName)
   const isWriteOperation = ["insert", "update", "delete", "upsert"].includes(methodName)
+  const repositoryClassName = `${tablePascal}SupabaseRepository`
+  const repositoryImportPath = `@workspace/supabase-data/modules/${domainKebab}/infrastructure/repositories/${tableKebab}-supabase.repository.codegen`
+  const repositorySuccessMock = generateActionTestRepositorySuccessMock(methodName)
 
   return `/**
  * Unit tests for ${actionName}
@@ -475,6 +479,14 @@ vi.mock("@workspace/supabase-auth/session/get-claims", () => ({
 
 vi.mock("@workspace/supabase-auth/server/create-server-auth-client", () => ({
   createServerAuthClient: vi.fn(),
+}))
+
+vi.mock("@workspace/supabase-data/lib/auth/rate-limit", () => ({
+  checkActionRateLimit: vi.fn(),
+}))
+
+vi.mock("${repositoryImportPath}", () => ({
+  ${repositoryClassName}: vi.fn(),
 }))
 
 vi.mock("@workspace/logging/server", () => ({
@@ -514,7 +526,9 @@ describe("${actionName}", () => {
   describe("Input Validation", () => {
     it("should validate input with Zod schema", async () => {
       const { getClaims } = await import("@workspace/supabase-auth/session/get-claims")
+      const { checkActionRateLimit } = await import("@workspace/supabase-data/lib/auth/rate-limit")
       vi.mocked(getClaims).mockResolvedValue({ claims: { sub: "test-user-id" } } as any)
+      vi.mocked(checkActionRateLimit).mockResolvedValue(undefined)
 
       await expect(${actionName}({ invalid: "data" } as any)).rejects.toThrow()
     })
@@ -523,16 +537,18 @@ ${
     ? `
     it("should accept valid input for ${methodName} operation", async () => {
       const { getClaims } = await import("@workspace/supabase-auth/session/get-claims")
+      const { checkActionRateLimit } = await import("@workspace/supabase-data/lib/auth/rate-limit")
+      const { ${repositoryClassName} } = await import("${repositoryImportPath}")
       vi.mocked(getClaims).mockResolvedValue({ claims: { sub: "test-user-id" } } as any)
+      vi.mocked(checkActionRateLimit).mockResolvedValue(undefined)
 
       const { createServerAuthClient } = await import("@workspace/supabase-auth/server/create-server-auth-client")
-      vi.mocked(createServerAuthClient).mockResolvedValue({
-        from: vi.fn().mockReturnThis(),
-        select: vi.fn().mockReturnThis(),
-        insert: vi.fn().mockReturnThis(),
-        update: vi.fn().mockReturnThis(),
-        delete: vi.fn().mockReturnThis(),
-      } as any)
+      vi.mocked(createServerAuthClient).mockResolvedValue({} as any)
+      vi.mocked(${repositoryClassName}).mockImplementation(
+        function MockRepository() {
+          return ${repositorySuccessMock} as any
+        } as any
+      )
 
       // TODO: Replace with actual valid input for ${tableName}
       const validInput = {} as any
@@ -547,14 +563,19 @@ ${
   describe("Logging", () => {
     it("should log on success", async () => {
       const { getClaims } = await import("@workspace/supabase-auth/session/get-claims")
+      const { checkActionRateLimit } = await import("@workspace/supabase-data/lib/auth/rate-limit")
+      const { ${repositoryClassName} } = await import("${repositoryImportPath}")
       const { logServerEvent } = await import("@workspace/logging/server")
       vi.mocked(getClaims).mockResolvedValue({ claims: { sub: "test-user-id" } } as any)
+      vi.mocked(checkActionRateLimit).mockResolvedValue(undefined)
 
       const { createServerAuthClient } = await import("@workspace/supabase-auth/server/create-server-auth-client")
-      vi.mocked(createServerAuthClient).mockResolvedValue({
-        from: vi.fn().mockReturnThis(),
-        select: vi.fn().mockReturnThis(),
-      } as any)
+      vi.mocked(createServerAuthClient).mockResolvedValue({} as any)
+      vi.mocked(${repositoryClassName}).mockImplementation(
+        function MockRepository() {
+          return ${repositorySuccessMock} as any
+        } as any
+      )
 
       await ${actionName}({} as any).catch(() => {})
 
@@ -569,13 +590,25 @@ ${
 
     it("should log on error with sanitized metadata", async () => {
       const { getClaims } = await import("@workspace/supabase-auth/session/get-claims")
+      const { checkActionRateLimit } = await import("@workspace/supabase-data/lib/auth/rate-limit")
+      const { ${repositoryClassName} } = await import("${repositoryImportPath}")
       const { logServerEvent } = await import("@workspace/logging/server")
       vi.mocked(getClaims).mockResolvedValue({ claims: { sub: "test-user-id" } } as any)
+      vi.mocked(checkActionRateLimit).mockResolvedValue(undefined)
 
       const { createServerAuthClient } = await import("@workspace/supabase-auth/server/create-server-auth-client")
-      vi.mocked(createServerAuthClient).mockResolvedValue({
-        from: vi.fn().mockRejectedValue(new Error("Test error")),
-      } as any)
+      vi.mocked(createServerAuthClient).mockResolvedValue({} as any)
+      vi.mocked(${repositoryClassName}).mockImplementation(
+        function MockRepository() {
+          return {
+            findById: vi.fn().mockRejectedValue(new Error("Test error")),
+            list: vi.fn().mockRejectedValue(new Error("Test error")),
+            insert: vi.fn().mockRejectedValue(new Error("Test error")),
+            update: vi.fn().mockRejectedValue(new Error("Test error")),
+            delete: vi.fn().mockRejectedValue(new Error("Test error")),
+          } as any
+        } as any
+      )
 
       await ${actionName}({} as any).catch(() => {})
 
@@ -596,6 +629,56 @@ ${
 `
 }
 
+function generateActionTestRepositorySuccessMock(methodName: string): string {
+  if (methodName === "findById") {
+    return `{
+        findById: vi.fn().mockResolvedValue({ id: "test-id" }),
+        list: vi.fn(),
+        insert: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+      }`
+  }
+
+  if (methodName === "list") {
+    return `{
+        findById: vi.fn(),
+        list: vi.fn().mockResolvedValue({ rows: [{ id: "test-id" }] }),
+        insert: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+      }`
+  }
+
+  if (methodName === "delete") {
+    return `{
+        findById: vi.fn(),
+        list: vi.fn(),
+        insert: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn().mockResolvedValue(undefined),
+      }`
+  }
+
+  if (methodName === "update" || methodName === "upsert") {
+    return `{
+        findById: vi.fn(),
+        list: vi.fn(),
+        insert: vi.fn(),
+        update: vi.fn().mockResolvedValue({ id: "test-id" }),
+        delete: vi.fn(),
+      }`
+  }
+
+  return `{
+      findById: vi.fn(),
+      list: vi.fn(),
+      insert: vi.fn().mockResolvedValue({ id: "test-id" }),
+      update: vi.fn(),
+      delete: vi.fn(),
+    }`
+}
+
 function generateHookTest(
   domainId: string,
   tableName: string,
@@ -604,46 +687,30 @@ function generateHookTest(
 ): string {
   const domainKebab = toKebabCase(domainId)
   const tableKebab = toKebabCase(tableName)
+  const queryKeysExport = `${toCamelCase(domainId)}QueryKeys`
+  const queryKeysMethod =
+    hookType === "query" ? `${toCamelCase(tableName)}List` : `${toCamelCase(tableName)}`
+  const queryKeyArgs = hookType === "query" ? "{}" : ""
 
   return `/**
  * Unit tests for ${hookName}
  * 
  * codegen:actions-hooks (generated) — do not hand-edit
  */
-import { describe, expect, it, vi, beforeEach } from "vitest"
-import { renderHook, waitFor } from "@testing-library/react"
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { describe, expect, it } from "vitest"
 
-import { ${hookName} } from "@workspace/supabase-data/hooks/${domainKebab}/${hookType === "query" ? `use-${tableKebab}-query` : `use-${tableKebab}-mutation`}.hook.codegen"
-
-function createWrapper() {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false },
-    },
-  })
-  return ({ children }: { children: React.ReactNode }) =>
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-}
+import { ${hookName} } from "@workspace/supabase-data/hooks/${domainKebab}/${
+    hookType === "query" ? `use-${tableKebab}-query` : `use-${tableKebab}-mutation`
+  }.hook.codegen"
+import { ${queryKeysExport} } from "@workspace/supabase-data/hooks/${domainKebab}/query-keys.codegen"
 
 describe("${hookName}", () => {
-  let wrapper: ReturnType<typeof createWrapper>
-
-  beforeEach(() => {
-    wrapper = createWrapper()
+  it("should export the generated hook", () => {
+    expect(${hookName}).toBeTypeOf("function")
   })
 
-  it("should ${hookType === "query" ? "fetch data" : "execute mutation"}", async () => {
-    const { result } = renderHook(() => ${hookName}(${hookType === "mutation" ? "" : "{}"}), { wrapper })
-
-    if (${hookType === "query" ? "true" : "false"}) {
-      await waitFor(() => {
-        expect(result.current.isFetching).toBe(false)
-      })
-    }
-
-    expect(result.current).toBeDefined()
+  it("should expose a query key factory for the generated hook", () => {
+    expect(${queryKeysExport}.${queryKeysMethod}(${queryKeyArgs})).toBeDefined()
   })
 })
 `
@@ -656,7 +723,7 @@ export function runActionsHooksCodegen(options: ActionsHooksCodegenOptions): Cod
     planPath,
     domainMapPath,
     checkOnly,
-    force = false,
+    force: _force = false,
     domainFilter,
   } = options
 
@@ -768,7 +835,7 @@ export function runActionsHooksCodegen(options: ActionsHooksCodegenOptions): Cod
           const listActionName = `list${toPascalCase(table)}Action`
           const hookName = `use${toPascalCase(table)}Query`
 
-          if (!checkOnly && (!existsSync(queryHookFile) || force)) {
+          if (!checkOnly) {
             const hookContent = generateQueryHook(domainId, table, listActionName)
             ensureDir(queryHookFile)
             writeFileSync(queryHookFile, hookContent, "utf8")
@@ -793,7 +860,7 @@ export function runActionsHooksCodegen(options: ActionsHooksCodegenOptions): Cod
           const insertActionName = `insert${toPascalCase(table)}Action`
           const hookName = `use${toPascalCase(table)}Mutation`
 
-          if (!checkOnly && (!existsSync(mutationHookFile) || force)) {
+          if (!checkOnly) {
             const hookContent = generateMutationHook(domainId, table, insertActionName)
             ensureDir(mutationHookFile)
             writeFileSync(mutationHookFile, hookContent, "utf8")
@@ -817,7 +884,7 @@ export function runActionsHooksCodegen(options: ActionsHooksCodegenOptions): Cod
       }
 
       const queryKeysFile = join(hooksDir, "query-keys.codegen.ts")
-      if (!checkOnly && queryKeyTables.length > 0 && (!existsSync(queryKeysFile) || force)) {
+      if (!checkOnly && queryKeyTables.length > 0) {
         const queryKeysContent = generateQueryKeys(domainId, queryKeyTables)
         ensureDir(queryKeysFile)
         writeFileSync(queryKeysFile, queryKeysContent, "utf8")

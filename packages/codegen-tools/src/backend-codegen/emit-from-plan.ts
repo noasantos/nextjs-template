@@ -133,11 +133,8 @@ function emitMapper(
     entry.dto.style === "zod" ? `${dtoName}Schema, type ${dtoName}` : `type ${dtoName}`
 
   const fromBody = camelFields.map((f) => `    ${f.camel}: row.${f.snake},`).join("\n")
-
-  const toInsertLines = camelFields.map((f) => {
-    // @type-escape: generated Insert payload assigns optional DTO fields to snake_case keys
-    return `  if (dto.${f.camel} !== undefined) (out as Record<string, unknown>).${f.snake} = dto.${f.camel} as never`
-  })
+  const fieldMappingsConstName = `${pascal}FieldMappings`
+  const fieldMappingsBody = camelFields.map((f) => `  ${f.camel}: "${f.snake}",`).join("\n")
 
   const dtoModuleImport = planDtoImportSpecifier(domainId, entityKebab)
 
@@ -149,6 +146,12 @@ type ${pascal}Row = ${rowRef}
 type ${pascal}Insert = ${insertTypeRef(writeTable)}
 type ${pascal}Update = ${updateTypeRef(writeTable)}
 
+const ${fieldMappingsConstName} = {
+${fieldMappingsBody}
+} as const
+
+type ${pascal}Field = keyof typeof ${fieldMappingsConstName}
+
 function from${pascal}Row(row: ${pascal}Row): ${dtoName} {
   const mapped = {
 ${fromBody}
@@ -158,7 +161,15 @@ ${fromBody}
 
 function to${pascal}Insert(dto: Partial<${dtoName}>): ${pascal}Insert {
   const out: Record<string, unknown> = {}
-${toInsertLines.join("\n")}
+  for (const [camelKey, snakeKey] of Object.entries(${fieldMappingsConstName}) as Array<
+    [${pascal}Field, (typeof ${fieldMappingsConstName})[${pascal}Field]]
+  >) {
+    const value = dto[camelKey]
+    if (typeof value !== "undefined") {
+      // @type-escape: generated Insert payload assigns optional DTO fields to snake_case keys
+      out[snakeKey] = value as never
+    }
+  }
   return out as ${pascal}Insert
 }
 

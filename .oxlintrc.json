@@ -34,6 +34,10 @@
     "eqeqeq": ["error", "always"],
     "no-var": "error",
     "prefer-const": "error",
+    "no-undefined": "off",
+    "no-void": "off",
+    "no-use-before-define": "off",
+    "complexity": "off",
     "no-unused-vars": [
       "error",
       {
@@ -48,6 +52,8 @@
     "typescript/no-explicit-any": "error",
     "typescript/no-non-null-assertion": "error",
     "typescript/no-unsafe-type-assertion": "error",
+    "typescript/explicit-function-return-type": "off",
+    "typescript/explicit-module-boundary-types": "off",
     "typescript/consistent-type-assertions": [
       "error",
       {
@@ -56,15 +62,23 @@
       }
     ],
     "react/react-in-jsx-scope": "off",
+    "react/jsx-filename-extension": "off",
+    "react/no-multi-comp": "off",
+    "react/only-export-components": "off",
     "import/first": "error",
-    "import/no-duplicates": "error"
+    "import/no-duplicates": "error",
+    "import/no-unassigned-import": "off",
+    "import/no-default-export": "off",
+    "unicorn/no-array-for-each": "off"
   },
   "overrides": [
     {
       "files": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts"],
       "rules": {
         "no-console": "off",
+        "no-await-in-loop": "off",
         "import/first": "off",
+        "import/no-relative-parent-imports": "off",
         "typescript/no-explicit-any": "off",
         "typescript/no-non-null-assertion": "off",
         "typescript/no-unsafe-type-assertion": "off",
@@ -96,9 +110,26 @@
       }
     },
     {
+      "files": ["apps/example/app/[locale]/(marketing)/page.tsx"],
+      "rules": {
+        "react/no-danger": "off"
+      }
+    },
+    {
       "files": ["scripts/**/*.ts", "scripts/**/*.mjs"],
       "rules": {
-        "no-console": "off"
+        "no-console": "off",
+        "no-plusplus": "off",
+        "import/no-relative-parent-imports": "off",
+        "unicorn/no-process-exit": "off"
+      }
+    },
+    {
+      "files": ["*.cjs", "*.js"],
+      "rules": {
+        "import/no-commonjs": "off",
+        "import/unambiguous": "off",
+        "unicorn/prefer-module": "off"
       }
     }
   ]

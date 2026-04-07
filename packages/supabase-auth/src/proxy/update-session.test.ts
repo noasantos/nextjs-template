@@ -110,7 +110,7 @@ describe("updateSession", () => {
   it("preserves upstream middleware headers when upstreamResponse is provided", async () => {
     createServerClientMock.mockReturnValue({
       auth: {
-        getClaims: vi.fn(async () => {}),
+        getClaims: vi.fn(async () => ({ claims: null })),
       },
     })
 
