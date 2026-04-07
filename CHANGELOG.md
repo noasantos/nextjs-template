@@ -21,6 +21,10 @@
 
 ### Changed
 
+- [refactor] **GitHub only:** workflows no longer trigger on `push` to
+  `main`/`master` (`pull_request` + `workflow_dispatch`). **Lefthook pre-push
+  stays** — typecheck, test, publint, knip, audit, depcruise still run locally
+  on `git push`. Docs: `docs/git-hooks.md`, `docs/guides/pre-push-workflow.md`.
 - [break] Plan-driven backend module files use a **`.codegen` segment** in the
   basename (`*.dto.codegen.ts`, `*.mapper.codegen.ts`,
   `*-repository.port.codegen.ts`, `*-supabase.repository.codegen.ts`) so

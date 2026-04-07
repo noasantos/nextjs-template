@@ -6,8 +6,10 @@
   on the **whole repo** (not only staged files). If a step **fails**, the commit
   is **aborted**; some steps **rewrite files** and, when successful,
   **`stage_fixed`** re-stages those fixes into your commit.
-- **`git push`** runs **Lefthook `pre-push`**: slower checks (typecheck, tests,
-  audit, etc.). Failures **block the push**.
+- **`git push`** runs **Lefthook `pre-push`**: typecheck, tests, publint, knip,
+  audit, depcruise. Failures **block the push**. (GitHub does **not** duplicate
+  this on **push** to `main`/`master` — workflows use **pull_request** /
+  **workflow_dispatch**.)
 - **Editor extensions** (format on save, Ox in the IDE, etc.) help your
   **local** workflow; they are **not** a substitute for hooks. The
   **authoritative** alignment with this repo is what runs when Git invokes
@@ -17,7 +19,7 @@
 
 |            | Editor (save, format document, etc.)  | `git commit` / `git push`                    |
 | ---------- | ------------------------------------- | -------------------------------------------- |
-| **When**   | On each save or manual command        | Only when you commit or push                 |
+| **When**   | On each save or manual command        | On commit and on push (see `lefthook.yml`)   |
 | **Config** | May differ (user settings, workspace) | **`lefthook.yml`** + root **`pnpm`** scripts |
 | **Scope**  | Often current file                    | Pre-commit: **entire tree** (Ox is fast)     |
 
@@ -85,7 +87,7 @@ git commit -m "added stuff"              # rejected
 
 ## Pre-push (`lefthook` → `pre-push`)
 
-**Trigger:** `git push` (to any remote ref that runs the hook).
+**Trigger:** `git push`.
 
 **Manual run:**
 
@@ -93,16 +95,20 @@ git commit -m "added stuff"              # rejected
 pnpm exec lefthook run pre-push
 ```
 
-**Checks** (see `lefthook.yml` for the exact list):
+**Checks** (see `lefthook.yml`):
 
 - Typecheck — `pnpm typecheck`
 - Unit tests — `pnpm test`
 - Package exports — `publint` on `packages/*`
-- Dead code — `knip` (non-blocking exit code where configured)
+- Dead code — `knip` (`--no-exit-code` where configured)
 - Audit — `pnpm audit --audit-level=high`
 - Boundaries — `depcruise` on `apps/*/app` and `packages/*/src`
 
-Failures **block the push**. Fix locally, commit, push again.
+Failures **block the push**.
+
+**GitHub:** workflows are **not** triggered on **push** to `main`/`master` in
+this template; they run on **pull_request** and **workflow_dispatch** (see
+`.github/workflows/`).
 
 ## Other automation
 

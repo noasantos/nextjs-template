@@ -45,10 +45,10 @@ pnpm depcruise apps/example/app --config .dependency-cruiser.cjs
 pnpm depcruise apps/*/app packages/*/src --config .dependency-cruiser.cjs --output-type dot | dot -T svg > dependency-graph.svg
 ```
 
-### Automated Execution
+### Automated execution
 
-Dependency Cruiser runs automatically on `git push` as part of the pre-push hook
-configured in `lefthook.yml`.
+Dependency Cruiser runs on **`git push`** as part of Lefthook **pre-push**
+(`lefthook.yml`). GitHub does not run workflows on **push** to `main` here.
 
 ## Common Violations and How to Fix Them
 
@@ -154,8 +154,8 @@ be imported into client components.
 
 ## Integration with Other Tools
 
-- **Lefthook**: Runs on pre-push to catch violations before code leaves your
-  machine
-- **CI/CD**: Can be added to CI pipelines for additional validation
+- **Lefthook**: **pre-push** runs depcruise before the push completes
+- **CI/CD**: GitHub Actions can run on `pull_request` / `workflow_dispatch` (not
+  on push to `main` in this template)
 - **VS Code**: Optional editor integration available via dependency-cruiser VS
   Code extension

@@ -104,7 +104,7 @@ Document ignores in `knip.json`:
 
 ## Tooling
 
-Knip runs automatically on pre-push:
+Knip runs on `git push` via Lefthook **pre-push** (and can be run manually):
 
 ```bash
 pnpm knip --production --no-exit-code

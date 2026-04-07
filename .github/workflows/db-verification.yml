@@ -11,19 +11,8 @@ on:
       - "packages/supabase-data/**"
       - "packages/supabase-infra/**"
       - "tests/**"
-  push:
-    branches:
-      - main
-      - master
-    paths:
-      - "package.json"
-      - "pnpm-lock.yaml"
-      - "turbo.json"
-      - "supabase/**"
-      - "packages/supabase-auth/**"
-      - "packages/supabase-data/**"
-      - "packages/supabase-infra/**"
-      - "tests/**"
+  workflow_dispatch:
+  # push: disabled — no CI on direct pushes
 
 jobs:
   db-tests:

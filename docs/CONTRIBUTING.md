@@ -414,7 +414,7 @@ AI agents follow rules in `.cursor/rules/` for:
    **`@supabase/supabase-js`** and **`@supabase/ssr`** together when upgrading
    the Supabase stack.
 4. **Security:** after changing `package.json` files, run
-   `pnpm audit --audit-level=high` (same bar as pre-push). Use root
+   `pnpm audit --audit-level=high` (same bar as Lefthook pre-push). Use root
    **`pnpm.overrides`** only for transitive CVEs, with a **CHANGELOG** note.
 5. **Verify:** `pnpm install`, `pnpm typecheck`, `pnpm test`, and `pnpm build`
    (example app) before merging.

@@ -26,9 +26,10 @@
 3. If **pre-commit fails**, fix the reported issues (or only then run the
    specific failing command), then commit again.
 4. **Pre-push** (runs on `git push`, not on commit): `pnpm typecheck`,
-   `pnpm test`, publint, knip, etc. Agents should not run the full pre-push
-   suite before every commit unless the user explicitly wants a dry run before
-   pushing.
+   `pnpm test`, publint, knip, audit, depcruise (see `lefthook.yml`). **GitHub
+   Actions do not run on push** to `main` in this template — only on PR /
+   `workflow_dispatch`. Agents should not run the full pre-push suite before
+   every commit unless the user wants a dry run before pushing.
 5. **Suggest** a conventional commit message (`type(scope): description` per
    `commitlint.config.js`). Types include `feat`, `fix`, `docs`, `refactor`,
    `chore`, `ci`, `build`, `perf`, `test`, `style`, `revert`.

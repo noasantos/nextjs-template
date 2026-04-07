@@ -2,10 +2,8 @@ name: Security Scanners
 
 on:
   pull_request:
-  push:
-    branches:
-      - main
-      - master
+  workflow_dispatch:
+  # push: disabled — no CI on direct pushes
 
 jobs:
   osv-scanner:

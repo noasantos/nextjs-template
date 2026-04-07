@@ -47,13 +47,11 @@ pnpm knip
 pnpm knip --watch
 ```
 
-### Automated Checks
+### Automated checks
 
-Knip runs automatically on `pre-push` via lefthook. The hook is configured to:
-
-- Run in production mode
-- Not block pushes (uses `--no-exit-code || true`)
-- Report issues for review
+Knip runs on **`git push`** via Lefthook **pre-push**
+(`pnpm knip --production --no-exit-code`). GitHub workflows for this template do
+not trigger on **push** to `main`; PR CI may still run Knip separately.
 
 ## Configuration
 

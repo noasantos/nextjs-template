@@ -59,30 +59,19 @@ commit-msg:
     commitlint:
       run: npx commitlint --edit {1}
 
-# Pre-push: Slower checks before push
+# Pre-push: full bar locally on `git push` (GitHub Actions do not run on push — see .github/workflows)
 pre-push:
   commands:
-    # Type check
     typecheck:
       run: pnpm typecheck
-
-    # Unit tests
     test:
       run: pnpm test
-
-    # Package exports validation
     publint:
       run: pnpm -r --filter './packages/*' exec publint
-
-    # Dead code detection
     knip:
       run: pnpm knip --production --no-exit-code
-
-    # Dependency audit
     audit:
       run: pnpm audit --audit-level=high
-
-    # Architectural boundary checks
     depcruise:
       run: pnpm depcruise apps/*/app packages/*/src --config .dependency-cruiser.cjs
 

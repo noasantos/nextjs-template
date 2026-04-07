@@ -1,12 +1,16 @@
 # Pre-Push Validation Workflow
 
-**Critical requirement:** All pre-push hooks **MUST** pass before pushing to
-remote.
+**Locally:** Lefthook **`pre-push`** runs on every **`git push`** (typecheck,
+tests, publint, knip, audit, depcruise). Failures **block** the push.
 
-## Why This Matters
+**GitHub:** Workflows do **not** run on **push** to `main`/`master` in this
+template — they run on **pull_request** and **workflow_dispatch** only. So you
+get the full bar on your machine; the remote does not re-run the same pipeline
+on every direct push.
 
-Pre-push hooks enforce code quality, security, and architectural integrity.
-Bypassing them risks:
+## Why this matters
+
+These checks catch:
 
 - **Security vulnerabilities** reaching production
 - **Architectural violations** (server-to-client leaks, cross-app imports)
@@ -14,9 +18,9 @@ Bypassing them risks:
 - **Type errors** causing runtime failures
 - **Test failures** indicating regressions
 
-## Pre-Push Hooks (in order)
+## Pre-push hooks (in order)
 
-The following checks run automatically on `git push`:
+The following run automatically on `git push` (via `lefthook.yml`):
 
 ### 1. Type Check (`typecheck`)
 
@@ -185,35 +189,21 @@ error no-circular: module A → module B → module A
 
 **Fix:** Extract shared code to a third module or restructure dependencies.
 
-## Manual Pre-Push Checklist
-
-Before pushing, run locally:
+## Manual dry run (same as the hook)
 
 ```bash
-# Full pre-push validation
-pnpm typecheck && pnpm test && pnpm audit --audit-level=high && pnpm depcruise apps/*/app packages/*/src --config .dependency-cruiser.cjs
+pnpm exec lefthook run pre-push
 ```
-
-## Bypassing Pre-Push (NOT RECOMMENDED)
-
-**Only for emergencies** with explicit team approval:
-
-```bash
-git push origin main --no-verify
-```
-
-**⚠️ WARNING:** Bypassing hooks puts the codebase at risk. Always fix issues
-properly instead.
 
 ## Troubleshooting
 
-### "Tests pass locally but fail on push"
+### "Tests pass locally but fail on push / in CI"
 
 - Ensure you're running the same command: `pnpm test`
 - Check for environment variable differences
 - Clear cache: `pnpm test -- --clearCache`
 
-### "Dependency Cruiser passes locally but fails on push"
+### "Dependency Cruiser passes in one environment but fails in another"
 
 - Ensure you're using the same config: `--config .dependency-cruiser.cjs`
 - Check if new files were added but not committed
@@ -231,10 +221,11 @@ properly instead.
 - For transitive dependencies, use `pnpm.overrides` in package.json
 - If no fix exists, document the risk and timeline for resolution
 
-## CI/CD Integration
+## CI / GitHub
 
-These same checks run in CI on pull requests. Passing locally does not guarantee
-CI will pass, but failing locally guarantees CI will fail.
+Quality workflows run on **pull requests** (and manual dispatch), not on
+**push** to `main`. Your **pre-push** hook still validates before code leaves
+your machine.
 
 ## Related Documentation
 
