@@ -49,6 +49,9 @@
 
 ### Fixed
 
+- [fix] `tests/tsconfig.json` — override `jsx` to `react-jsx` so Vitest/Vite 8
+  can transform JSX in `tests/unit/ui` and `tests/unit/forms` (extends Next
+  `preserve`).
 - [fix] Pre-push hooks now pass all validations (typecheck, test, publint, knip,
   audit, depcruise).
 - [docs] `supabase/template-baseline/` +
