@@ -128,6 +128,18 @@ type Runtime = (typeof runtimes)[number]
 type Severity = (typeof severities)[number]
 type ObservabilityEvent = z.infer<typeof ObservabilityEventSchema>
 
+/**
+ * Sanitized audit metadata type for HIPAA compliance
+ *
+ * Use this type when logging errors for PHI tables to ensure
+ * no protected health information is logged.
+ */
+export type SanitizedAuditMetadata = {
+  _sanitized: true
+  _fieldCount: number
+  [key: string]: unknown
+}
+
 export {
   ObservabilityEventSchema,
   JsonValueSchema,

@@ -11,14 +11,18 @@
       "table": "demo_widgets",
       "read": { "kind": "table", "name": "demo_widgets" },
       "methods": ["findById", "list", "insert", "update", "delete"],
-      "dto": { "style": "zod", "include": "all_columns" }
+      "dto": { "style": "zod", "include": "all_columns" },
+      "phiFields": [],
+      "auditSafeFields": ["id", "createdAt", "updatedAt"]
     },
     {
       "domainId": "demo",
       "table": "demo_widget_events",
       "read": { "kind": "table", "name": "demo_widget_events" },
       "methods": ["findById", "list", "insert", "update", "delete"],
-      "dto": { "style": "zod", "include": "all_columns" }
+      "dto": { "style": "zod", "include": "all_columns" },
+      "phiFields": [],
+      "auditSafeFields": ["id", "createdAt", "widgetId"]
     }
   ]
 }

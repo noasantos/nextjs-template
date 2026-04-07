@@ -4,6 +4,26 @@
 
 ### Added
 
+- [feat] Auth + data layer implementation (HIPAA compliant) — rate limiting with
+  Upstash Redis (60 req/min per user), PHI audit sanitization utility
+  (`sanitizeForAudit`), `requireAuth()` updated with decision log + rate limit +
+  `{ userId, claims }` return shape, tenant resolution helper
+  (`getPsychologistIdForUser`), and codegen template rewrite with table-type
+  routing (public/tenant/role-gated), PHI sanitization in error metadata, and
+  explicit tenant context passing to repositories.
+- [feat] Repository plan schema extended with `phiFields` and `auditSafeFields`
+  for HIPAA-compliant audit logging; example configs updated.
+- [feat] `SanitizedAuditMetadata` type added to `@workspace/logging/contracts`
+  for type-safe audit metadata.
+- [docs] `docs/guides/supabase-verification.md` — manual verification guide for
+  JWT expiry (900s) and RLS policy compliance (InitPlan caching, indexes,
+  SECURITY DEFINER functions).
+- [docs] `docs/guides/auth-data-layer-implementation.md` — complete
+  implementation summary with files created, dependencies, manual verification
+  checklist, and next steps.
+- [docs] `tests/unit/supabase-data/COVERAGE_GAP.md` — documented unit test
+  coverage gap (Path B) with mitigation via integration + RLS tests.
+
 - [feat] Rebuilt `supabase/migrations` from `supabase/temp-migrations` with
   template-first baseline (`baseline_identity_and_observability`), extensions
   (`domain_infrastructure_extensions`), product schema split across 35 stamped

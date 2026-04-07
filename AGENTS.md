@@ -8,13 +8,14 @@
 
 1. **[CRITICAL ARCHITECTURE RULES](./docs/architecture/CRITICAL-RULES.md)** — 5
    non-negotiable rules with examples
-   - **Server Actions:** only in `packages/supabase-data/src/actions/<module>/`
-     (`pnpm action:new`); apps **consume** only — no `"use server"` or
-     `apps/*/actions/` (enforced by `pnpm check:forbidden`)
-   - MUST use `.inputSchema()` (NEVER `.schema()`)
-   - Zod validators MUST have `()` (`.uuid()` not `.uuid`)
-   - NO server imports in client components
-   - NO barrel exports (explicit imports only)
+
+- **Server Actions:** only in `packages/supabase-data/src/actions/<module>/`
+  (`pnpm action:new`); apps **consume** only — no `"use server"` or
+  `apps/*/actions/` (enforced by `pnpm check:forbidden`)
+- MUST use `.inputSchema()` (NEVER `.schema()`)
+- Zod validators MUST have `()` (`.uuid()` not `.uuid`)
+- NO server imports in client components
+- NO barrel exports (explicit imports only)
 
 2. **[Proxy Not Middleware](./docs/standards/rules/proxy-not-middleware.md)** -
    Next.js 16 uses proxy.ts
@@ -60,7 +61,7 @@
 [docs/standards/rules/README.md](./docs/standards/rules/README.md)  
 **Composition package filenames:**
 [docs/standards/package-file-suffixes.md](./docs/standards/package-file-suffixes.md)
-— hub [`packages/AGENTS.md`](./packages/AGENTS.md) (`*.component.tsx` /
+— hub `[packages/AGENTS.md](./packages/AGENTS.md)` (`*.component.tsx` /
 `*.hook.ts` / `*.provider.tsx` in `brand` / `core` / `forms` / `seo` only; not
 `apps/`; not `packages/ui`)  
 **Architecture:** [docs/architecture/](./docs/architecture/)  

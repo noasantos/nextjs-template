@@ -60,6 +60,9 @@ const RepositoryPlanEntrySchema = z
       )
       .optional(),
     deferred: z.boolean().optional(),
+    // HIPAA compliance: PHI field registry for audit sanitization
+    phiFields: z.array(z.string().min(1)).optional(),
+    auditSafeFields: z.array(z.string().min(1)).optional(),
   })
   .refine((entry) => !entry.methods.includes("upsert") || Boolean(entry.upsert?.onConflict), {
     message: 'methods includes "upsert" but upsert.onConflict is missing',
