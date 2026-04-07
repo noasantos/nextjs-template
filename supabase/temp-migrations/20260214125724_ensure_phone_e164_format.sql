@@ -1,0 +1,12 @@
+-- Documentation: Phone numbers in Fluri must be stored in E.164 format
+-- E.164 format: +[country code][subscriber number]
+-- Examples: +5511912345678 (Brazil), +351910512649 (Portugal), +15551234567 (US)
+--
+-- The auth.users.phone column is managed by Supabase Auth and stores phone in E.164 format by default.
+-- This migration serves as documentation that all phone fields across the application
+-- must follow the E.164 standard for consistency.
+--
+-- Phone validation happens at the application layer:
+-- - FluriFieldV2Phone component ensures E.164 format before saving
+-- - parsePhoneValue() validates format using libphonenumber-js
+-- - Display formatting is handled by formatPhoneDisplay() for UI purposes only;

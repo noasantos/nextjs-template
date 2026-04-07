@@ -9,6 +9,7 @@
  * packages/ui: fails if Git reports changes under packages/ui/ (staged, unstaged, or
  * commits on HEAD not in the merge-base with the default branch). Intentional shadcn
  * updates: ALLOW_PACKAGES_UI_CHANGES=1 pnpm check:forbidden
+ * Regenerated DB types (pnpm supabase:types:local|linked): ALLOW_DATABASE_TYPES_CHANGES=1
  * Override base ref: FORBIDDEN_DIFF_BASE=origin/develop (otherwise origin/main, etc.)
  */
 import { execSync } from "node:child_process"
@@ -144,17 +145,28 @@ const allowPackagesUi =
   process.env.ALLOW_PACKAGES_UI_CHANGES === "1" ||
   /^true$/i.test(process.env.ALLOW_PACKAGES_UI_CHANGES ?? "")
 
-if (!allowPackagesUi && isGitRepository()) {
-  for (const p of collectGitChangedPaths()) {
-    if (isUnderPackagesUi(p)) {
-      errors.push(
-        `Forbidden change under packages/ui (GR-001 / shadcn-only): ${p}\n  Set ALLOW_PACKAGES_UI_CHANGES=1 when committing intentional shadcn CLI output.`
-      )
+const allowDatabaseTypesChanges =
+  process.env.ALLOW_DATABASE_TYPES_CHANGES === "1" ||
+  /^true$/i.test(process.env.ALLOW_DATABASE_TYPES_CHANGES ?? "")
+
+if (isGitRepository()) {
+  const changed = collectGitChangedPaths()
+  if (!allowPackagesUi) {
+    for (const p of changed) {
+      if (isUnderPackagesUi(p)) {
+        errors.push(
+          `Forbidden change under packages/ui (GR-001 / shadcn-only): ${p}\n  Set ALLOW_PACKAGES_UI_CHANGES=1 when committing intentional shadcn CLI output.`
+        )
+      }
     }
-    if (IMMUTABLE_GENERATED_PATHS.has(p)) {
-      errors.push(
-        `Forbidden change to generated file: ${p}\n  Regenerate with pnpm supabase:types:local or pnpm supabase:types:linked instead of editing it by hand.`
-      )
+  }
+  if (!allowDatabaseTypesChanges) {
+    for (const p of changed) {
+      if (IMMUTABLE_GENERATED_PATHS.has(p)) {
+        errors.push(
+          `Forbidden change to generated file: ${p}\n  Regenerate with pnpm supabase:types:local or pnpm supabase:types:linked instead of editing it by hand.\n  When committing CLI output, set ALLOW_DATABASE_TYPES_CHANGES=1.`
+        )
+      }
     }
   }
 }

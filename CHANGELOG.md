@@ -20,6 +20,9 @@
   `catalog_clinical_activities` column adds; use `pg_policies` / `pg_trigger`
   guards instead of `DROP … IF EXISTS` so `supabase db reset` stays quiet (no
   duplicate-column or missing-object notices).
+- [feat] Fluri fork — branch `fluri` carries rebaselined `supabase/migrations`,
+  `supabase/temp-migrations` (pg_dump sources for traceability), updated
+  `supabase/seed.sql`, and regenerated `packages/supabase-infra` DB types.
 
 - [docs] `docs/guides/migration-rebaselining-prompt.md` — analysis + phased plan
   for rebuilding `supabase/migrations` from `supabase/temp-migrations` with
@@ -76,6 +79,10 @@
 
 ### Changed
 
+- [refactor] `scripts/ci/check-forbidden.mjs` — optional
+  `ALLOW_DATABASE_TYPES_CHANGES=1` when committing CLI-regenerated
+  `database.types.ts` (`pnpm supabase:types:local` / `linked`); Git guards for
+  `packages/ui` and generated types run independently.
 - [docs] `docs/guides/template-baseline-schema.md` and
   `supabase/template-baseline/0002_role_extension_pattern.sql`: generic
   multi-actor naming in prose and commented DDL (e.g. `provider_profiles`,
