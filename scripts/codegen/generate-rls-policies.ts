@@ -13,17 +13,13 @@ import { readFileSync, writeFileSync, existsSync } from "node:fs"
 import { resolve, dirname } from "node:path"
 import { fileURLToPath } from "node:url"
 
-import type { RepositoryPlan } from "../../packages/codegen-tools/src/repository-plan-schema"
+import {
+  parseRepositoryPlanJson,
+  type RepositoryPlanFile,
+} from "../../packages/codegen-tools/src/repository-plan-schema"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const repoRoot = resolve(__dirname, "../../..")
-
-function toScreamingCase(str: string): string {
-  return str
-    .replace(/([a-z])([A-Z])/g, "$1_$2")
-    .toUpperCase()
-    .replace(/[^A-Z0-9]/g, "_")
-}
 
 function generateRLSPolicy(
   table: string,
@@ -110,14 +106,14 @@ CREATE INDEX IF NOT EXISTS ${indexName} ON public.${table} USING btree (${column
 `
 }
 
-function generateMigration(plan: RepositoryPlan): string {
-  const timestamp = new Date()
-    .toISOString()
-    .replace(/[-:]/g, "")
-    .replace(/\.\d{3}/, "")
+function generateMigration(plan: RepositoryPlanFile): string {
+  const generatedAt = new Date()
+  const generatedIso = generatedAt.toISOString()
+  const migrationIdStamp = generatedIso.replace(/[-:]/g, "").replace(/\.\d{3}/, "")
 
   let migration = `-- RLS Policies and Indexes (Auto-generated)
--- Generated: ${new Date().toISOString()}
+-- Generated: ${generatedIso}
+-- Migration id stamp: ${migrationIdStamp}
 -- DO NOT EDIT - This file is auto-generated
 -- Run: pnpm codegen:generate-rls-policies --write
 --
@@ -134,10 +130,12 @@ function generateMigration(plan: RepositoryPlan): string {
 
   const domainTables = new Map<string, Set<string>>()
   for (const entry of plan.entries || []) {
-    if (!domainTables.has(entry.domainId)) {
-      domainTables.set(entry.domainId, new Set())
+    let tables = domainTables.get(entry.domainId)
+    if (!tables) {
+      tables = new Set()
+      domainTables.set(entry.domainId, tables)
     }
-    domainTables.get(entry.domainId)!.add(entry.table)
+    tables.add(entry.table)
   }
 
   for (const [domainId, tables] of domainTables) {
@@ -211,7 +209,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     process.exit(1)
   }
 
-  const plan = JSON.parse(readFileSync(planPath, "utf8")) as RepositoryPlan
+  const plan = parseRepositoryPlanJson(JSON.parse(readFileSync(planPath, "utf8")))
 
   console.log(`📝 Generating RLS policies and indexes...`)
   console.log(`   Tables: ${plan.entries?.length ?? 0}`)

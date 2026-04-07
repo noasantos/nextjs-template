@@ -12,7 +12,10 @@
 import { readFileSync, writeFileSync } from "node:fs"
 import { resolve } from "node:path"
 
-import type { RepositoryPlan } from "../../packages/codegen-tools/src/repository-plan-schema"
+import {
+  parseRepositoryPlanJson,
+  type RepositoryPlanFile,
+} from "../../packages/codegen-tools/src/repository-plan-schema"
 
 const repoRoot = resolve(process.cwd())
 
@@ -90,7 +93,7 @@ function toPascalCase(str: string): string {
   return camel.charAt(0).toUpperCase() + camel.slice(1)
 }
 
-function generateSemanticPlan(plan: RepositoryPlan): SemanticPlanFile {
+function generateSemanticPlan(plan: RepositoryPlanFile): SemanticPlanFile {
   const actions: ActionSemanticPlan[] = []
 
   for (const entry of plan.entries || []) {
@@ -160,7 +163,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const planPath = resolve(repoRoot, "config/repository-plan.json")
 
   try {
-    const plan = JSON.parse(readFileSync(planPath, "utf8")) as RepositoryPlan
+    const plan = parseRepositoryPlanJson(JSON.parse(readFileSync(planPath, "utf8")))
     const semanticPlan = generateSemanticPlan(plan)
 
     const outputPath = resolve(repoRoot, "config/action-semantic-plan.json")

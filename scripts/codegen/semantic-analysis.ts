@@ -9,19 +9,20 @@
  *   pnpm tsx scripts/codegen/semantic-analysis.ts
  */
 
-import { readFileSync, writeFileSync } from "node:fs"
+import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
 
 const repoRoot = resolve(process.cwd())
 const typesPath = resolve(repoRoot, "packages/supabase-infra/src/types/database.types.ts")
 
-// Read and parse database types
 const typesContent = readFileSync(typesPath, "utf8")
+const typesLineCount = typesContent.split("\n").length
 
 console.log("🧠 Phase 0: Semantic Analysis (LLM-Powered)")
 console.log("")
 console.log("📖 Reading database.types.ts...")
 console.log("   Path:", typesPath)
+console.log("   Size:", typesContent.length, "bytes,", typesLineCount, "lines")
 console.log("")
 console.log("🔍 Analyzing schema semantically...")
 console.log("")

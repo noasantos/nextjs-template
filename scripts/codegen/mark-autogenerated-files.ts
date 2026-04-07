@@ -61,7 +61,7 @@ function addMarker(filePath: string): void {
 
 // Main
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const { readdirSync, statSync } = require("node:fs")
+  const { readdirSync } = require("node:fs")
 
   console.log("🏷️  Marking auto-generated files...")
   console.log("")

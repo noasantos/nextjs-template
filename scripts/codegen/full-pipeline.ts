@@ -77,7 +77,7 @@ function runCommand(command: string, description: string): boolean {
       cwd: repoRoot,
     })
     return true
-  } catch (error) {
+  } catch (_error) {
     console.error(`\n❌ Command failed: ${command}`)
     return false
   }

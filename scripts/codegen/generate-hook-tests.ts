@@ -9,7 +9,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { dirname, join, resolve } from "node:path"
 
-import type { ActionSemanticPlan } from "./actions-semantic-plan"
+import type { SemanticPlanFile } from "./actions-semantic-plan"
 
 const repoRoot = resolve(process.cwd())
 
@@ -175,7 +175,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     process.exit(1)
   }
 
-  const plan = JSON.parse(readFileSync(planPath, "utf8")) as ActionSemanticPlan
+  const plan = JSON.parse(readFileSync(planPath, "utf8")) as SemanticPlanFile
 
   console.log(`📝 Generating hook tests...`)
   console.log("")
@@ -185,10 +185,12 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
   const domains = new Map<string, Set<string>>()
   for (const action of plan.actions) {
-    if (!domains.has(action.domainId)) {
-      domains.set(action.domainId, new Set())
+    let tables = domains.get(action.domainId)
+    if (!tables) {
+      tables = new Set()
+      domains.set(action.domainId, tables)
     }
-    domains.get(action.domainId)!.add(action.table)
+    tables.add(action.table)
   }
 
   for (const [domainId, tables] of domains) {

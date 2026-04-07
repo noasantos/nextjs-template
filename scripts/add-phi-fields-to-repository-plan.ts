@@ -9,6 +9,8 @@
 import { readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
+import type { RepositoryPlanEntry } from "../packages/codegen-tools/src/repository-plan-schema"
+
 const repoRoot = join(__dirname, "..")
 const repositoryPlanPath = join(repoRoot, "config/repository-plan.json")
 
@@ -723,7 +725,7 @@ const phiFieldDefinitions: Record<string, { phiFields: string[]; auditSafeFields
 
 // Process each entry
 let updatedCount = 0
-repositoryPlan.entries = repositoryPlan.entries.map((entry: any) => {
+repositoryPlan.entries = repositoryPlan.entries.map((entry: RepositoryPlanEntry) => {
   const tableName = entry.table
 
   // Skip if already has phiFields (shouldn't happen)

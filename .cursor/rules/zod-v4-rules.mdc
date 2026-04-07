@@ -1,7 +1,6 @@
-> **Contributors without Cursor:** Same rule as
-> [`.cursor/rules/zod-v4-rules.mdc`](../../../.cursor/rules/zod-v4-rules.mdc).
-> Regenerate: `node scripts/ci/sync-cursor-rules-to-docs.mjs`.
-
+---
+description: Zod v4 mandatory patterns — top-level formats, record arity, error param (codegen-safe)
+globs: **/*.{ts,tsx}
 ---
 
 # Zod v4 Rules (MANDATORY)

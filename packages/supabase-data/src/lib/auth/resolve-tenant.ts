@@ -39,7 +39,6 @@
  */
 "use server"
 
-import { logServerEvent } from "@workspace/logging/server"
 import { createServerAuthClient } from "@workspace/supabase-auth/server/create-server-auth-client"
 
 /**

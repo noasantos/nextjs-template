@@ -11,7 +11,11 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { dirname, join, relative, resolve } from "node:path"
 
-import type { RepositoryPlan } from "../../packages/codegen-tools/src/repository-plan-schema"
+import {
+  parseDomainMapJson,
+  type DomainEntry,
+} from "../../packages/codegen-tools/src/domain-map-schema"
+import { parseRepositoryPlanJson } from "../../packages/codegen-tools/src/repository-plan-schema"
 
 interface ActionsHooksCodegenOptions {
   repoRoot: string
@@ -33,10 +37,10 @@ interface CodegenResult {
 }
 
 interface TableDefinition {
-  Row: Record<string, any>
-  Insert: Record<string, any>
-  Update: Record<string, any>
-  Relationships: any[]
+  Row: Record<string, unknown>
+  Insert: Record<string, unknown>
+  Update: Record<string, unknown>
+  Relationships: unknown[]
 }
 
 function toKebabCase(str: string): string {
@@ -68,7 +72,7 @@ function generateServerAction(
   tableName: string,
   methodName: string,
   tableDef: TableDefinition,
-  domainConfig?: { auth?: string }
+  domainConfig?: Pick<DomainEntry, "auth">
 ): string {
   const domainKebab = toKebabCase(domainId)
   const tableKebab = toKebabCase(tableName)
@@ -635,17 +639,13 @@ export function runActionsHooksCodegen(options: ActionsHooksCodegenOptions): Cod
   let queryKeysUpdated = 0
 
   try {
-    const planJson = JSON.parse(readFileSync(planPath, "utf8")) as RepositoryPlan
-    const domainMapJson = JSON.parse(readFileSync(domainMapPath, "utf8")) as {
-      domains: Array<{
-        id: string
-        auth: string
-        codegen: boolean
-        exposeActions: boolean
-        readOnly: boolean
-        tables: string[]
-      }>
+    if (!existsSync(typesPath)) {
+      errors.push(`Types file not found: ${typesPath}`)
+      return { ok: false, filesWritten, errors, actionsGenerated, hooksGenerated, queryKeysUpdated }
     }
+
+    const planJson = parseRepositoryPlanJson(JSON.parse(readFileSync(planPath, "utf8")))
+    const domainMapJson = parseDomainMapJson(JSON.parse(readFileSync(domainMapPath, "utf8")))
 
     const entries = planJson.entries || []
 
@@ -655,10 +655,12 @@ export function runActionsHooksCodegen(options: ActionsHooksCodegenOptions): Cod
     >()
 
     for (const entry of entries) {
-      if (!domainEntries.has(entry.domainId)) {
-        domainEntries.set(entry.domainId, [])
+      let bucket = domainEntries.get(entry.domainId)
+      if (!bucket) {
+        bucket = []
+        domainEntries.set(entry.domainId, bucket)
       }
-      domainEntries.get(entry.domainId)!.push({
+      bucket.push({
         table: entry.table,
         methods: entry.methods,
         entry,
@@ -670,13 +672,15 @@ export function runActionsHooksCodegen(options: ActionsHooksCodegenOptions): Cod
       return { ok: false, filesWritten, errors, actionsGenerated, hooksGenerated, queryKeysUpdated }
     }
 
-    const domainsToProcess = domainFilter
-      ? [[domainFilter, domainEntries.get(domainFilter)!] as const]
-      : Array.from(domainEntries.entries())
+    const filteredTables = domainFilter ? domainEntries.get(domainFilter) : undefined
+    const domainsToProcess =
+      domainFilter && filteredTables
+        ? ([[domainFilter, filteredTables]] as const)
+        : Array.from(domainEntries.entries())
 
     for (const [domainId, tables] of domainsToProcess) {
       const domainConfig = domainMapJson.domains.find((d) => d.id === domainId)
-      if (!domainConfig?.exposeActions) {
+      if (!domainConfig || !domainConfig.exposeActions) {
         continue
       }
 
@@ -692,14 +696,11 @@ export function runActionsHooksCodegen(options: ActionsHooksCodegenOptions): Cod
 
       for (const { table, methods } of tables) {
         const tableDef: TableDefinition = {
-          Row: {} as any,
-          Insert: {} as any,
-          Update: {} as any,
+          Row: {},
+          Insert: {},
+          Update: {},
           Relationships: [],
         }
-
-        // Get domain config for table-type routing
-        const domainConfig = domainMapJson.domains.find((d) => d.id === domainId)
 
         for (const method of methods) {
           const actionFile = join(

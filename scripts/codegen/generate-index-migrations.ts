@@ -56,13 +56,13 @@ function generateIndexMigration(
     relationships: Array<{ column: string; referencedTable: string }>
   }>
 ): string {
-  const timestamp = new Date()
-    .toISOString()
-    .replace(/[-:]/g, "")
-    .replace(/\.\d{3}/, "")
+  const generatedAt = new Date()
+  const generatedIso = generatedAt.toISOString()
+  const migrationIdStamp = generatedIso.replace(/[-:]/g, "").replace(/\.\d{3}/, "")
 
   let migration = `-- Performance Indexes (Auto-generated from database.types.ts)
--- Generated: ${new Date().toISOString()}
+-- Generated: ${generatedIso}
+-- Migration id stamp: ${migrationIdStamp}
 -- DO NOT EDIT - This file is auto-generated
 -- Run: pnpm codegen:generate-index-migrations --write
 

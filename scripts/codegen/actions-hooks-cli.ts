@@ -7,7 +7,6 @@
  *   pnpm codegen:actions-hooks --write
  */
 
-import { readFileSync } from "node:fs"
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
@@ -51,9 +50,6 @@ if (!planPath) {
   )
   process.exit(1)
 }
-
-const typesSource = readFileSync(typesPath, "utf8")
-const mapRaw = JSON.parse(readFileSync(mapPath, "utf8")) as unknown
 
 const gen = runActionsHooksCodegen({
   repoRoot,

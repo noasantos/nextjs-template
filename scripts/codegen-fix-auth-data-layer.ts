@@ -9,7 +9,7 @@
  * HIPAA compliance requirement - DO NOT skip.
  */
 
-import { readFileSync, writeFileSync, readdirSync, statSync } from "node:fs"
+import { readFileSync, writeFileSync, readdirSync } from "node:fs"
 import { join } from "node:path"
 
 const repoRoot = join(__dirname, "..")
@@ -19,10 +19,6 @@ const reposDir = join(repoRoot, "packages/supabase-data/src/modules")
 // Read database types for Zod schema generation
 const databaseTypesPath = join(repoRoot, "packages/supabase-infra/src/types/database.types.ts")
 const databaseTypesContent = readFileSync(databaseTypesPath, "utf-8")
-
-// Read repository-plan.json for PHI fields
-const repositoryPlanPath = join(repoRoot, "config/repository-plan.json")
-const repositoryPlan = JSON.parse(readFileSync(repositoryPlanPath, "utf-8"))
 
 // Build a map of table -> columns from database.types.ts
 const tableColumnsMap = new Map<string, Array<{ name: string; type: string; nullable: boolean }>>()
@@ -66,9 +62,6 @@ function generateZodSchema(tableName: string, operation: "insert" | "update" | "
   if (!columns) {
     return "z.object({})"
   }
-
-  const phiEntry = repositoryPlan.entries.find((e: any) => e.table === tableName)
-  const auditSafeFields = phiEntry?.auditSafeFields || []
 
   const lines: string[] = []
 
@@ -179,8 +172,8 @@ function processActions() {
       // Add tenant resolution if missing
       if (!hasTenantResolution) {
         const importMatch = updated.match(/import.*requireAuth.*from.*require-auth["']/)
-        if (importMatch) {
-          const insertAfter = importMatch.index! + importMatch[0].length
+        if (importMatch && importMatch.index !== undefined) {
+          const insertAfter = importMatch.index + importMatch[0].length
           updated =
             updated.slice(0, insertAfter) +
             '\nimport { getPsychologistIdForUser } from "@workspace/supabase-data/lib/auth/resolve-tenant"' +
@@ -191,8 +184,8 @@ function processActions() {
         const requireAuthMatch = updated.match(
           /const \{ userId, claims \} = await requireAuth\(\{[^}]+\}\)/
         )
-        if (requireAuthMatch) {
-          const insertAfter = requireAuthMatch.index! + requireAuthMatch[0].length
+        if (requireAuthMatch && requireAuthMatch.index !== undefined) {
+          const insertAfter = requireAuthMatch.index + requireAuthMatch[0].length
           const tenantCode = `
 
     // 2. Tenant resolution — BEFORE creating auth client
