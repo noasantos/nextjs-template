@@ -1,3 +1,4 @@
+/* oxlint-disable react/no-danger -- JSON-LD must be injected as raw script content in this page. */
 import type { Metadata } from "next"
 import { getLocale, getTranslations } from "next-intl/server"
 
@@ -49,7 +50,6 @@ export default async function MarketingHomePage() {
   return (
     <>
       {/* JSON-LD must be injected as raw script content for crawlers to parse it correctly. */}
-      {/* eslint-disable-next-line react/no-danger */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{

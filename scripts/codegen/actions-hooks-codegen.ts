@@ -80,13 +80,14 @@ function renderValidInput(fields: SemanticField[], method: ActionSemanticPlan["m
     return "{}"
   }
 
+  const identifierField = fields.find((field) => field.name !== "data")
   const parts = fields
     .filter((field) => field.required)
     .map((field) => `  ${field.name}: ${field.sample},`)
 
   if (method === "update" || method === "upsert") {
     const dataField = fields.find((field) => field.name === "data")
-    return `{\n  id: "00000000-0000-0000-0000-000000000000",\n  data: ${dataField?.sample ?? "{}"},\n}`
+    return `{\n  ${identifierField?.name ?? "id"}: ${identifierField?.sample ?? '"00000000-0000-0000-0000-000000000000"'},\n  data: ${dataField?.sample ?? "{}"},\n}`
   }
 
   if (parts.length === 0) {
@@ -407,11 +408,12 @@ function renderHookTest(plan: ActionSemanticPlan): string {
   const hookName = plan.frontendContract.hookName
   const domainKebab = toKebabCase(plan.domainId)
   const queryKeysExport = `${toCamelCase(plan.domainId)}QueryKeys`
+  const byIdField = plan.inputSchema.fields[0]
   const queryKeyAccessor =
     plan.method === "list"
       ? `${queryKeysExport}.${toCamelCase(plan.table)}List({})`
       : plan.method === "findById"
-        ? `${queryKeysExport}.${toCamelCase(plan.table)}ById({ id: "00000000-0000-0000-0000-000000000000" })`
+        ? `${queryKeysExport}.${toCamelCase(plan.table)}ById({ ${byIdField?.name ?? "id"}: ${byIdField?.sample ?? '"00000000-0000-0000-0000-000000000000"'} })`
         : `${queryKeysExport}.${toCamelCase(plan.table)}()`
 
   return `import { beforeEach, describe, expect, it, vi } from "vitest"
