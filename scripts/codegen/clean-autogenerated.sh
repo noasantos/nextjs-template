@@ -4,7 +4,7 @@
 # Never deleted under `modules/`:
 # - `profiles/`, `user-access/`, `user-roles/` (hand-maintained; see backend-codegen.md)
 #
-# Elsewhere: only `*.codegen.*` (actions/hooks) and semantic-plan reset.
+# Elsewhere: only `*.codegen.*` artifacts.
 #
 # If output is wrong, fix `scripts/codegen/` / `packages/codegen-tools/` and re-run
 # generators — do not patch `*.codegen.*` by hand.
@@ -20,6 +20,7 @@ echo ""
 
 echo "📋 Preserved:"
 echo -e "${GREEN}  ✓${NC} config/domain-map.json, config/repository-plan.json (local)"
+echo -e "${GREEN}  ✓${NC} config/action-semantic-plan.json"
 echo -e "${GREEN}  ✓${NC} config/*.example.json"
 echo -e "${GREEN}  ✓${NC} packages/supabase-infra/src/types/database.types.ts"
 echo -e "${GREEN}  ✓${NC} Manual actions: _shared/, user-access/, user-roles/, profiles/, example/"
@@ -77,17 +78,6 @@ TU=$(find tests/unit/supabase-data -type f "${CODEGEN_TEST_FIND[@]}" 2>/dev/null
 find tests/unit/supabase-data -type f "${CODEGEN_TEST_FIND[@]}" -delete 2>/dev/null || true
 echo -e "${GREEN}  ✓${NC} $TU file(s)"
 echo -e "${YELLOW}  Manual tests under tests/unit/codegen etc. preserved${NC}"
-echo ""
-
-# Reset semantic plan placeholder
-echo "🗑️  Reset config/action-semantic-plan.json …"
-if [ -f config/action-semantic-plan.example.json ]; then
-  cp config/action-semantic-plan.example.json config/action-semantic-plan.json
-  echo -e "${GREEN}  ✓${NC} from action-semantic-plan.example.json"
-else
-  printf '%s\n' '{"version":1,"generatedAt":"1970-01-01T00:00:00.000Z","actions":[],"meta":{"generator":"codegen-clean","confidence":"high","requiresHumanReview":false}}' > config/action-semantic-plan.json
-  echo -e "${GREEN}  ✓${NC} minimal JSON"
-fi
 echo ""
 
 # Prune empties

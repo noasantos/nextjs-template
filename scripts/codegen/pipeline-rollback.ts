@@ -6,7 +6,7 @@
  * `packages/codegen-tools/` and re-run generators.
  *
  * Order:
- * 1. `pnpm codegen:clean` — only `*.codegen.*` artifacts + semantic plan reset;
+ * 1. `pnpm codegen:clean` — only `*.codegen.*` artifacts;
  *    `profiles` / `user-access` / `user-roles` modules are never matched.
  * 2. `git restore --source=HEAD --staged --worktree` — resets tracked trees to HEAD.
  * 3. `git clean -fd` — removes **untracked** files/dirs under the same trees

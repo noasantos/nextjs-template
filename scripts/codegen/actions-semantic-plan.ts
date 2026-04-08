@@ -278,7 +278,17 @@ function inferAuthPolicy(domain: DomainEntry): AuthPolicy {
   return "session"
 }
 
-function inferTenantScoping(entry: RepositoryPlanEntry): boolean {
+function inferTenantScoping(entry: RepositoryPlanEntry, fields: ExtractedField[]): boolean {
+  const fieldNames = new Set(fields.map((field) => field.name))
+
+  if (
+    fieldNames.has("psychologist_id") ||
+    fieldNames.has("psychologist_client_id") ||
+    fieldNames.has("psychologist_patient_id")
+  ) {
+    return true
+  }
+
   return entry.table.includes("psychologist") || entry.table.includes("patient")
 }
 
@@ -397,6 +407,8 @@ function inferInputFields(
   }
   const rowIdField = {
     ...rawIdField,
+    isNullable: false,
+    isOptional: false,
     typeText: "string",
   }
 
@@ -472,20 +484,31 @@ function inferOutputType(
   }
 }
 
-function inferRepositoryArguments(method: CrudMethod): string[] {
+function inferIdFieldName(entry: RepositoryPlanEntry): string {
+  return toDtoFieldName(entry.idColumn ?? "id")
+}
+
+function inferRepositoryArguments(entry: RepositoryPlanEntry, method: CrudMethod): string[] {
+  const idFieldName = inferIdFieldName(entry)
+
   if (method === "findById" || method === "delete") {
-    return ["validated.id"]
+    return [`validated.${idFieldName}`]
   }
   if (method === "list" || method === "insert") {
     return ["validated"]
   }
   if (method === "update" || method === "upsert") {
-    return ["validated.id", "validated.data"]
+    return [`validated.${idFieldName}`, "validated.data"]
   }
   return []
 }
 
-function inferLoggingMetadata(method: CrudMethod): ActionSemanticPlan["logging"] {
+function inferLoggingMetadata(
+  entry: RepositoryPlanEntry,
+  method: CrudMethod
+): ActionSemanticPlan["logging"] {
+  const idFieldName = inferIdFieldName(entry)
+
   if (method === "list") {
     return {
       errorMetadata: ["input"],
@@ -495,7 +518,7 @@ function inferLoggingMetadata(method: CrudMethod): ActionSemanticPlan["logging"]
   if (method === "delete") {
     return {
       errorMetadata: ["input"],
-      successMetadata: ["id: validated.id"],
+      successMetadata: [`id: validated.${idFieldName}`],
     }
   }
   if (method === "insert") {
@@ -508,13 +531,13 @@ function inferLoggingMetadata(method: CrudMethod): ActionSemanticPlan["logging"]
     return {
       errorMetadata: ["input"],
       successMetadata: [
-        "id: (result as { id?: string | number | boolean | null }).id ?? validated.id",
+        `id: (result as { id?: string | number | boolean | null }).id ?? validated.${idFieldName}`,
       ],
     }
   }
   return {
     errorMetadata: ["input"],
-    successMetadata: ["id: validated.id"],
+    successMetadata: [`id: validated.${idFieldName}`],
   }
 }
 
@@ -538,10 +561,17 @@ function buildActionSemanticPlan(
   domain: DomainEntry,
   typesSource: string
 ): ActionSemanticPlan {
+  const schemaSource =
+    method === "list" || method === "findById"
+      ? entry.read
+      : // For mutations, prefer the write target (tables) so Insert/Update shapes exist.
+        // Falls back to read when a write target isn't configured.
+        (entry.write ?? entry.read)
+
   const shapes = extractTableShapes(
     typesSource,
-    entry.read.name,
-    entry.read.kind === "view" ? "Views" : "Tables"
+    schemaSource.name,
+    schemaSource.kind === "view" ? "Views" : "Tables"
   )
   const inputFields = inferInputFields(entry, method, shapes)
   const outputSchema = inferOutputType(entry, method)
@@ -575,7 +605,7 @@ function buildActionSemanticPlan(
       zodSchema: renderZodObject(inputFields),
     },
     kind: hookKind,
-    logging: inferLoggingMetadata(method),
+    logging: inferLoggingMetadata(entry, method),
     method,
     notes: [
       `Generated for ${entry.table}.${method}`,
@@ -597,11 +627,11 @@ function buildActionSemanticPlan(
             }
           : undefined,
     repositoryCall: {
-      arguments: inferRepositoryArguments(method),
+      arguments: inferRepositoryArguments(entry, method),
       method,
     },
     table: entry.table,
-    tenantScoping: inferTenantScoping(entry),
+    tenantScoping: inferTenantScoping(entry, shapes.row),
   }
 }
 

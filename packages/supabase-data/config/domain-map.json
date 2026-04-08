@@ -45,7 +45,6 @@
       "tables": [
         "availability_exceptions",
         "busy_slots",
-        "calendar_change_log",
         "calendar_event_series",
         "calendar_event_series_exceptions",
         "calendar_events",
@@ -77,18 +76,28 @@
       "tables": ["psychologist_financial_entries", "psychologist_invoices", "psychologist_patient_charges"]
     },
     {
-      "id": "google-sync",
+      "id": "google-calendar",
       "auth": "session",
       "codegen": true,
       "exposeActions": true,
       "readOnly": false,
+      "tables": ["google_calendar_connections"]
+    },
+    {
+      "id": "sync-infra",
+      "auth": "admin",
+      "codegen": false,
+      "exposeActions": false,
+      "readOnly": false,
       "tables": [
-        "google_calendar_connections",
+        "calendar_change_log",
         "google_sync_idempotency",
         "google_sync_inbound_coalesce",
         "google_sync_job_dedup",
         "google_sync_logs",
-        "google_sync_worker_metrics"
+        "google_sync_worker_metrics",
+        "sync_conflict_resolutions",
+        "sync_locks"
       ]
     },
     {
@@ -162,31 +171,65 @@
       "exposeActions": true,
       "readOnly": false,
       "tables": ["account_deletion_requests"]
+    },
+    {
+      "id": "public-directory",
+      "auth": "public",
+      "codegen": false,
+      "exposeActions": true,
+      "readOnly": false,
+      "tables": ["public_linktree_links", "public_locations", "public_profiles"]
+    },
+    {
+      "id": "identity-profiles",
+      "auth": "session",
+      "codegen": false,
+      "exposeActions": true,
+      "readOnly": false,
+      "tables": ["user_admins", "user_assistants", "user_patients", "user_psychologists"]
+    },
+    {
+      "id": "practice-operations",
+      "auth": "session",
+      "codegen": false,
+      "exposeActions": true,
+      "readOnly": false,
+      "tables": [
+        "psychologist_session_cancellation_policy",
+        "psychologist_weekly_schedules",
+        "session_reschedule_logs",
+        "session_reschedule_requests"
+      ]
+    },
+    {
+      "id": "billing-platform",
+      "auth": "session",
+      "codegen": false,
+      "exposeActions": true,
+      "readOnly": false,
+      "tables": [
+        "psychologist_stripe_connect",
+        "psychologist_subscriptions",
+        "public_client_checkout_intents",
+        "session_billing_dead_letter"
+      ]
+    },
+    {
+      "id": "stripe-infra",
+      "auth": "admin",
+      "codegen": false,
+      "exposeActions": false,
+      "readOnly": true,
+      "tables": ["stripe_idempotency_log", "stripe_webhook_events", "webhook_audit_log", "webhook_events"]
+    },
+    {
+      "id": "platform-audit",
+      "auth": "admin",
+      "codegen": false,
+      "exposeActions": false,
+      "readOnly": true,
+      "tables": ["security_audit_events", "unified_events"]
     }
   ],
-  "ignoreTables": [
-    "psychologist_session_cancellation_policy",
-    "psychologist_stripe_connect",
-    "psychologist_subscriptions",
-    "psychologist_weekly_schedules",
-    "public_client_checkout_intents",
-    "public_linktree_links",
-    "public_locations",
-    "public_profiles",
-    "security_audit_events",
-    "session_billing_dead_letter",
-    "session_reschedule_logs",
-    "session_reschedule_requests",
-    "stripe_idempotency_log",
-    "stripe_webhook_events",
-    "sync_conflict_resolutions",
-    "sync_locks",
-    "unified_events",
-    "user_admins",
-    "user_assistants",
-    "user_patients",
-    "user_psychologists",
-    "webhook_audit_log",
-    "webhook_events"
-  ]
+  "ignoreTables": []
 }

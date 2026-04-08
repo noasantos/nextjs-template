@@ -99,13 +99,14 @@ function renderValidInput(fields: SemanticField[], method: ActionSemanticPlan["m
 function renderActionExecution(plan: ActionSemanticPlan): string {
   const dtoTypeName = `${toPascalCase(plan.table)}DTO`
   const listParamsTypeName = `${toPascalCase(plan.table)}ListParams`
+  const idArg = plan.repositoryCall.arguments[0] ?? "validated.id"
 
   if (plan.method === "delete") {
-    return `await repository.delete(validated.id)\n    const result = { success: true } as const`
+    return `await repository.delete(${idArg})\n    const result = { success: true } as const`
   }
 
   if (plan.method === "findById") {
-    return "const result = await repository.findById(validated.id)"
+    return `const result = await repository.findById(${idArg})`
   }
 
   if (plan.method === "list") {
@@ -126,7 +127,7 @@ function renderActionExecution(plan: ActionSemanticPlan): string {
     return `const repositoryInput = Object.fromEntries(
       Object.entries(validated.data).filter(([, value]) => value !== undefined)
     ) as Partial<${dtoTypeName}>
-    const result = await repository.${plan.method}(validated.id, repositoryInput)`
+    const result = await repository.${plan.method}(${idArg}, repositoryInput)`
   }
 
   return `const result = await repository.${plan.repositoryCall.method}(${plan.repositoryCall.arguments.join(", ")})`
@@ -284,8 +285,9 @@ function renderQueryKeysFile(domainId: string, actions: ActionSemanticPlan[]): s
 
       const byIdAction = tableActions.find((action) => action.method === "findById")
       if (byIdAction) {
+        const byIdParamName = byIdAction.inputSchema.fields[0]?.name ?? "id"
         lines.push(`  ${tableCamel}ById: (input: ${byIdAction.inputSchema.typeName}) =>
-    [...${exportName}.${tableCamel}(), "byId", input.id] as const,`)
+    [...${exportName}.${tableCamel}(), "byId", input.${byIdParamName}] as const,`)
       }
 
       return lines.join("\n")

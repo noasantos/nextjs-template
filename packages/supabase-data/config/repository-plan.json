@@ -1,9 +1,10 @@
 {
   "version": 1,
   "meta": {
-    "generatedAt": "2026-04-07T13:26:53.813Z",
-    "generator": "llm-semantic-analysis-qwen3.5-plus",
-    "promptVersion": "v1"
+    "generatedAt": "2026-04-07T18:33:01.436Z",
+    "generator": "codex-semantic-review",
+    "promptVersion": "v1-manual-semantic-pass",
+    "model": "gpt-5-codex"
   },
   "entries": [
     {
@@ -267,58 +268,20 @@
         "kind": "table",
         "name": "busy_slots"
       },
-      "write": {
-        "kind": "table",
-        "name": "busy_slots"
-      },
-      "methods": ["findById", "list", "insert", "update", "delete"],
+      "methods": ["findById", "list"],
       "dto": {
         "style": "zod",
         "include": "all_columns"
       },
       "idColumn": "id",
-      "phiFields": ["reason", "metadata"],
+      "phiFields": ["title"],
       "auditSafeFields": [
         "id",
         "psychologist_id",
-        "slot_date",
-        "start_time",
-        "end_time",
-        "slot_type",
-        "created_at",
-        "updated_at"
-      ]
-    },
-    {
-      "domainId": "calendar",
-      "table": "calendar_change_log",
-      "read": {
-        "kind": "table",
-        "name": "calendar_change_log"
-      },
-      "write": {
-        "kind": "table",
-        "name": "calendar_change_log"
-      },
-      "methods": ["findById", "list", "insert", "update", "delete"],
-      "dto": {
-        "style": "zod",
-        "include": "all_columns"
-      },
-      "idColumn": "id",
-      "phiFields": [],
-      "auditSafeFields": [
-        "id",
-        "psychologist_id",
-        "event_id",
-        "change_type",
-        "changed_fields",
-        "old_values",
-        "new_values",
-        "correlation_id",
-        "google_event_id",
-        "sync_direction",
-        "processed_at",
+        "event_type",
+        "is_hard_block",
+        "source_id",
+        "source_type",
         "created_at"
       ]
     },
@@ -391,8 +354,8 @@
       "domainId": "calendar",
       "table": "calendar_events",
       "read": {
-        "kind": "table",
-        "name": "calendar_events"
+        "kind": "view",
+        "name": "calendar_events_full"
       },
       "write": {
         "kind": "table",
@@ -422,9 +385,6 @@
         "google_sync_status",
         "google_sync_error",
         "last_synced_at",
-        "remote_updated_at",
-        "remote_etag",
-        "sync_origin",
         "original_start_datetime",
         "original_end_datetime",
         "created_at",
@@ -438,11 +398,7 @@
         "kind": "table",
         "name": "calendar_holidays"
       },
-      "write": {
-        "kind": "table",
-        "name": "calendar_holidays"
-      },
-      "methods": ["findById", "list", "insert", "update", "delete"],
+      "methods": ["findById", "list"],
       "dto": {
         "style": "zod",
         "include": "all_columns"
@@ -456,10 +412,9 @@
         "date",
         "year",
         "type",
-        "country",
+        "source",
         "state",
         "city",
-        "source",
         "created_at",
         "updated_at"
       ]
@@ -679,7 +634,7 @@
       ]
     },
     {
-      "domainId": "google-sync",
+      "domainId": "google-calendar",
       "table": "google_calendar_connections",
       "read": {
         "kind": "table",
@@ -689,151 +644,37 @@
         "kind": "table",
         "name": "google_calendar_connections"
       },
-      "methods": ["findById", "list", "insert", "update", "delete"],
+      "methods": ["findById", "list", "insert", "update"],
       "dto": {
         "style": "zod",
         "include": "all_columns"
       },
       "idColumn": "id",
-      "phiFields": [],
+      "phiFields": [
+        "google_email",
+        "access_token",
+        "access_token_encrypted",
+        "refresh_token",
+        "refresh_token_encrypted",
+        "sync_token",
+        "watch_channel_token"
+      ],
       "auditSafeFields": [
         "id",
         "psychologist_id",
-        "google_user_id",
         "google_email",
-        "connection_status",
-        "last_synced_at",
+        "google_calendar_id",
+        "is_connected",
         "sync_enabled",
+        "sync_state",
+        "sync_to_google",
+        "sync_from_google",
+        "sync_sessions",
+        "sync_blocks",
+        "last_successful_sync_at",
+        "last_sync_at",
         "created_at",
         "updated_at"
-      ]
-    },
-    {
-      "domainId": "google-sync",
-      "table": "google_sync_idempotency",
-      "read": {
-        "kind": "table",
-        "name": "google_sync_idempotency"
-      },
-      "write": {
-        "kind": "table",
-        "name": "google_sync_idempotency"
-      },
-      "methods": ["list", "insert", "update", "delete"],
-      "dto": {
-        "style": "zod",
-        "include": "all_columns"
-      },
-      "phiFields": [],
-      "auditSafeFields": ["id", "psychologist_id", "operation_type", "operation_key", "result_hash", "created_at"]
-    },
-    {
-      "domainId": "google-sync",
-      "table": "google_sync_inbound_coalesce",
-      "read": {
-        "kind": "table",
-        "name": "google_sync_inbound_coalesce"
-      },
-      "write": {
-        "kind": "table",
-        "name": "google_sync_inbound_coalesce"
-      },
-      "methods": ["list", "insert", "update", "delete"],
-      "dto": {
-        "style": "zod",
-        "include": "all_columns"
-      },
-      "phiFields": [],
-      "auditSafeFields": [
-        "id",
-        "psychologist_id",
-        "connection_id",
-        "google_event_id",
-        "operation_type",
-        "payload",
-        "processed",
-        "locked_at",
-        "locked_by",
-        "created_at"
-      ]
-    },
-    {
-      "domainId": "google-sync",
-      "table": "google_sync_job_dedup",
-      "read": {
-        "kind": "table",
-        "name": "google_sync_job_dedup"
-      },
-      "write": {
-        "kind": "table",
-        "name": "google_sync_job_dedup"
-      },
-      "methods": ["list", "insert", "update", "delete"],
-      "dto": {
-        "style": "zod",
-        "include": "all_columns"
-      },
-      "phiFields": [],
-      "auditSafeFields": ["id", "psychologist_id", "job_key", "last_run_at"]
-    },
-    {
-      "domainId": "google-sync",
-      "table": "google_sync_logs",
-      "read": {
-        "kind": "table",
-        "name": "google_sync_logs"
-      },
-      "write": {
-        "kind": "table",
-        "name": "google_sync_logs"
-      },
-      "methods": ["findById", "list", "insert", "update", "delete"],
-      "dto": {
-        "style": "zod",
-        "include": "all_columns"
-      },
-      "idColumn": "id",
-      "phiFields": [],
-      "auditSafeFields": [
-        "id",
-        "psychologist_id",
-        "connection_id",
-        "sync_direction",
-        "operation_type",
-        "google_event_id",
-        "status",
-        "error_message",
-        "duration_ms",
-        "created_at"
-      ]
-    },
-    {
-      "domainId": "google-sync",
-      "table": "google_sync_worker_metrics",
-      "read": {
-        "kind": "table",
-        "name": "google_sync_worker_metrics"
-      },
-      "write": {
-        "kind": "table",
-        "name": "google_sync_worker_metrics"
-      },
-      "methods": ["findById", "list", "insert", "update", "delete"],
-      "dto": {
-        "style": "zod",
-        "include": "all_columns"
-      },
-      "idColumn": "id",
-      "phiFields": [],
-      "auditSafeFields": [
-        "id",
-        "psychologist_id",
-        "worker_id",
-        "jobs_processed",
-        "jobs_failed",
-        "avg_duration_ms",
-        "last_heartbeat_at",
-        "created_at"
       ]
     },
     {
@@ -898,29 +739,30 @@
       "domainId": "onboarding",
       "table": "psychologist_onboarding_state",
       "read": {
-        "kind": "table",
-        "name": "psychologist_onboarding_state"
+        "kind": "view",
+        "name": "psychologist_onboarding_summary"
       },
       "write": {
         "kind": "table",
         "name": "psychologist_onboarding_state"
       },
-      "methods": ["list", "insert", "update", "delete"],
+      "methods": ["findById", "list", "insert", "update"],
       "dto": {
         "style": "zod",
         "include": "all_columns"
       },
       "phiFields": [],
       "auditSafeFields": [
-        "id",
         "psychologist_id",
         "current_step",
-        "completed_steps",
-        "onboarding_completed",
-        "completed_at",
-        "created_at",
-        "updated_at"
-      ]
+        "total_steps",
+        "completion_percentage",
+        "next_pending_step",
+        "last_resumed_at",
+        "onboarding_completed_at",
+        "abandoned_at"
+      ],
+      "idColumn": "psychologist_id"
     },
     {
       "domainId": "patients",
@@ -1245,8 +1087,8 @@
       "domainId": "observability",
       "table": "observability_events",
       "read": {
-        "kind": "table",
-        "name": "observability_events"
+        "kind": "view",
+        "name": "v_operational_events"
       },
       "methods": ["findById", "list"],
       "dto": {
@@ -1254,8 +1096,23 @@
         "include": "all_columns"
       },
       "idColumn": "id",
-      "phiFields": [],
-      "auditSafeFields": ["id", "event_type", "severity", "source", "correlation_id", "payload", "created_at"]
+      "phiFields": ["metadata", "error_message", "request_path", "user_agent"],
+      "auditSafeFields": [
+        "id",
+        "event_family",
+        "event_name",
+        "operation",
+        "operation_type",
+        "outcome",
+        "http_status",
+        "error_category",
+        "error_code",
+        "service",
+        "environment",
+        "severity",
+        "timestamp",
+        "correlation_id"
+      ]
     },
     {
       "domainId": "account-management",
@@ -1268,19 +1125,17 @@
         "kind": "table",
         "name": "account_deletion_requests"
       },
-      "methods": ["findById", "list", "insert", "update", "delete"],
+      "methods": ["findById", "list", "insert", "update"],
       "dto": {
         "style": "zod",
         "include": "all_columns"
       },
       "idColumn": "id",
-      "phiFields": [],
+      "phiFields": ["reason", "failure_reason", "metadata"],
       "auditSafeFields": [
         "id",
         "user_id",
         "requested_by",
-        "reason",
-        "metadata",
         "status",
         "requested_at",
         "processing_started_at",
@@ -1288,8 +1143,8 @@
         "approved_at",
         "cancelled_at",
         "failed_at",
-        "failure_reason",
-        "retention_until"
+        "retention_until",
+        "correlation_id"
       ]
     }
   ]
