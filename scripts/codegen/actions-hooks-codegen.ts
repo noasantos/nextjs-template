@@ -1,8 +1,11 @@
 #!/usr/bin/env tsx
 /**
- * Automated codegen for frontend-consumable actions and hooks.
+ * Automated codegen for frontend-consumable Server Actions.
  *
  * Consumes the semantic plan as the executable SSOT.
+ * Generates: Server Actions + unit tests.
+ * Does NOT generate: hooks or query keys — the template uses RSC (Server Components)
+ * for data fetching, so client-side React Query hooks are not part of the architecture.
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
@@ -19,14 +22,11 @@ import { parseRepositoryPlanJson } from "@workspace/codegen-tools/repository-pla
 import {
   generateSemanticPlan,
   type ActionSemanticPlan,
-  type QueryFrontendContract,
   type SemanticField,
   type SemanticPlanFile,
 } from "./actions-semantic-plan"
 
-type QueryActionSemanticPlan = ActionSemanticPlan & { frontendContract: QueryFrontendContract }
-
-interface ActionsHooksCodegenOptions {
+interface ActionsCodegenOptions {
   checkOnly: boolean
   domainFilter?: string
   domainMapPath: string
@@ -41,9 +41,7 @@ interface CodegenResult {
   actionsGenerated: number
   errors: string[]
   filesWritten: string[]
-  hooksGenerated: number
   ok: boolean
-  queryKeysUpdated: number
 }
 
 function argValue(flag: string): string | undefined {
@@ -114,21 +112,24 @@ function renderActionExecution(plan: ActionSemanticPlan): string {
   }
 
   if (plan.method === "list") {
-    return `const repositoryInput = Object.fromEntries(
+    return `// @type-escape: Object.fromEntries loses key types — Zod-validated shape satisfies ${listParamsTypeName} at runtime
+    const repositoryInput = Object.fromEntries(
       Object.entries(validated).filter(([, value]) => value !== undefined)
     ) as ${listParamsTypeName}
     const result = await repository.list(repositoryInput)`
   }
 
   if (plan.method === "insert") {
-    return `const repositoryInput = Object.fromEntries(
+    return `// @type-escape: Object.fromEntries loses key types — Zod-validated shape satisfies Partial<${dtoTypeName}> at runtime
+    const repositoryInput = Object.fromEntries(
       Object.entries(validated).filter(([, value]) => value !== undefined)
     ) as Partial<${dtoTypeName}>
     const result = await repository.insert(repositoryInput)`
   }
 
   if (plan.method === "update" || plan.method === "upsert") {
-    return `const repositoryInput = Object.fromEntries(
+    return `// @type-escape: Object.fromEntries loses key types — Zod-validated shape satisfies Partial<${dtoTypeName}> at runtime
+    const repositoryInput = Object.fromEntries(
       Object.entries(validated.data).filter(([, value]) => value !== undefined)
     ) as Partial<${dtoTypeName}>
     const result = await repository.${plan.method}(${idArg}, repositoryInput)`
@@ -188,7 +189,7 @@ function renderActionFile(plan: ActionSemanticPlan): string {
  * ${plan.actionName}
  *
  * @module ${plan.actionPath}
- * codegen:actions-hooks (generated) — do not hand-edit
+ * codegen:actions (generated) — do not hand-edit
  */
 "use server"
 
@@ -226,7 +227,9 @@ export async function ${plan.actionName}(input: ${inputTypeName}): Promise<${out
       operation: "${plan.method}",
       operationType: "action",
       outcome: "success",
-      metadata: { ${plan.logging.successMetadata.join(", ")} },
+      metadata: {
+        ${plan.logging.successMetadata.join("\n        ")},
+      },
       service: "supabase-data",
     })
 
@@ -243,6 +246,7 @@ export async function ${plan.actionName}(input: ${inputTypeName}): Promise<${out
       operationType: "action",
       outcome: "failure",
       error,
+      // @type-escape: input type is the generated Zod-inferred shape; Record<string,unknown> is required by sanitizeForAudit — diverges at the catch boundary where input may be unvalidated
       metadata: sanitizeForAudit(input as Record<string, unknown>, AUDIT_SAFE_FIELDS),
       service: "supabase-data",
     })
@@ -251,150 +255,6 @@ export async function ${plan.actionName}(input: ${inputTypeName}): Promise<${out
   }
 }
 `
-}
-
-function renderQueryKeyImports(actions: ActionSemanticPlan[]): string {
-  const imports = actions
-    .filter((action) => action.queryKeyPolicy)
-    .map(
-      (action) =>
-        `import type { ${action.inputSchema.typeName} } from "${action.frontendContract.actionImportPath}"`
-    )
-
-  return Array.from(new Set(imports)).join("\n")
-}
-
-function renderQueryKeysFile(domainId: string, actions: ActionSemanticPlan[]): string {
-  const domainCamel = toCamelCase(domainId)
-  const exportName = `${domainCamel}QueryKeys`
-  const grouped = new Map<string, ActionSemanticPlan[]>()
-  for (const action of actions.filter((candidate) => candidate.queryKeyPolicy)) {
-    const bucket = grouped.get(action.table) ?? []
-    bucket.push(action)
-    grouped.set(action.table, bucket)
-  }
-
-  const body = Array.from(grouped.entries())
-    .map(([table, tableActions]) => {
-      const tableCamel = toCamelCase(table)
-      const lines = [
-        `  ${tableCamel}: () => [...${exportName}.all, "${toKebabCase(table)}"] as const,`,
-      ]
-
-      const listAction = tableActions.find((action) => action.method === "list")
-      if (listAction) {
-        lines.push(`  ${tableCamel}List: (input?: ${listAction.inputSchema.typeName}) =>
-    [...${exportName}.${tableCamel}(), "list", input ?? {}] as const,`)
-      }
-
-      const byIdAction = tableActions.find((action) => action.method === "findById")
-      if (byIdAction) {
-        const byIdParamName = byIdAction.inputSchema.fields[0]?.name ?? "id"
-        lines.push(`  ${tableCamel}ById: (input: ${byIdAction.inputSchema.typeName}) =>
-    [...${exportName}.${tableCamel}(), "byId", input.${byIdParamName}] as const,`)
-      }
-
-      return lines.join("\n")
-    })
-    .join("\n")
-
-  const importBlock = renderQueryKeyImports(actions)
-
-  return `/**
- * Query key factory for domain "${toKebabCase(domainId)}".
- *
- * codegen:actions-hooks (generated) — do not hand-edit
- */
-${importBlock}
-
-export const ${exportName} = {
-  all: ["${toKebabCase(domainId)}"] as const,
-${body}
-}
-`
-}
-
-function renderQueryHook(plan: QueryActionSemanticPlan): string {
-  const domainKebab = toKebabCase(plan.domainId)
-  const hookName = plan.frontendContract.hookName
-  const queryKeysExport = `${toCamelCase(plan.domainId)}QueryKeys`
-  const actionOutputType = renderOutputTypeName(plan)
-  const paramsSignature =
-    plan.method === "list"
-      ? `input?: ${plan.inputSchema.typeName}`
-      : `input: ${plan.inputSchema.typeName}, options?: { enabled?: boolean }`
-  const queryKeyCall =
-    plan.method === "list"
-      ? `${queryKeysExport}.${toCamelCase(plan.table)}List(input)`
-      : `${queryKeysExport}.${toCamelCase(plan.table)}ById(input)`
-  const enabledLine = plan.method === "findById" ? "\n    enabled: options?.enabled ?? true," : ""
-  const inputFallback = plan.method === "list" ? "input ?? {}" : "input"
-
-  return `/**
- * ${hookName}
- *
- * @module ${plan.frontendContract.hookImportPath}
- * codegen:actions-hooks (generated) — do not hand-edit
- */
-"use client"
-
-import { useQuery, type UseQueryResult } from "@tanstack/react-query"
-
-import {
-  ${plan.actionName},
-  type ${plan.inputSchema.typeName},
-  type ${actionOutputType},
-} from "${plan.frontendContract.actionImportPath}"
-import { ${queryKeysExport} } from "@workspace/supabase-data/hooks/${domainKebab}/query-keys.codegen"
-
-export function ${hookName}(${paramsSignature}): UseQueryResult<${actionOutputType}, Error> {
-  return useQuery({
-    queryKey: ${queryKeyCall},
-    queryFn: async () => ${plan.actionName}(${inputFallback}),${enabledLine}
-  })
-}
-`
-}
-
-function renderHookTest(plan: QueryActionSemanticPlan): string {
-  const hookName = plan.frontendContract.hookName
-  const domainKebab = toKebabCase(plan.domainId)
-  const queryKeysExport = `${toCamelCase(plan.domainId)}QueryKeys`
-  const byIdField = plan.inputSchema.fields[0]
-  const queryKeyAccessor =
-    plan.method === "list"
-      ? `${queryKeysExport}.${toCamelCase(plan.table)}List({})`
-      : plan.method === "findById"
-        ? `${queryKeysExport}.${toCamelCase(plan.table)}ById({ ${byIdField?.name ?? "id"}: ${byIdField?.sample ?? '"00000000-0000-0000-0000-000000000000"'} })`
-        : `${queryKeysExport}.${toCamelCase(plan.table)}()`
-
-  return `import { beforeEach, describe, expect, it, vi } from "vitest"
-import { ${queryKeysExport} } from "@workspace/supabase-data/hooks/${domainKebab}/query-keys.codegen"
-
-describe("${hookName}", () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    vi.resetModules()
-  })
-
-  it("exports the generated hook", async () => {
-    vi.doMock("${plan.frontendContract.actionImportPath}", () => ({
-      ${plan.actionName}: vi.fn(async () => undefined),
-    }))
-
-    const { ${hookName} } = await import("@workspace/supabase-data/hooks/${domainKebab}/${hookFileBasename(plan)}")
-    expect(${hookName}).toBeTypeOf("function")
-  })
-
-  it("exposes the expected query key factory", () => {
-    expect(${queryKeyAccessor}).toBeDefined()
-  })
-})
-`
-}
-
-function hookFileBasename(plan: QueryActionSemanticPlan): string {
-  return plan.frontendContract.hookImportPath.split("/").at(-1) ?? "missing-hook"
 }
 
 function renderActionTest(plan: ActionSemanticPlan): string {
@@ -457,7 +317,7 @@ ${authMock}    vi.doMock("@workspace/supabase-auth/server/create-server-auth-cli
 `
 }
 
-function loadSemanticPlan(options: ActionsHooksCodegenOptions): SemanticPlanFile {
+function loadSemanticPlan(options: ActionsCodegenOptions): SemanticPlanFile {
   if (options.semanticPlanPath) {
     return JSON.parse(readFileSync(options.semanticPlanPath, "utf8")) as SemanticPlanFile
   }
@@ -484,7 +344,7 @@ function assertSemanticCompleteness(plan: SemanticPlanFile): string[] {
   return errors
 }
 
-export function runActionsHooksCodegen(options: ActionsHooksCodegenOptions): CodegenResult {
+export function runActionsCodegen(options: ActionsCodegenOptions): CodegenResult {
   const {
     checkOnly,
     domainFilter,
@@ -498,23 +358,21 @@ export function runActionsHooksCodegen(options: ActionsHooksCodegenOptions): Cod
   const errors: string[] = []
   const filesWritten: string[] = []
   let actionsGenerated = 0
-  let hooksGenerated = 0
-  let queryKeysUpdated = 0
 
   try {
     if (!existsSync(typesPath)) {
       errors.push(`Types file not found: ${typesPath}`)
-      return { ok: false, filesWritten, errors, actionsGenerated, hooksGenerated, queryKeysUpdated }
+      return { ok: false, filesWritten, errors, actionsGenerated }
     }
 
     if (!existsSync(planPath)) {
       errors.push(`Repository plan not found: ${planPath}`)
-      return { ok: false, filesWritten, errors, actionsGenerated, hooksGenerated, queryKeysUpdated }
+      return { ok: false, filesWritten, errors, actionsGenerated }
     }
 
     if (!existsSync(domainMapPath)) {
       errors.push(`Domain map not found: ${domainMapPath}`)
-      return { ok: false, filesWritten, errors, actionsGenerated, hooksGenerated, queryKeysUpdated }
+      return { ok: false, filesWritten, errors, actionsGenerated }
     }
 
     const semanticPlan = loadSemanticPlan({
@@ -529,7 +387,7 @@ export function runActionsHooksCodegen(options: ActionsHooksCodegenOptions): Cod
     errors.push(...assertSemanticCompleteness(semanticPlan))
 
     if (errors.length > 0) {
-      return { ok: false, filesWritten, errors, actionsGenerated, hooksGenerated, queryKeysUpdated }
+      return { ok: false, filesWritten, errors, actionsGenerated }
     }
 
     const domainMap = parseDomainMapJson(JSON.parse(readFileSync(domainMapPath, "utf8")))
@@ -554,26 +412,14 @@ export function runActionsHooksCodegen(options: ActionsHooksCodegenOptions): Cod
 
     if (domainFilter && !actionsByDomain.has(domainFilter)) {
       errors.push(`Domain "${domainFilter}" not found in semantic plan`)
-      return { ok: false, filesWritten, errors, actionsGenerated, hooksGenerated, queryKeysUpdated }
+      return { ok: false, filesWritten, errors, actionsGenerated }
     }
 
     for (const [domainId, actions] of actionsByDomain.entries()) {
       const domainActionsDir = join(repoRoot, "packages/supabase-data/src/actions", domainId)
-      const domainHooksDir = join(repoRoot, "packages/supabase-data/src/hooks", domainId)
-      const queryKeyFile = join(domainHooksDir, "query-keys.codegen.ts")
 
       if (!checkOnly) {
         mkdirSync(domainActionsDir, { recursive: true })
-        mkdirSync(domainHooksDir, { recursive: true })
-      }
-
-      const queryActions = actions.filter((action) => action.queryKeyPolicy)
-      if (!checkOnly && queryActions.length > 0) {
-        const queryKeysContent = renderQueryKeysFile(domainId, queryActions)
-        ensureDir(queryKeyFile)
-        writeFileSync(queryKeyFile, queryKeysContent, "utf8")
-        filesWritten.push(relative(repoRoot, queryKeyFile))
-        queryKeysUpdated += 1
       }
 
       for (const action of actions) {
@@ -595,28 +441,6 @@ export function runActionsHooksCodegen(options: ActionsHooksCodegenOptions): Cod
           filesWritten.push(relative(repoRoot, actionFile), relative(repoRoot, actionTestFile))
         }
         actionsGenerated += 1
-
-        if (action.kind !== "query") {
-          continue
-        }
-
-        const queryAction = action as QueryActionSemanticPlan
-        const hookFile = join(domainHooksDir, `${hookFileBasename(queryAction)}.ts`)
-        const hookTestFile = join(
-          repoRoot,
-          "tests/unit/supabase-data/hooks",
-          domainId,
-          `${hookFileBasename(queryAction)}.test.ts`
-        )
-
-        if (!checkOnly) {
-          const hookContent = renderQueryHook(queryAction)
-          writeFileSync(hookFile, hookContent, "utf8")
-          ensureDir(hookTestFile)
-          writeFileSync(hookTestFile, renderHookTest(queryAction), "utf8")
-          filesWritten.push(relative(repoRoot, hookFile), relative(repoRoot, hookTestFile))
-        }
-        hooksGenerated += 1
       }
     }
 
@@ -624,9 +448,7 @@ export function runActionsHooksCodegen(options: ActionsHooksCodegenOptions): Cod
       actionsGenerated,
       errors,
       filesWritten,
-      hooksGenerated,
       ok: errors.length === 0,
-      queryKeysUpdated,
     }
   } catch (error) {
     errors.push(error instanceof Error ? error.message : "Unknown error during codegen")
@@ -634,9 +456,7 @@ export function runActionsHooksCodegen(options: ActionsHooksCodegenOptions): Cod
       actionsGenerated,
       errors,
       filesWritten,
-      hooksGenerated,
       ok: false,
-      queryKeysUpdated,
     }
   }
 }
@@ -645,7 +465,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const write = process.argv.includes("--write")
   const checkOnly = process.argv.includes("--check") || !write
   const repoRoot = resolve(process.cwd())
-  const result = runActionsHooksCodegen({
+  const result = runActionsCodegen({
     checkOnly,
     domainFilter: argValue("--domain"),
     domainMapPath: resolve(repoRoot, argValue("--map") ?? "config/domain-map.json"),
@@ -670,11 +490,11 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
   if (checkOnly) {
     process.stdout.write(
-      `codegen:actions-hooks --check OK: ${result.actionsGenerated} actions, ${result.hooksGenerated} hooks, ${result.queryKeysUpdated} query key files would be generated.\n`
+      `codegen:actions --check OK: ${result.actionsGenerated} actions would be generated.\n`
     )
   } else {
     process.stdout.write(`Generated ${result.filesWritten.length} file(s).\n`)
   }
 }
 
-export { renderActionFile, renderHookTest, renderQueryHook, renderQueryKeysFile }
+export { renderActionFile }

@@ -1,31 +1,36 @@
-const AUTH_ROLES = ["admin", "user"] as const
+import {
+  AUTH_PRIVILEGED_ROLE,
+  AUTH_ROLE_ALIASES,
+  AUTH_ROLES,
+  type AuthRole,
+} from "@workspace/auth-config/roles"
 
-type AuthRole = (typeof AUTH_ROLES)[number]
+export { AUTH_ROLES, AUTH_ROLE_LABELS, type AuthRole } from "@workspace/auth-config/roles"
 
-const AUTH_ROLE_LABELS: Record<AuthRole, string> = {
-  admin: "Admin",
-  user: "User",
+/**
+ * Normalises a raw string (e.g. from a JWT claim) to a canonical `AuthRole`.
+ * Applies the alias map defined in `@workspace/auth-config/roles` before
+ * falling back to an exact match against `AUTH_ROLES`.
+ */
+function normalizeAuthRole(value: string): AuthRole | null {
+  const aliased = AUTH_ROLE_ALIASES[value]
+  if (aliased !== undefined) {
+    return aliased
+  }
+
+  return AUTH_ROLES.includes(value as AuthRole) ? (value as AuthRole) : null
 }
 
 function isAuthRole(value: string): value is AuthRole {
-  return AUTH_ROLES.includes(value as AuthRole)
+  return normalizeAuthRole(value) !== null
 }
 
-/** Returns the value as an `AuthRole` when valid, otherwise `null`. */
-function normalizeAuthRole(value: string): AuthRole | null {
-  return isAuthRole(value) ? value : null
-}
-
-/** Users with `admin` receive every app role in DB/JWT (canonical order). */
+/**
+ * Users with the privileged role (defined in `@workspace/auth-config/roles`)
+ * receive every app role in DB/JWT (canonical order).
+ */
 function expandRolesForAdmin(roles: readonly AuthRole[]): AuthRole[] {
-  return roles.includes("admin") ? [...AUTH_ROLES] : [...roles]
+  return roles.includes(AUTH_PRIVILEGED_ROLE) ? [...AUTH_ROLES] : [...roles]
 }
 
-export {
-  AUTH_ROLES,
-  AUTH_ROLE_LABELS,
-  expandRolesForAdmin,
-  isAuthRole,
-  normalizeAuthRole,
-  type AuthRole,
-}
+export { expandRolesForAdmin, isAuthRole, normalizeAuthRole }

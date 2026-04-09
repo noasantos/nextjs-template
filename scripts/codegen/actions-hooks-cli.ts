@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * CLI wrapper for automated Server Actions and TanStack Query hooks codegen.
+ * CLI wrapper for automated Server Actions codegen.
  *
  * Usage:
  *   pnpm codegen:actions-hooks --check
@@ -10,7 +10,7 @@
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
-import { runActionsHooksCodegen } from "./actions-hooks-codegen"
+import { runActionsCodegen } from "./actions-hooks-codegen"
 import { resolveDomainMapPath, resolveRepositoryPlanPath } from "./config-defaults"
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..")
@@ -51,7 +51,7 @@ if (!planPath) {
   process.exit(1)
 }
 
-const gen = runActionsHooksCodegen({
+const gen = runActionsCodegen({
   repoRoot,
   typesPath,
   planPath,
@@ -70,7 +70,7 @@ if (!gen.ok) {
 
 if (checkOnly) {
   process.stdout.write(
-    `codegen:actions-hooks --check OK: ${gen.actionsGenerated} actions, ${gen.hooksGenerated} hooks, ${gen.queryKeysUpdated} query key files would be generated.\n`
+    `codegen:actions --check OK: ${gen.actionsGenerated} actions would be generated.\n`
   )
 } else if (write && gen.filesWritten.length > 0) {
   process.stdout.write(`Generated ${gen.filesWritten.length} file(s):\n`)
@@ -78,7 +78,7 @@ if (checkOnly) {
     process.stdout.write(`  ${f}\n`)
   }
   process.stdout.write(
-    "\nNext steps:\n  1. Run: pnpm codegen:validate-generated-frontend\n  2. Run: pnpm typecheck\n  3. Run: pnpm lint\n  4. Consume the generated contracts from the frontend\n"
+    "\nNext steps:\n  1. Run: pnpm codegen:validate-generated-frontend\n  2. Run: pnpm typecheck\n  3. Run: pnpm lint\n  4. Consume from Server Components (reads) or app-local *.action.ts (writes)\n"
   )
 } else if (write) {
   process.stdout.write("Nothing to generate.\n")

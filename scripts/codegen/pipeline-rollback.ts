@@ -26,7 +26,6 @@ const RESTORE_PATHSPECS = [
   "config/repository-plan.json",
   "config/action-semantic-plan.json",
   "packages/supabase-data/src/modules",
-  "packages/supabase-data/src/hooks",
   "packages/supabase-data/src/actions",
   "tests/integration/supabase-data",
   "tests/unit/supabase-data",
@@ -34,7 +33,6 @@ const RESTORE_PATHSPECS = [
 
 const CLEAN_PATHSPECS = [
   "packages/supabase-data/src/modules",
-  "packages/supabase-data/src/hooks",
   "packages/supabase-data/src/actions",
   "tests/integration/supabase-data",
   "tests/unit/supabase-data",

@@ -217,9 +217,15 @@ if (existsDir(appsDir)) {
       if (isTestFile(rel)) continue
       const text = readFileSync(file, "utf8")
       if (/^["']use server["']/m.test(text)) {
-        errors.push(
-          `Forbidden "use server" under apps/ (Server Actions live in packages/supabase-data only): ${rel}\n  Move to packages/supabase-data/src/actions/<module>/ (pnpm action:new). See docs/architecture/CRITICAL-RULES.md and AGENTS.md.`
-        )
+        // Exception: app-local _actions/*.action.ts are thin orchestrators (CRITICAL-RULES write path)
+        const posix = normalizePathPosix(rel)
+        const isAppLocalAction =
+          posix.includes("/_actions/") && basename(file).endsWith(".action.ts")
+        if (!isAppLocalAction) {
+          errors.push(
+            `Forbidden "use server" under apps/ (Server Actions live in packages/supabase-data only): ${rel}\n  Move to packages/supabase-data/src/actions/<module>/ (pnpm action:new). See docs/architecture/CRITICAL-RULES.md and AGENTS.md.`
+          )
+        }
       }
       const baseName = basename(file)
       if (

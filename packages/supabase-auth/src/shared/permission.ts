@@ -1,18 +1,12 @@
 /**
- * Template permission keys for JWT / `requirePermission`. Add codes here as you define them;
- * keep `exampleAccess` aligned with `ACCESS_CONTROL_TEMPLATE.exampleJwtPermission` in
- * `@workspace/supabase-auth/testing/access-control-template`.
+ * Re-exports permission definitions from `@workspace/auth-config`.
+ *
+ * All permission codes are declared in `@workspace/auth-config/permissions`.
+ * Edit that file to add, rename, or remove permissions for this workspace.
  */
-const PERMISSIONS = {
-  exampleAccess: "app.example.access",
-} as const
-
-const AUTH_PERMISSIONS = Object.values(PERMISSIONS)
-
-type Permission = (typeof AUTH_PERMISSIONS)[number]
-
-function isPermission(value: string): value is Permission {
-  return AUTH_PERMISSIONS.includes(value as Permission)
-}
-
-export { AUTH_PERMISSIONS, PERMISSIONS, isPermission, type Permission }
+export {
+  AUTH_PERMISSIONS,
+  PERMISSIONS,
+  isPermission,
+  type Permission,
+} from "@workspace/auth-config/permissions"

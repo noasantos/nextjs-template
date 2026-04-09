@@ -1,36 +1,25 @@
 import type { JwtPayload } from "@supabase/supabase-js"
 
 import {
+  APP_SEGMENT_PATHS,
+  APP_SURFACE_LABELS,
+  ROLE_APP_MAP,
+  type AppSegmentKey,
+} from "@workspace/auth-config/surfaces"
+import {
   buildAuthAccessDeniedUrl,
   buildAuthSignInUrl,
   getAuthAppOrigin,
+  getDefaultRedirectTo,
   getSafeRedirectTo,
 } from "@workspace/supabase-auth/shared/auth-redirect"
-import { AUTH_ROLE_LABELS } from "@workspace/supabase-auth/shared/auth-role"
 import type { AuthRole } from "@workspace/supabase-auth/shared/auth-role"
 import { getUserRolesFromClaims } from "@workspace/supabase-auth/shared/get-user-roles-from-claims"
+import { getSupabasePublicEnv } from "@workspace/supabase-infra/env/public"
 
 import { AUTH_ROUTE_PATH_PREFIXES } from "./auth-route-paths"
 
-/**
- * URL segments for the primary Next.js app (same origin as auth).
- * Marketing/landing lives at `/` (route group `(marketing)`).
- * Add more keys here when the fork introduces role-specific surfaces (e.g. `/admin`).
- * @see apps/example
- */
-const APP_SEGMENT_PATHS = {
-  institutional: "/",
-} as const
-
-type AppSegmentKey = keyof typeof APP_SEGMENT_PATHS
-
-/**
- * Where each role lands after sign-in.
- */
-const ROLE_APP_MAP: Record<AuthRole, AppSegmentKey> = {
-  admin: "institutional",
-  user: "institutional",
-}
+export type { AppSegmentKey }
 
 const AUTH_LOGIN_PATH = "/sign-in" as const
 
@@ -46,8 +35,6 @@ type ContinueDecision =
   | { kind: "chooser"; destinations: AppDestination[] }
   | { kind: "access-denied"; href: string }
 
-const APP_SEGMENT_KEYS = Object.keys(APP_SEGMENT_PATHS) as AppSegmentKey[]
-
 /** Primary app origin: aligns with `NEXT_PUBLIC_AUTH_APP_URL` (single-app template). */
 function getPrimaryAppOrigin(): string {
   const auth = process.env.NEXT_PUBLIC_AUTH_APP_URL?.trim()
@@ -57,13 +44,38 @@ function getPrimaryAppOrigin(): string {
   return "http://localhost:3000"
 }
 
+function getSpaceAppOrigin(): string {
+  const env = getSupabasePublicEnv()
+  const configured = env.NEXT_PUBLIC_SPACE_APP_URL?.trim()
+
+  if (configured) {
+    return new URL(configured).origin
+  }
+
+  return getPrimaryAppOrigin()
+}
+
 function getConfiguredAppUrl(app: AppSurfaceKey): string {
   if (app === "auth") {
     return new URL(AUTH_LOGIN_PATH, getPrimaryAppOrigin()).toString()
   }
 
   const path = APP_SEGMENT_PATHS[app]
-  return new URL(path, getPrimaryAppOrigin()).toString()
+  const origin = app === "space" ? getSpaceAppOrigin() : getPrimaryAppOrigin()
+  return new URL(path, origin).toString()
+}
+
+function getAllowedSurfacesForRoles(roles: readonly AuthRole[]): AppSegmentKey[] {
+  const surfaces = roles.map((role) => ROLE_APP_MAP[role]).filter(Boolean)
+
+  return surfaces.filter(
+    (surface, index, allSurfaces) =>
+      allSurfaces.findIndex((candidate) => candidate === surface) === index
+  )
+}
+
+function getSurfaceLabel(surface: AppSegmentKey): string {
+  return APP_SURFACE_LABELS[surface]
 }
 
 /**
@@ -92,46 +104,40 @@ function isAuthRoutePath(pathname: string): boolean {
 function getAppKeyForUrl(value: string): AppSurfaceKey | null {
   const redirectUrl = new URL(value)
   const primaryOrigin = getPrimaryAppOrigin()
+  const spaceOrigin = getSpaceAppOrigin()
 
   if (redirectUrl.origin === primaryOrigin) {
     if (isAuthRoutePath(redirectUrl.pathname)) {
       return "auth"
     }
 
-    const sorted = [...APP_SEGMENT_KEYS].toSorted(
-      (a, b) => APP_SEGMENT_PATHS[b].length - APP_SEGMENT_PATHS[a].length
-    )
-    for (const key of sorted) {
-      const prefix = APP_SEGMENT_PATHS[key]
-      if (redirectUrl.pathname === prefix || redirectUrl.pathname.startsWith(`${prefix}/`)) {
-        return key
-      }
-    }
+    return "web"
+  }
+
+  if (redirectUrl.origin === spaceOrigin) {
+    return "space"
   }
 
   return null
 }
 
 function getDefaultAppForRoles(roles: readonly AuthRole[]) {
-  for (const role of roles) {
-    return getConfiguredAppUrl(ROLE_APP_MAP[role])
+  const [surface] = getAllowedSurfacesForRoles(roles)
+
+  if (surface) {
+    return getConfiguredAppUrl(surface)
   }
 
   return null
 }
 
 function getDestinationsForRoles(roles: readonly AuthRole[]): AppDestination[] {
-  return roles
-    .map((role) => ({
-      app: ROLE_APP_MAP[role],
-      href: getConfiguredAppUrl(ROLE_APP_MAP[role]),
-      label: AUTH_ROLE_LABELS[role],
-      role,
-    }))
-    .filter(
-      (destination, index, destinations) =>
-        destinations.findIndex((candidate) => candidate.role === destination.role) === index
-    )
+  return getAllowedSurfacesForRoles(roles).map((surface) => ({
+    app: surface,
+    href: getConfiguredAppUrl(surface),
+    label: getSurfaceLabel(surface),
+    role: roles.find((role) => ROLE_APP_MAP[role] === surface) ?? null,
+  }))
 }
 
 function buildAuthContinueUrl(redirectTo?: string | null) {
@@ -152,13 +158,26 @@ function resolveAuthorizedRedirect({
   const requestedRedirectTo = getSafeRedirectTo(redirectTo)
   const requestedApp = getAppKeyForUrl(requestedRedirectTo)
   const roles = getUserRolesFromClaims(claims)
+  const allowedSurfaces = getAllowedSurfacesForRoles(roles)
 
-  if (requestedApp === "institutional") {
-    return requestedRedirectTo
+  if (requestedApp === "web" || requestedApp === "space") {
+    if (allowedSurfaces.includes(requestedApp)) {
+      return requestedRedirectTo
+    }
+
+    return (
+      getDefaultAppForRoles(roles) ??
+      buildAuthAccessDeniedUrl(requestedRedirectTo, [requestedApp]) ??
+      buildAuthSignInUrl(requestedRedirectTo)
+    )
+  }
+
+  if (requestedRedirectTo === getDefaultRedirectTo()) {
+    return getDefaultAppForRoles(roles) ?? getConfiguredAppUrl("web")
   }
 
   if (requestedApp === "auth" && isAuthAppLandingOrSignIn(requestedRedirectTo)) {
-    return getDefaultAppForRoles(roles) ?? getConfiguredAppUrl("institutional")
+    return getDefaultAppForRoles(roles) ?? getConfiguredAppUrl("web")
   }
 
   if (!requestedApp) {
@@ -169,15 +188,7 @@ function resolveAuthorizedRedirect({
     return requestedRedirectTo
   }
 
-  if (roles.includes(requestedApp as AuthRole)) {
-    return requestedRedirectTo
-  }
-
-  return (
-    getDefaultAppForRoles(roles) ??
-    buildAuthAccessDeniedUrl(requestedRedirectTo, [requestedApp]) ??
-    buildAuthSignInUrl(requestedRedirectTo)
-  )
+  return requestedRedirectTo
 }
 
 function getContinueDecision({
@@ -189,24 +200,56 @@ function getContinueDecision({
 }): ContinueDecision {
   const requestedRedirectTo = getSafeRedirectTo(redirectTo)
   const requestedApp = getAppKeyForUrl(requestedRedirectTo)
+  const allowedSurfaces = getAllowedSurfacesForRoles(roles)
 
-  if (requestedApp === "institutional") {
-    return { kind: "redirect", href: requestedRedirectTo }
+  if (requestedApp === "web" || requestedApp === "space") {
+    if (allowedSurfaces.includes(requestedApp)) {
+      return { kind: "redirect", href: requestedRedirectTo }
+    }
+
+    if (allowedSurfaces.length === 1) {
+      const [surface] = allowedSurfaces
+
+      if (surface) {
+        return {
+          kind: "redirect",
+          href: getConfiguredAppUrl(surface),
+        }
+      }
+    }
+
+    if (allowedSurfaces.length > 1) {
+      return { kind: "chooser", destinations: getDestinationsForRoles(roles) }
+    }
+
+    return {
+      kind: "access-denied",
+      href: buildAuthAccessDeniedUrl(requestedRedirectTo, [requestedApp]),
+    }
   }
 
   if (requestedApp === "auth" && isAuthAppLandingOrSignIn(requestedRedirectTo)) {
-    if (roles.length === 1 && roles[0]) {
+    if (allowedSurfaces.length === 1) {
+      const [surface] = allowedSurfaces
+
+      if (!surface) {
+        return {
+          kind: "redirect",
+          href: getConfiguredAppUrl("web"),
+        }
+      }
+
       return {
         kind: "redirect",
-        href: getConfiguredAppUrl(ROLE_APP_MAP[roles[0]]),
+        href: getConfiguredAppUrl(surface),
       }
     }
-    if (roles.length > 1) {
+    if (allowedSurfaces.length > 1) {
       return { kind: "chooser", destinations: getDestinationsForRoles(roles) }
     }
     return {
       kind: "redirect",
-      href: getConfiguredAppUrl("institutional"),
+      href: getConfiguredAppUrl("web"),
     }
   }
 
@@ -218,28 +261,9 @@ function getContinueDecision({
     return { kind: "redirect", href: requestedRedirectTo }
   }
 
-  if (roles.includes(requestedApp as AuthRole)) {
-    return { kind: "redirect", href: requestedRedirectTo }
-  }
-
-  if (roles.length === 1) {
-    const [singleRole] = roles
-
-    if (singleRole) {
-      return {
-        kind: "redirect",
-        href: getConfiguredAppUrl(ROLE_APP_MAP[singleRole]),
-      }
-    }
-  }
-
-  if (roles.length > 1) {
-    return { kind: "chooser", destinations: getDestinationsForRoles(roles) }
-  }
-
   return {
     kind: "access-denied",
-    href: buildAuthAccessDeniedUrl(requestedRedirectTo, [requestedApp]),
+    href: buildAuthAccessDeniedUrl(requestedRedirectTo, []),
   }
 }
 

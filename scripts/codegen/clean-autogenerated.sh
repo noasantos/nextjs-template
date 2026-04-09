@@ -46,12 +46,6 @@ M=$(find "${MODULE_FIND[@]}" 2>/dev/null | wc -l | tr -d "[:space:]")
 find "${MODULE_FIND[@]}" -delete 2>/dev/null || true
 echo -e "${GREEN}  ✓${NC} $M file(s)"
 
-# Hooks
-echo "🗑️  hooks … *.codegen.ts"
-H=$(find packages/supabase-data/src/hooks -mindepth 2 -type f -name "*.codegen.ts" 2>/dev/null | wc -l | tr -d "[:space:]")
-find packages/supabase-data/src/hooks -mindepth 2 -type f -name "*.codegen.ts" -delete 2>/dev/null || true
-echo -e "${GREEN}  ✓${NC} $H file(s)"
-
 # Actions (exclude manual dirs)
 echo "🗑️  actions … *.codegen.ts"
 A=$(find packages/supabase-data/src/actions -mindepth 2 -type f -name "*.codegen.ts" \
@@ -64,16 +58,15 @@ find packages/supabase-data/src/actions -mindepth 2 -type f -name "*.codegen.ts"
 echo -e "${GREEN}  ✓${NC} $A file(s)"
 
 # Integration tests (backend emit: *.repository.codegen.integration.test.ts)
-# Unit: actions-hooks *.codegen.test.ts; generate-action-tests *.codegen.action.test.ts;
-# generate-hook-tests *.hook.codegen.test.tsx — include *.tsx so hook tests are removed.
-CODEGEN_TEST_FIND=( \( -name '*.codegen.test.ts' -o -name '*.codegen.*.test.ts' -o -name '*.codegen.test.tsx' -o -name '*.codegen.*.test.tsx' \) )
+# Unit: actions *.codegen.test.ts; generate-action-tests *.codegen.action.test.ts
+CODEGEN_TEST_FIND=( \( -name '*.codegen.test.ts' -o -name '*.codegen.*.test.ts' \) )
 
-echo "🗑️  integration tests … *.codegen*.test.ts(x)"
+echo "🗑️  integration tests … *.codegen*.test.ts"
 TI=$(find tests/integration/supabase-data/modules -type f "${CODEGEN_TEST_FIND[@]}" 2>/dev/null | wc -l | tr -d "[:space:]")
 find tests/integration/supabase-data/modules -type f "${CODEGEN_TEST_FIND[@]}" -delete 2>/dev/null || true
 echo -e "${GREEN}  ✓${NC} $TI file(s)"
 
-echo "🗑️  unit tests … *.codegen*.test.ts(x)"
+echo "🗑️  unit tests … *.codegen*.test.ts"
 TU=$(find tests/unit/supabase-data -type f "${CODEGEN_TEST_FIND[@]}" 2>/dev/null | wc -l | tr -d "[:space:]")
 find tests/unit/supabase-data -type f "${CODEGEN_TEST_FIND[@]}" -delete 2>/dev/null || true
 echo -e "${GREEN}  ✓${NC} $TU file(s)"
@@ -83,10 +76,8 @@ echo ""
 # Prune empties
 PRUNE_BASES=(
   "packages/supabase-data/src/actions"
-  "packages/supabase-data/src/hooks"
   "packages/supabase-data/src/modules"
   "tests/unit/supabase-data/actions"
-  "tests/unit/supabase-data/hooks"
   "tests/integration/supabase-data/modules"
 )
 PRUNED=0

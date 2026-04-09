@@ -3,12 +3,10 @@
  * Full Codegen Pipeline - Automated End-to-End
  *
  * This script runs the COMPLETE codegen pipeline:
- * Phase 0: Generate ALL plans (domain-map, repository-plan, action-semantic-plan)
+ * Phase 0: Generate semantic plan (domain-map, repository-plan, action-semantic-plan)
  * Phase 1: Generate Repositories + Integration Tests
- * Phase 2: Generate Actions + Unit Tests
- * Phase 3: Generate Hooks + Unit Tests
+ * Phase 2: Generate Server Actions + Unit Tests
  * Validation: typecheck, lint, test
- * Auto-Fix: Automatically fixes common issues
  *
  * Usage:
  *   pnpm tsx scripts/codegen/full-pipeline.ts
@@ -46,15 +44,15 @@ const pipelineSteps: PipelineStep[] = [
     required: true,
   },
   {
-    name: "Phase 2+3: Generate Actions + Hooks",
+    name: "Phase 2: Generate Server Actions",
     command: "pnpm codegen:actions-hooks --write",
-    description: "Generating frontend-ready actions, hooks, and unit tests...",
+    description: "Generating Server Actions and unit tests...",
     required: true,
   },
   {
     name: "Generated Artifact Validation",
     command: "pnpm codegen:validate-generated-frontend",
-    description: "Checking generated files for placeholders and missing wiring...",
+    description: "Checking generated action files for placeholders and missing wiring...",
     required: true,
   },
   {
@@ -73,7 +71,7 @@ const pipelineSteps: PipelineStep[] = [
     name: "Test Suite",
     command: "pnpm test",
     description: "Running tests...",
-    required: false, // Tests can fail, pipeline continues
+    required: false,
   },
 ]
 
@@ -125,7 +123,6 @@ function main() {
   console.log("=".repeat(50))
   console.log("")
 
-  // Pre-flight checks
   console.log("🔍 Pre-flight checks...")
   if (!checkDatabaseTypes()) {
     console.error("\n❌ Pre-flight checks failed!")
@@ -136,23 +133,20 @@ function main() {
     process.exit(1)
   }
 
-  // Run pipeline steps
   const failedSteps: string[] = []
 
   for (const step of pipelineSteps) {
-    // Skip tests if requested
     if (skipTests && step.name.includes("Test Suite")) {
       continue
     }
 
-    // Skip validation if requested
     if (skipValidation && !step.required) {
       continue
     }
 
     const testSuiteHint =
       step.name === "Test Suite"
-        ? "Note: turbo + Vitest may run for several minutes with sparse logs (especially @workspace/supabase-data). Not frozen. Next time: pnpm codegen:full-pipeline --skip-tests (same as pnpm codegen:full-pipeline:clean)."
+        ? "Note: turbo + Vitest may run for several minutes with sparse logs. Next time: pnpm codegen:full-pipeline --skip-tests"
         : undefined
 
     const success = runCommand(step.command, step.description, testSuiteHint)
@@ -160,7 +154,6 @@ function main() {
     if (!success) {
       failedSteps.push(step.name)
 
-      // If required step fails, stop pipeline
       if (step.required) {
         console.error(`\n❌ Required step failed: ${step.name}`)
         if (!noRollback) {
@@ -190,7 +183,6 @@ function main() {
           console.error("   - Common: Missing repository exports in package.json")
         } else if (step.name.includes("Lint")) {
           console.error("   - Run: pnpm lint to see detailed errors")
-          console.error("   - Common: Import order, formatting issues")
         }
 
         console.error("\n🔧 To fix and re-run:")
@@ -203,7 +195,6 @@ function main() {
     }
   }
 
-  // Summary
   console.log("\n" + "=".repeat(50))
   console.log("📊 Pipeline Summary")
   console.log("=".repeat(50))
@@ -215,13 +206,12 @@ function main() {
     console.log("   - config/repository-plan.json")
     console.log("   - config/action-semantic-plan.json")
     console.log("   - Repositories with DTOs, mappers, ports")
-    console.log("   - Frontend-ready Server Actions with Zod validation")
-    console.log("   - Frontend-ready TanStack Query hooks")
+    console.log("   - Server Actions with Zod validation")
     console.log("   - Integration tests")
     console.log("   - Unit tests")
     console.log("\n📝 Next steps:")
-    console.log("   1. Review generated contracts")
-    console.log("   2. Consume from the frontend")
+    console.log("   1. Review generated action contracts")
+    console.log("   2. Consume from Server Components (reads) or app-local *.action.ts (writes)")
     console.log("   3. Commit changes")
     console.log("   4. Deploy!")
   } else {

@@ -21,6 +21,7 @@
   "dependencies": {
     "@supabase/ssr": "^0.10.0",
     "@supabase/supabase-js": "^2.101.1",
+    "@workspace/auth-config": "workspace:*",
     "@workspace/logging": "workspace:*",
     "@workspace/supabase-infra": "workspace:*",
     "next": "^16.2.2",

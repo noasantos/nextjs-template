@@ -33,7 +33,6 @@ function argValue(flag: string): string | undefined {
 }
 
 type CrudMethod = RepositoryPlanEntry["methods"][number]
-type ActionKind = "query" | "mutation"
 type AuthPolicy = "public" | "session" | "admin"
 
 interface SemanticField {
@@ -46,34 +45,16 @@ interface SemanticField {
   zodSchema: string
 }
 
-interface QueryFrontendContract {
-  actionImportPath: string
-  hookImportPath: string
-  hookKind: "query"
-  hookName: string
-  queryKeyFactory: string
-}
-
-interface MutationFrontendContract {
-  actionImportPath: string
-}
-
 interface ActionSemanticPlan {
   actionName: string
   actionPath: string
   authPolicy: AuthPolicy
-  cacheInvalidation: {
-    invalidateKeys: string[]
-    optimisticUpdate: boolean
-  }
   domainId: string
-  frontendContract: QueryFrontendContract | MutationFrontendContract
   inputSchema: {
     fields: SemanticField[]
     typeName: string
     zodSchema: string
   }
-  kind: ActionKind
   logging: {
     errorMetadata: string[]
     successMetadata: string[]
@@ -83,11 +64,6 @@ interface ActionSemanticPlan {
   outputSchema: {
     fields: Array<{ name: string; source: "computed" | "relation" | "row"; type: string }>
     returnType: string
-  }
-  queryKeyPolicy?: {
-    accessor: string
-    paramsTypeName?: string
-    scope: "all" | "byId" | "list"
   }
   repositoryCall: {
     arguments: string[]
@@ -297,40 +273,10 @@ function inferTenantScoping(entry: RepositoryPlanEntry, fields: ExtractedField[]
   return entry.table.includes("psychologist") || entry.table.includes("patient")
 }
 
-function inferActionKind(method: CrudMethod): ActionKind {
-  return method === "list" || method === "findById" ? "query" : "mutation"
-}
-
 function defaultAuditFields(entry: RepositoryPlanEntry): string[] {
   return entry.auditSafeFields && entry.auditSafeFields.length > 0
     ? entry.auditSafeFields.map(toDtoFieldName)
     : ["id", "createdAt", "updatedAt"]
-}
-
-function queryKeyFactoryName(table: string, method: CrudMethod): string {
-  const tableCamel = toCamelCase(table)
-  if (method === "findById") {
-    return `${tableCamel}ById`
-  }
-  if (method === "list") {
-    return `${tableCamel}List`
-  }
-  return tableCamel
-}
-
-function hookNameFor(table: string, method: "list" | "findById"): string {
-  const tablePascal = toPascalCase(table)
-  if (method === "list") {
-    return `use${tablePascal}Query`
-  }
-  return `use${tablePascal}ByIdQuery`
-}
-
-function hookFileNameFor(table: string, method: "list" | "findById"): string {
-  if (method === "list") {
-    return `use-${toKebabCase(table)}-query.hook.codegen`
-  }
-  return `use-${toKebabCase(table)}-by-id-query.hook.codegen`
 }
 
 function inferListFields(entry: RepositoryPlanEntry, rowFields: ExtractedField[]): SemanticField[] {
@@ -508,13 +454,17 @@ function inferLoggingMetadata(
   if (method === "insert") {
     return {
       errorMetadata: ["input"],
-      successMetadata: ["id: (result as { id?: string | number | boolean | null }).id ?? null"],
+      successMetadata: [
+        "// @type-escape: DTO id field type is unknown at codegen time — safe to narrow to primitive at logging boundary",
+        "id: (result as { id?: string | number | boolean | null }).id ?? null",
+      ],
     }
   }
   if (method === "update" || method === "upsert") {
     return {
       errorMetadata: ["input"],
       successMetadata: [
+        "// @type-escape: DTO id field type is unknown at codegen time — safe to narrow to primitive at logging boundary",
         `id: (result as { id?: string | number | boolean | null }).id ?? validated.${idFieldName}`,
       ],
     }
@@ -522,20 +472,6 @@ function inferLoggingMetadata(
   return {
     errorMetadata: ["input"],
     successMetadata: [`id: validated.${idFieldName}`],
-  }
-}
-
-function inferCacheInvalidation(entry: RepositoryPlanEntry, method: CrudMethod) {
-  const baseAccessor = `${toCamelCase(entry.domainId)}QueryKeys.${toCamelCase(entry.table)}()`
-  if (method === "list" || method === "findById") {
-    return {
-      invalidateKeys: [],
-      optimisticUpdate: false,
-    }
-  }
-  return {
-    invalidateKeys: [baseAccessor],
-    optimisticUpdate: false,
   }
 }
 
@@ -559,33 +495,17 @@ function buildActionSemanticPlan(
   const tableKebab = toKebabCase(entry.table)
   const methodCamel = toCamelCase(method)
   const actionName = `${methodCamel}${toPascalCase(entry.table)}Action`
-  const isQueryMethod = method === "list" || method === "findById"
-
-  const frontendContract: QueryFrontendContract | MutationFrontendContract = isQueryMethod
-    ? {
-        actionImportPath: `@workspace/supabase-data/actions/${domainKebab}/${tableKebab}-${methodCamel}.codegen`,
-        hookImportPath: `@workspace/supabase-data/hooks/${domainKebab}/${hookFileNameFor(entry.table, method)}`,
-        hookKind: "query",
-        hookName: hookNameFor(entry.table, method),
-        queryKeyFactory: queryKeyFactoryName(entry.table, method),
-      }
-    : {
-        actionImportPath: `@workspace/supabase-data/actions/${domainKebab}/${tableKebab}-${methodCamel}.codegen`,
-      }
 
   return {
     actionName,
     actionPath: `@workspace/supabase-data/actions/${domainKebab}/${tableKebab}-${methodCamel}.codegen`,
     authPolicy: inferAuthPolicy(domain),
-    cacheInvalidation: inferCacheInvalidation(entry, method),
     domainId: entry.domainId,
-    frontendContract,
     inputSchema: {
       fields: inputFields,
       typeName: `${toPascalCase(entry.table)}${toPascalCase(method)}Input`,
       zodSchema: renderZodObject(inputFields),
     },
-    kind: inferActionKind(method),
     logging: inferLoggingMetadata(entry, method),
     method,
     notes: [
@@ -593,20 +513,6 @@ function buildActionSemanticPlan(
       `Audit-safe fields: ${defaultAuditFields(entry).join(", ")}`,
     ],
     outputSchema,
-    queryKeyPolicy:
-      method === "list"
-        ? {
-            accessor: queryKeyFactoryName(entry.table, method),
-            paramsTypeName: `${toPascalCase(entry.table)}${toPascalCase(method)}Input`,
-            scope: "list",
-          }
-        : method === "findById"
-          ? {
-              accessor: queryKeyFactoryName(entry.table, method),
-              paramsTypeName: `${toPascalCase(entry.table)}${toPascalCase(method)}Input`,
-              scope: "byId",
-            }
-          : undefined,
     repositoryCall: {
       arguments: inferRepositoryArguments(entry, method),
       method,
@@ -674,11 +580,4 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   }
 }
 
-export {
-  generateSemanticPlan,
-  type ActionSemanticPlan,
-  type MutationFrontendContract,
-  type QueryFrontendContract,
-  type SemanticField,
-  type SemanticPlanFile,
-}
+export { generateSemanticPlan, type ActionSemanticPlan, type SemanticField, type SemanticPlanFile }
