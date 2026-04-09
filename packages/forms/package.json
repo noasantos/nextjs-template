@@ -19,8 +19,8 @@
     "@hookform/resolvers": "^5.2.2",
     "@next-safe-action/adapter-react-hook-form": "2.0.5",
     "@workspace/ui": "workspace:*",
-    "next-safe-action": "^8.3.0",
-    "react": "^19.2.4",
+    "next-safe-action": "^8.4.0",
+    "react": "^19.2.5",
     "react-hook-form": "^7.72.1",
     "zod": "^4.3.6"
   },
@@ -33,7 +33,7 @@
     "@workspace/typescript-config": "workspace:*",
     "@workspace/vitest-config": "workspace:*",
     "publint": "^0.3.18",
-    "typescript": "^5.9.3",
-    "vitest": "^4.1.2"
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.4"
   }
 }
