@@ -1,3 +1,4 @@
+import { NextRequest } from "next/server"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 const {
@@ -44,7 +45,7 @@ afterEach(() => {
 const baseConfirmUrl = "http://localhost:3000/auth/confirm"
 
 function confirmRequest(search: string) {
-  return new Request(`${baseConfirmUrl}${search}`) as never
+  return new NextRequest(`${baseConfirmUrl}${search}`)
 }
 
 describe("auth confirm route (email OTP)", () => {

@@ -1,3 +1,4 @@
+import { NextRequest } from "next/server"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 const {
@@ -43,9 +44,7 @@ afterEach(() => {
 describe("auth callback route", () => {
   it("redirects to an error when the code is missing", async () => {
     const response = await GET(
-      new Request(
-        "http://localhost:3000/callback?redirect_to=http://localhost:3000/account"
-      ) as never
+      new NextRequest("http://localhost:3000/callback?redirect_to=http://localhost:3000/account")
     )
 
     expect(response.headers.get("location")).toBe(
@@ -57,9 +56,9 @@ describe("auth callback route", () => {
     exchangeCodeForSessionMock.mockResolvedValue({ error: null })
 
     const response = await GET(
-      new Request(
+      new NextRequest(
         "http://localhost:3000/callback?code=abc&redirect_to=http://localhost:3000/account"
-      ) as never
+      )
     )
 
     expect(response.headers.get("location")).toBe(
@@ -75,7 +74,7 @@ describe("auth callback route", () => {
       retryAfterSeconds: 30,
     })
 
-    const response = await GET(new Request("http://localhost:3000/callback?code=abc") as never)
+    const response = await GET(new NextRequest("http://localhost:3000/callback?code=abc"))
 
     expect(response.status).toBe(429)
     expect(response.headers.get("retry-after")).toBe("30")

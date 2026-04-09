@@ -1,6 +1,11 @@
 import type { JwtPayload } from "@supabase/supabase-js"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
+// @type-escape: JwtPayload is a wide interface from supabase-js; partial stubs cannot satisfy it structurally — cast is localised here so test bodies stay clean
+function makeClaims(roles: string[]): JwtPayload {
+  return { sub: "user-1", app_metadata: { roles } } as unknown as JwtPayload
+}
+
 const { getSupabasePublicEnvMock } = vi.hoisted(() => ({
   getSupabasePublicEnvMock: vi.fn(),
 }))
@@ -49,7 +54,7 @@ describe("getContinueDecision", () => {
         roles: ["admin"],
       })
     ).toEqual({
-      href: "http://localhost:3000/",
+      href: "http://localhost:3000/dashboard",
       kind: "redirect",
     })
   })
@@ -85,7 +90,40 @@ describe("getContinueDecision", () => {
         roles: [],
       })
     ).toEqual({
-      href: "http://localhost:3000/",
+      href: "http://localhost:3000/dashboard",
+      kind: "redirect",
+    })
+  })
+
+  it("routes patient users to the protected web surface", () => {
+    expect(
+      getContinueDecision({
+        redirectTo: "http://localhost:3000/sign-in",
+        roles: ["patient"],
+      })
+    ).toEqual({
+      href: "http://localhost:3000/dashboard",
+      kind: "redirect",
+    })
+  })
+
+  it("routes psychologist users to the space app surface", () => {
+    process.env.NEXT_PUBLIC_SPACE_APP_URL = "http://localhost:3001"
+    getSupabasePublicEnvMock.mockReturnValue({
+      NEXT_PUBLIC_AUTH_ALLOWED_REDIRECT_ORIGINS: ["http://localhost:3000", "http://localhost:3001"],
+      NEXT_PUBLIC_AUTH_APP_URL: "http://localhost:3000",
+      NEXT_PUBLIC_SPACE_APP_URL: "http://localhost:3001",
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "pk",
+      NEXT_PUBLIC_SUPABASE_URL: "http://localhost:54321",
+    })
+
+    expect(
+      getContinueDecision({
+        redirectTo: "http://localhost:3000/sign-in",
+        roles: ["psychologist"],
+      })
+    ).toEqual({
+      href: "http://localhost:3001/dashboard",
       kind: "redirect",
     })
   })
@@ -95,36 +133,45 @@ describe("resolveAuthorizedRedirect", () => {
   it("sends auth landing to institutional when claims have no roles (avoids /sign-in loop)", () => {
     expect(
       resolveAuthorizedRedirect({
-        claims: {
-          app_metadata: { roles: [] },
-          sub: "user-1",
-        } as unknown as JwtPayload,
+        claims: makeClaims([]),
         redirectTo: "http://localhost:3000/sign-in",
       })
-    ).toBe("http://localhost:3000/")
+    ).toBe("http://localhost:3000/dashboard")
   })
 
   it("sends auth landing to the default workspace for admin", () => {
     expect(
       resolveAuthorizedRedirect({
-        claims: {
-          app_metadata: { roles: ["admin"] },
-          sub: "user-1",
-        } as unknown as JwtPayload,
+        claims: makeClaims(["admin"]),
         redirectTo: "http://localhost:3000/sign-in",
       })
-    ).toBe("http://localhost:3000/")
+    ).toBe("http://localhost:3000/dashboard")
   })
 
   it("keeps non-landing auth paths unchanged", () => {
     expect(
       resolveAuthorizedRedirect({
-        claims: {
-          app_metadata: { roles: ["admin"] },
-          sub: "user-1",
-        } as unknown as JwtPayload,
+        claims: makeClaims(["admin"]),
         redirectTo: "http://localhost:3000/mfa",
       })
     ).toBe("http://localhost:3000/mfa")
+  })
+
+  it("sends psychologist users to space when auth lands on sign-in", () => {
+    process.env.NEXT_PUBLIC_SPACE_APP_URL = "http://localhost:3001"
+    getSupabasePublicEnvMock.mockReturnValue({
+      NEXT_PUBLIC_AUTH_ALLOWED_REDIRECT_ORIGINS: ["http://localhost:3000", "http://localhost:3001"],
+      NEXT_PUBLIC_AUTH_APP_URL: "http://localhost:3000",
+      NEXT_PUBLIC_SPACE_APP_URL: "http://localhost:3001",
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "pk",
+      NEXT_PUBLIC_SUPABASE_URL: "http://localhost:54321",
+    })
+
+    expect(
+      resolveAuthorizedRedirect({
+        claims: makeClaims(["psychologist"]),
+        redirectTo: "http://localhost:3000/sign-in",
+      })
+    ).toBe("http://localhost:3001/dashboard")
   })
 })

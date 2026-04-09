@@ -16,9 +16,11 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
+    "@next-safe-action/adapter-react-hook-form": "2.0.5",
     "@workspace/core": "workspace:*",
     "@workspace/forms": "workspace:*",
     "@workspace/logging": "workspace:*",
+    "@workspace/safe-action": "workspace:*",
     "@workspace/seo": "workspace:*",
     "@workspace/supabase-auth": "workspace:*",
     "@workspace/supabase-infra": "workspace:*",
